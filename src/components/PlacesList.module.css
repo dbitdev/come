@@ -35,8 +35,8 @@
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
 }
 
 .carouselContainer {
@@ -63,11 +63,15 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
     overflow: hidden;
+    border-radius: 16px;
+    aspect-ratio: 1 / 1; /* Square proportions */
+    position: relative;
 }
 
 .carouselContainer .card {
-    flex: 0 0 600px; /* Even wider as requested */
+    flex: 0 0 380px; /* Consistent square card size */
     scroll-snap-align: start;
+    aspect-ratio: 1 / 1;
 }
 
 .card:hover {
@@ -76,9 +80,8 @@
 }
 
 .imageWrapper {
-    position: relative;
-    width: 100%;
-    height: 380px; /* Taller for overlay */
+    position: absolute;
+    inset: 0; /* Fill the entire square card */
     overflow: hidden;
 }
 
@@ -164,14 +167,11 @@
     }
 
     .carouselContainer .card {
-        flex: 0 0 320px;
+        flex: 0 0 280px;
+        aspect-ratio: 1 / 1;
     }
 
     .name {
         font-size: 1.4rem;
-    }
-
-    .imageWrapper {
-        height: 300px;
     }
 }
