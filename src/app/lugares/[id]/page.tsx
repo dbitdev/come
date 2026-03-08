@@ -6,6 +6,11 @@ import { FaMapMarkerAlt, FaStar, FaUtensils, FaGlobe, FaPhone, FaInstagram, FaFa
 import Link from 'next/link';
 import styles from './profile.module.css';
 
+// Required for static export (Firebase Hosting)
+export function generateStaticParams() {
+    return restaurantsData.map((r) => ({ id: r.id }));
+}
+
 export default function RestaurantProfile({ params }: { params: { id: string } }) {
     const restaurant = restaurantsData.find(r => r.id === params.id);
 
