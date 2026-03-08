@@ -1,0 +1,60 @@
+.banner {
+    background-color: var(--primary);
+    color: #fff;
+    padding: 6rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle background pattern/gradient */
+.banner::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 60%);
+    z-index: 1;
+}
+
+.content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.banner h2 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.banner p {
+    font-size: 1.25rem;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+    opacity: 0.95;
+    font-weight: 500;
+}
+
+.button {
+    display: inline-block;
+    background-color: var(--background);
+    color: var(--primary);
+    padding: 1.2rem 3rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    background-color: #fafafa;
+}

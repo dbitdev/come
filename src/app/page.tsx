@@ -1,65 +1,62 @@
-import Image from "next/image";
+import Hero from "@/components/Hero";
+import PlacesList from "@/components/PlacesList";
+import NewsSection from "@/components/NewsSection";
+import Banner from "@/components/Banner";
+import HomeMap from "@/components/HomeMap";
 import styles from "./page.module.css";
+import { restaurantsData } from "@/data/mockData";
 
 export default function Home() {
+  const popularPlaces = restaurantsData.slice(15, 21); // Grab some non-michelin
+  const michelinPlaces = restaurantsData.filter(r => r.isMichelin).slice(0, 3);
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+        <Hero />
+        <PlacesList
+          title="Dónde comer"
+          subtitle="Los lugares más populares y cercanos a ti"
+          places={popularPlaces}
+          isCarousel={true}
         />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+        <section className={styles.mapHighlightSection}>
+          <div className={styles.container}>
+            <div className={styles.mapGrid}>
+              <div className={styles.mapInfo}>
+                <div className={styles.tag}>Interactivo</div>
+                <h2 className={styles.mapTitle}>Explora la Ciudad</h2>
+                <p className={styles.mapText}>
+                  Encuentra los mejores restaurantes cerca de ti en nuestro mapa interactivo. 
+                  Filtra por categorías y descubre joyas ocultas.
+                </p>
+                <div className={styles.mapStats}>
+                  <div className={styles.stat}>
+                    <strong>+50</strong>
+                    <span>Lugares</span>
+                  </div>
+                  <div className={styles.stat}>
+                    <strong>10</strong>
+                    <span>Zonas</span>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.mapWrapper}>
+              <HomeMap />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <PlacesList
+          title="Restaurantes Exclusivos"
+          subtitle="Galardonados con estrella Michelin"
+          places={michelinPlaces}
+          showMichelin={true}
+        />
+        <NewsSection />
+        <Banner />
       </main>
     </div>
   );

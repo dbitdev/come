@@ -1,0 +1,277 @@
+.profileWrapper {
+    padding-top: 80px;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.6;
+}
+
+.hero {
+    width: 100%;
+    height: 60vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.heroImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.9);
+}
+
+.heroOverlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 50%);
+}
+
+.contentContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+    position: relative;
+    margin-top: -120px;
+    z-index: 10;
+}
+
+.mainHeader {
+    background-color: #fff;
+    padding: 4rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.05);
+    margin-bottom: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.category {
+    color: var(--primary);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.15em;
+}
+
+.name {
+    font-size: 4.5rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+    color: #111;
+}
+
+.badges {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.michelinStars {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #000;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.michelinIcon {
+    width: 28px;
+}
+
+.addressRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 5rem;
+}
+
+.aboutSection h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    letter-spacing: -0.01em;
+}
+
+.description {
+    font-size: 1.25rem;
+    color: #444;
+    line-height: 1.8;
+    margin-bottom: 3rem;
+}
+
+.chefSection {
+    background: #fcfaf7;
+    padding: 3rem;
+    border-left: 4px solid var(--primary);
+    margin-bottom: 4rem;
+}
+
+.chefLabel {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.chefName {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #111;
+}
+
+.signatureSection h3 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+}
+
+.dishList {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.dishItem {
+    padding: 1.5rem;
+    border: 1px solid #eee;
+    background: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dishItem::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.mapCard {
+    background: #fff;
+    padding: 2rem;
+    border: 1px solid #eee;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.mapWrapper {
+    height: 300px;
+    background: #f0f0f0;
+    margin: 1.5rem 0;
+}
+
+.contactInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.contactLink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.contactLink:hover {
+    color: var(--primary);
+}
+
+.actionBtn {
+    width: 100%;
+    padding: 1.5rem;
+    background: #000;
+    color: #fff;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.actionBtn:hover {
+    background: var(--primary);
+    transform: translateY(-3px);
+}
+
+@media (max-width: 1024px) {
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 4rem;
+    }
+    
+    .name {
+        font-size: 3.5rem;
+    }
+    
+    .mainHeader {
+        padding: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .name {
+        font-size: 2.8rem;
+    }
+    
+    .dishList {
+        grid-template-columns: 1fr;
+    }
+    
+    .contentContainer {
+        padding: 0 1rem 4rem;
+    }
+    
+    .mainHeader {
+        padding: 2rem;
+        margin-top: -80px;
+    }
+}
