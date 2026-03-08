@@ -1,24 +1,23 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "dummy_api_key",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "dummy_auth_domain",
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "dummy_project_id",
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "dummy_storage_bucket",
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "dummy_messaging_sender_id",
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "dummy_app_id"
+  apiKey: "AIzaSyAPt2Qka3rhBblhjZO0tg7-gg4pL2zYV-0",
+  authDomain: "comeappmx.firebaseapp.com",
+  projectId: "comeappmx",
+  storageBucket: "comeappmx.firebasestorage.app",
+  messagingSenderId: "554971133009",
+  appId: "1:554971133009:web:3b8cfe3cebc25bf8457470"
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase (singleton pattern)
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Providers
-const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const appleProvider = new OAuthProvider('apple.com');
+// Initialize Services
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
-export { app, auth, db, googleProvider, facebookProvider, appleProvider };
+export default app;

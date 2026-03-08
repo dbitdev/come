@@ -1,19 +1,43 @@
-"use client";
-
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FaGoogle, FaFacebookF, FaApple, FaEnvelope } from 'react-icons/fa';
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
+    const router = useRouter();
+    const [error, setError] = useState<string | null>(null);
+
+    const handleGoogleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            await signInWithPopup(auth, provider);
+            router.push('/perfil');
+        } catch (err: any) {
+            console.error(err);
+            setError("Error al iniciar sesión con Google. Inténtalo de nuevo.");
+        }
+    };
+
     const handleSocialLogin = (provider: string) => {
-        // Integration with Firebase auth goes here
-        console.log(`Log in with ${provider}`);
+        if (provider === 'Google') {
+            handleGoogleLogin();
+        } else {
+            console.log(`Log in with ${provider} (Not implemented)`);
+        }
     };
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', padding: '2rem', paddingTop: '100px' }}>
             <div style={{ background: '#ffffff', padding: '3.5rem', width: '100%', maxWidth: '450px', border: '1px solid #eaeaea', boxShadow: '0 10px 40px rgba(0,0,0,0.03)' }}>
                 <h1 style={{ textAlign: 'center', marginBottom: '2.5rem', fontSize: '2.2rem', fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>Iniciar Sesión</h1>
+
+                {error && (
+                    <div style={{ padding: '0.8rem', backgroundColor: '#fff5f5', color: '#e53e3e', marginBottom: '1.5rem', borderRadius: '4px', fontSize: '0.9rem', textAlign: 'center', border: '1px solid #fed7d7' }}>
+                        {error}
+                    </div>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <button

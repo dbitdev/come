@@ -17,7 +17,7 @@ export default function Footer() {
                     </div>
                     <div className={styles.column}>
                         <h3>Negocios</h3>
-                        <Link href="/register-business">Registra tu negocio</Link>
+                        <Link href="/registra-negocio">Registra tu negocio</Link>
                         <Link href="/login">Acceso Partners</Link>
                         <Link href="/publicidad">Publicidad</Link>
                     </div>

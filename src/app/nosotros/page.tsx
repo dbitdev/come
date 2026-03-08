@@ -101,7 +101,7 @@ export default function Nosotros() {
                         <Link href="/lugares" className={styles.primaryBtn}>
                             Explorar Restaurantes
                         </Link>
-                        <Link href="/register-business" className={styles.secondaryBtn}>
+                        <Link href="/registra-negocio" className={styles.secondaryBtn}>
                             Registrar mi Negocio
                         </Link>
                     </div>

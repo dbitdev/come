@@ -11,7 +11,7 @@ export default function Banner() {
                     Únete a la red más grande de Latinoamérica. Registra tu negocio totalmente gratis y
                     genera un menú digital interactivo con subdominio personalizado al instante.
                 </p>
-                <Link href="/register-business" className={styles.button}>
+                <Link href="/registra-negocio" className={styles.button}>
                     Registra tu negocio gratis
                 </Link>
             </div>

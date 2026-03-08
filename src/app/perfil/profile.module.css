@@ -1,0 +1,220 @@
+.wrapper {
+    padding: 120px 2rem 6rem;
+    background-color: #f9f9f9;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+.sidebar {
+    background: #fff;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #eaeaea;
+}
+
+.profileHeader {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1.5rem;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.avatarPlaceholder {
+    font-size: 100px;
+    color: #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: #111;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    background: #f1f1f1;
+    color: #666;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 20px;
+}
+
+.sideNav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.navItem, .navItemActive, .logoutBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem 1.2rem;
+    border: none;
+    background: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.navItemActive {
+    background-color: var(--primary);
+    color: #fff;
+}
+
+.navItem:hover {
+    background-color: #f7f7f7;
+    color: var(--primary);
+}
+
+.logoutBtn {
+    color: #e53e3e;
+    margin-top: 2rem;
+    border-top: 1px solid #f0f0f0;
+    border-radius: 0;
+}
+
+.logoutBtn:hover {
+    background-color: #fff5f5;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+.section {
+    background: #fff;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #eaeaea;
+}
+
+.sectionTitle {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    letter-spacing: -0.01em;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.infoCard label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.infoCard p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.emptyIcon {
+    font-size: 3rem;
+    color: #eee;
+    margin-bottom: 1.5rem;
+}
+
+.emptyState p {
+    color: #888;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.exploreBtn {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background: #000;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.exploreBtn:hover {
+    background: var(--primary);
+}
+
+.loadingContainer {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0,0,0,0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1024px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .wrapper {
+        padding: 100px 1rem 4rem;
+    }
+    .section {
+        padding: 2rem;
+    }
+    .infoGrid {
+        grid-template-columns: 1fr;
+    }
+}

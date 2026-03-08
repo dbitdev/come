@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaSearch, FaUser, FaBars, FaTimes } from "react-icons/fa";
+import { FaSearch, FaUser, FaBars, FaTimes, FaSignOutAlt } from "react-icons/fa";
 import styles from "./Navbar.module.css";
+import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mobileSearch, setMobileSearch] = useState("");
+  const { user } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -19,6 +22,11 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    window.location.href = "/";
+  };
 
   const isHome = pathname === "/";
   const isSolid = scrolled || !isHome;
@@ -67,9 +75,24 @@ export default function Navbar() {
         </nav>
 
         <div className={styles.actions}>
-          <Link href="/login" className={styles.userAction} title="Iniciar Sesión">
-            <FaUser />
-          </Link>
+          {user ? (
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <Link href="/perfil" className={styles.userAction} title="Ver Perfil">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="Profile" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                ) : (
+                  <FaUser />
+                )}
+              </Link>
+              <button onClick={handleLogout} className={styles.userAction} title="Cerrar Sesión" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <FaSignOutAlt />
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className={styles.userAction} title="Iniciar Sesión">
+              <FaUser />
+            </Link>
+          )}
           <button className={styles.hamburger} onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <FaTimes /> : <FaBars />}
           </button>
