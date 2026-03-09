@@ -30,6 +30,7 @@ if (isConfigValid) {
             // Force long polling on client side for maximum compatibility
             db = initializeFirestore(app, {
                 experimentalForceLongPolling: true,
+                databaseId: "come"
             });
             console.log("Firebase & Firestore initialized successfully (Long Polling & Debug enabled)");
         } else {
