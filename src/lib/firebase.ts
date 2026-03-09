@@ -1,6 +1,6 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore, getFirestore } from "firebase/firestore";
+import { initializeFirestore, getFirestore, Firestore, terminate } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -12,26 +12,36 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Validation to avoid build crash if config is missing
+// Validation
 const isConfigValid = !!firebaseConfig.apiKey;
 
-if (typeof window !== "undefined") {
-  console.log("Firebase config check:", isConfigValid ? "Valid" : "Missing API Key");
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
+
+if (isConfigValid) {
+    try {
+        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+        
+        // Use singleton pattern for Firestore to avoid multiple initialization errors
+        if (typeof window !== "undefined") {
+            // Force long polling on client side for maximum compatibility
+            db = initializeFirestore(app, {
+                experimentalForceLongPolling: true,
+            });
+            console.log("Firebase & Firestore initialized successfully (Long Polling enabled)");
+        } else {
+            db = getFirestore(app);
+        }
+    } catch (error) {
+        console.error("Error initializing Firebase:", error);
+    }
+} else {
+    if (typeof window !== "undefined") {
+        console.warn("Firebase config is missing or invalid. Check your environment variables.");
+    }
 }
 
-const app = isConfigValid 
-  ? (!getApps().length ? initializeApp(firebaseConfig) : getApp())
-  : null;
-
 const auth = app ? getAuth(app) : null as any;
-
-// Use initializeFirestore with long-polling capability for better stability in different networks
-const db = app 
-  ? initializeFirestore(app, {
-      experimentalAutoDetectLongPolling: true,
-    }) 
-  : null as any;
-
 const storage = app ? getStorage(app) : null as any;
 
 export { app, auth, db, storage };

@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import styles from './RegisterBusiness.module.css';
+import { useEffect } from 'react';
 
 export default function RegisterBusinessPage() {
     const [step, setStep] = useState(1);
@@ -18,7 +19,7 @@ export default function RegisterBusinessPage() {
     const [success, setSuccess] = useState(false);
     const { user } = useAuth();
     const [error, setError] = useState<string | null>(null);
-    
+
     // Menu States
     const [menuItems, setMenuItems] = useState<any[]>([]);
     const [currentDish, setCurrentDish] = useState({
@@ -31,6 +32,24 @@ export default function RegisterBusinessPage() {
     });
 
     const router = useRouter();
+
+    useEffect(() => {
+        async function testConnection() {
+            if (db) {
+                console.log("Testeando conexión con Firestore...");
+                try {
+                    // Try to read a non-existent doc just to check connectivity
+                    await getDoc(doc(db, "_system_test_", "ping"));
+                    console.log("Conexión con Firestore: OK");
+                } catch (e) {
+                    console.error("Error de conexión inicial con Firestore:", e);
+                }
+            } else {
+                console.error("Firestore no está disponible (db is null)");
+            }
+        }
+        testConnection();
+    }, []);
 
     const addDish = () => {
         if (!currentDish.name || !currentDish.price) {
@@ -70,7 +89,7 @@ export default function RegisterBusinessPage() {
                 console.log("Iniciando registro de negocio...");
                 console.log("DB instance:", !!db);
                 console.log("User authenticated:", !!user, user?.uid);
-                
+
                 if (!db) {
                     throw new Error("Firebase no está inicializado correctamente. Verifica tu conexión o configuración.");
                 }
@@ -85,17 +104,17 @@ export default function RegisterBusinessPage() {
                     createdAt: serverTimestamp(),
                     status: 'pending'
                 };
-                
+
                 console.log("Intentando guardar datos en Firestore:", docData);
 
                 // Timeout of 15 seconds to prevent permanent hang
                 const savePromise = addDoc(collection(db, "business_leads"), docData);
-                const timeoutPromise = new Promise((_, reject) => 
+                const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error("La conexión con el servidor tardó demasiado. Por favor verifica tu internet o intenta más tarde.")), 15000)
                 );
 
                 await Promise.race([savePromise, timeoutPromise]);
-                
+
                 console.log("Registro guardado con éxito.");
                 setSuccess(true);
                 setTimeout(() => router.push('/perfil'), 4000);
@@ -115,10 +134,10 @@ export default function RegisterBusinessPage() {
             <div className={styles.card}>
                 {success ? (
                     <div style={{ textAlign: 'center' }}>
-                         <div style={{ fontSize: '4rem', color: '#48bb78', marginBottom: '1.5rem' }}>✓</div>
-                         <h2 className={styles['success-title']}>¡Registro Recibido!</h2>
-                         <p style={{ color: '#666', marginBottom: '2rem' }}>Estamos configurando tu menú en <b>{subdomain}.come.mx</b>. Te redirigiremos a tu perfil en unos segundos.</p>
-                         <Link href="/perfil" style={{ color: 'var(--primary)', fontWeight: 700 }}>Ir a mi perfil ahora</Link>
+                        <div style={{ fontSize: '4rem', color: '#48bb78', marginBottom: '1.5rem' }}>✓</div>
+                        <h2 className={styles['success-title']}>¡Registro Recibido!</h2>
+                        <p style={{ color: '#666', marginBottom: '2rem' }}>Estamos configurando tu menú en <b>{subdomain}.come.mx</b>. Te redirigiremos a tu perfil en unos segundos.</p>
+                        <Link href="/perfil" style={{ color: 'var(--primary)', fontWeight: 700 }}>Ir a mi perfil ahora</Link>
                     </div>
                 ) : (
                     <>
@@ -130,7 +149,7 @@ export default function RegisterBusinessPage() {
                                 <>
                                     <div>
                                         <label className={styles.label}>Nombre del Restaurante</label>
-                                        <input required type="text" value={restaurantName} placeholder="Ej. Tacos El Pastor" className={styles.input} 
+                                        <input required type="text" value={restaurantName} placeholder="Ej. Tacos El Pastor" className={styles.input}
                                             onChange={(e) => {
                                                 setRestaurantName(e.target.value);
                                                 // Autogenerate subdomain suggestion
@@ -142,6 +161,7 @@ export default function RegisterBusinessPage() {
                                         <label className={styles.label}>Categoría</label>
                                         <select value={category} onChange={e => setCategory(e.target.value)} className={styles.select}>
                                             <option>Comida Mexicana</option>
+                                            <option>Tacos</option>
                                             <option>Mariscos</option>
                                             <option>Antojitos</option>
                                             <option>Alta Cocina</option>
@@ -178,7 +198,7 @@ export default function RegisterBusinessPage() {
                             {step === 3 && (
                                 <>
                                     <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', borderBottom: '2px solid #eee', paddingBottom: '0.5rem' }}>Tu Menú Digital</h2>
-                                    
+
                                     {/* Added Dishes List */}
                                     <div className={styles['dish-list']}>
                                         {menuItems.map((item) => (
@@ -197,18 +217,18 @@ export default function RegisterBusinessPage() {
                                         <div className={styles.grid}>
                                             <div>
                                                 <label className={styles.label} style={{ fontSize: '0.85rem' }}>Nombre del Platillo</label>
-                                                <input type="text" value={currentDish.name} onChange={e => setCurrentDish({...currentDish, name: e.target.value})} placeholder="Ej. Mole Poblano" className={styles.input} />
+                                                <input type="text" value={currentDish.name} onChange={e => setCurrentDish({ ...currentDish, name: e.target.value })} placeholder="Ej. Mole Poblano" className={styles.input} />
                                             </div>
                                             <div>
                                                 <label className={styles.label} style={{ fontSize: '0.85rem' }}>Precio ($)</label>
-                                                <input type="number" value={currentDish.price} onChange={e => setCurrentDish({...currentDish, price: e.target.value})} placeholder="0.00" className={styles.input} />
+                                                <input type="number" value={currentDish.price} onChange={e => setCurrentDish({ ...currentDish, price: e.target.value })} placeholder="0.00" className={styles.input} />
                                             </div>
                                         </div>
 
                                         <div className={styles.grid}>
                                             <div>
                                                 <label className={styles.label} style={{ fontSize: '0.85rem' }}>Categoría</label>
-                                                <select value={currentDish.category} onChange={e => setCurrentDish({...currentDish, category: e.target.value})} className={styles.select}>
+                                                <select value={currentDish.category} onChange={e => setCurrentDish({ ...currentDish, category: e.target.value })} className={styles.select}>
                                                     <option>Entrada</option>
                                                     <option>Sopa / Ensalada</option>
                                                     <option>Plato Fuerte</option>
@@ -218,13 +238,13 @@ export default function RegisterBusinessPage() {
                                             </div>
                                             <div>
                                                 <label className={styles.label} style={{ fontSize: '0.85rem' }}>Ingredientes</label>
-                                                <input type="text" value={currentDish.ingredients} onChange={e => setCurrentDish({...currentDish, ingredients: e.target.value})} placeholder="Chile, cacao, etc." className={styles.input} />
+                                                <input type="text" value={currentDish.ingredients} onChange={e => setCurrentDish({ ...currentDish, ingredients: e.target.value })} placeholder="Chile, cacao, etc." className={styles.input} />
                                             </div>
                                         </div>
 
                                         <div>
                                             <label className={styles.label} style={{ fontSize: '0.85rem' }}>Descripción Corta</label>
-                                            <textarea value={currentDish.description} onChange={e => setCurrentDish({...currentDish, description: e.target.value})} placeholder="Cuenta de qué trata este platillo..." className={styles.textarea} />
+                                            <textarea value={currentDish.description} onChange={e => setCurrentDish({ ...currentDish, description: e.target.value })} placeholder="Cuenta de qué trata este platillo..." className={styles.textarea} />
                                         </div>
 
                                         <button type="button" onClick={addDish} className={styles['add-dish-btn']}>+ Agregar Platillo al Menú</button>
