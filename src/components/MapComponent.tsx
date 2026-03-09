@@ -1,49 +1,38 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useState, useCallback } from 'react';
+import { 
+  Map, 
+  AdvancedMarker, 
+  InfoWindow, 
+  useMap,
+  Pin
+} from '@vis.gl/react-google-maps';
 import styles from './MapComponent.module.css';
 
 import { restaurantsData, Restaurant, newsArticlesData } from '@/data/mockData';
 import { FaInstagram, FaFacebook, FaTwitter, FaGlobe, FaPhone, FaUtensils, FaStar, FaTimes, FaNewspaper, FaDirections } from 'react-icons/fa';
 import Link from 'next/link';
-
-// Fix for Next.js Leaflet icon issue
-const iconDefault = L.icon({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-const userIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
-    const map = useMap();
-    useEffect(() => {
-        map.setView(center, zoom);
-    }, [center, zoom, map]);
-    return null;
-}
+import GoogleMapsWrapper from './GoogleMapsWrapper';
 
 export default function MapComponent() {
-    const defaultCenter: [number, number] = [19.4326, -99.1332]; // CDMX Zocalo
-    const [position, setPosition] = useState<[number, number]>(defaultCenter);
-    const [hasLocation, setHasLocation] = useState(false);
+    return (
+        <GoogleMapsWrapper>
+            <MapContent />
+        </GoogleMapsWrapper>
+    );
+}
+
+function MapContent() {
+    const defaultCenter = { lat: 19.4326, lng: -99.1332 }; // CDMX Zocalo
+    const [center, setCenter] = useState(defaultCenter);
+    const [zoom, setZoom] = useState(12);
+    const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
     const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [infoWindowOpen, setInfoWindowOpen] = useState(false);
+
+    const map = useMap();
 
     const filteredRestaurants = restaurantsData.filter(r => 
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,12 +47,21 @@ export default function MapComponent() {
         if (typeof window !== "undefined" && "geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    setPosition([pos.coords.latitude, pos.coords.longitude]);
-                    setHasLocation(true);
+                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    setUserLocation(loc);
+                    setCenter(loc);
+                    setZoom(14);
                 },
                 (err) => console.warn(err)
             );
         }
+    }, []);
+
+    const handleRestaurantSelect = useCallback((restaurant: Restaurant) => {
+        const pos = { lat: restaurant.lat, lng: restaurant.lng };
+        setCenter(pos);
+        setSelectedRestaurant(restaurant);
+        setInfoWindowOpen(true);
     }, []);
 
     const googleMapsUrl = selectedRestaurant 
@@ -91,10 +89,7 @@ export default function MapComponent() {
                         <li 
                             key={place.id} 
                             className={`${styles.placeItem} ${selectedRestaurant?.id === place.id ? styles.active : ""}`} 
-                            onClick={() => {
-                                setPosition([place.lat, place.lng]);
-                                setSelectedRestaurant(place);
-                            }}
+                            onClick={() => handleRestaurantSelect(place)}
                         >
                             <div className={styles.placeName}>{place.name}</div>
                             <div className={styles.placeCategory}>{place.category}</div>
@@ -162,18 +157,18 @@ export default function MapComponent() {
 
                         <div className={styles.miniMapColumn}>
                             <div className={styles.miniMapWrapper}>
-                                <MapContainer
-                                    center={[selectedRestaurant.lat, selectedRestaurant.lng]}
+                                <Map
+                                    mapId="bf50a91342b3225"
+                                    center={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }}
                                     zoom={15}
                                     style={{ height: '100%', width: '100%' }}
-                                    zoomControl={false}
-                                    dragging={false}
-                                    doubleClickZoom={false}
-                                    scrollWheelZoom={false}
+                                    disableDefaultUI={true}
+                                    gestureHandling={'none'}
                                 >
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                    <Marker position={[selectedRestaurant.lat, selectedRestaurant.lng]} icon={iconDefault} />
-                                </MapContainer>
+                                    <AdvancedMarker position={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }}>
+                                        <Pin background={'#000'} glyphColor={'#fff'} borderColor={'#000'} />
+                                    </AdvancedMarker>
+                                </Map>
                             </div>
                             <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className={styles.directionsBtn}>
                                 <FaDirections /> Cómo llegar
@@ -195,34 +190,34 @@ export default function MapComponent() {
                 </div>
             )}
 
-            <MapContainer
-                center={position}
-                zoom={hasLocation ? 14 : 12}
+            <Map
+                mapId="bf50a91342b3225"
+                defaultCenter={center}
+                defaultZoom={zoom}
+                center={center}
+                zoom={zoom}
+                onCenterChanged={ev => setCenter(ev.detail.center)}
+                onZoomChanged={ev => setZoom(ev.detail.zoom)}
                 className={styles.map}
+                gestureHandling={'greedy'}
+                disableDefaultUI={false}
             >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <ChangeView center={position} zoom={hasLocation ? 14 : 12} />
-
-                {hasLocation && (
-                    <Marker position={position} icon={userIcon}>
-                        <Popup>AQUÍ ESTÁS</Popup>
-                    </Marker>
+                {userLocation && (
+                    <AdvancedMarker position={userLocation}>
+                        <Pin background={'#ff0000'} glyphColor={'#fff'} borderColor={'#ff0000'} scale={1.2} />
+                    </AdvancedMarker>
                 )}
 
-                {restaurantsData.map((place) => (
-                    <Marker 
+                {filteredRestaurants.map((place) => (
+                    <AdvancedMarker 
                         key={place.id} 
-                        position={[place.lat, place.lng]} 
-                        icon={iconDefault}
-                        eventHandlers={{
-                            click: () => {
-                                setPosition([place.lat, place.lng]);
-                                setSelectedRestaurant(place);
-                            }
-                        }}
-                    />
+                        position={{ lat: place.lat, lng: place.lng }} 
+                        onClick={() => handleRestaurantSelect(place)}
+                    >
+                        <Pin background={'#000'} glyphColor={'#fff'} borderColor={'#000'} />
+                    </AdvancedMarker>
                 ))}
-            </MapContainer>
+            </Map>
         </div>
     );
 }
