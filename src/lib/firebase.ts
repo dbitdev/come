@@ -12,20 +12,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+// Validation to avoid build crash if config is missing
 const isConfigValid = !!firebaseConfig.apiKey;
 
-// Initialize Firebase (singleton pattern)
-let app;
-if (isConfigValid) {
-  console.log("API Key disponible:", !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-} else {
-  console.log("API Key NO disponible durante el build");
-}
+const app = isConfigValid 
+  ? (!getApps().length ? initializeApp(firebaseConfig) : getApp())
+  : null;
 
-// Initialize Services (conditionally)
-export const auth = app ? getAuth(app) : null as any;
-export const db = app ? getFirestore(app) : null as any;
-export const storage = app ? getStorage(app) : null as any;
+const auth = app ? getAuth(app) : null as any;
+const db = app ? getFirestore(app) : null as any;
+const storage = app ? getStorage(app) : null as any;
 
+export { app, auth, db, storage };
 export default app;
