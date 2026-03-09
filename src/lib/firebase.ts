@@ -17,7 +17,10 @@ const isConfigValid = !!firebaseConfig.apiKey;
 // Initialize Firebase (singleton pattern)
 let app;
 if (isConfigValid) {
+  console.log("API Key disponible:", !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+} else {
+  console.log("API Key NO disponible durante el build");
 }
 
 // Initialize Services (conditionally)
