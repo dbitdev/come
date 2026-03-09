@@ -7,32 +7,32 @@ runConfig:
 
 environmentVariables:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "AIzaSyAPt2Qka3rhBblhjZO0tg7-gg4pL2zYV-0"
+    secret: NEXT_PUBLIC_FIREBASE_API_KEY
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: "comeappmx.firebaseapp.com"
+    secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: "comeappmx"
+    secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "comeappmx.firebasestorage.app"
+    secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: "554971133009"
+    secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: "1:554971133009:web:3b8cfe3cebc25bf8457470"
+    secret: NEXT_PUBLIC_FIREBASE_APP_ID
     availability:
       - BUILD
       - RUNTIME
