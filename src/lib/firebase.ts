@@ -28,13 +28,13 @@ if (isConfigValid) {
             setLogLevel('debug');
             
             // Force long polling on client side for maximum compatibility
+            // databaseId is the third parameter of initializeFirestore
             db = initializeFirestore(app, {
                 experimentalForceLongPolling: true,
-                databaseId: "come"
-            });
-            console.log("Firebase & Firestore initialized successfully (Long Polling & Debug enabled)");
+            }, "come");
+            console.log("Firebase & Firestore ('come' db) initialized successfully (Long Polling & Debug enabled)");
         } else {
-            db = getFirestore(app);
+            db = getFirestore(app, "come");
         }
     } catch (error) {
         console.error("Error initializing Firebase:", error);
