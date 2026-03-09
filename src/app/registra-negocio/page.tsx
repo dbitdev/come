@@ -144,6 +144,13 @@ export default function RegisterBusinessPage() {
                         <h1 className={styles.title}>Únete a Come</h1>
                         <p className={styles.subtitle}>Registra tu negocio y obtén tu menú digital gratis al instante.</p>
 
+                        {error && (
+                            <div style={{ background: '#fff5f5', color: '#e53e3e', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #fed7d7', fontSize: '0.9rem' }}>
+                                <strong>Error:</strong> {error}
+                                <button type="button" onClick={() => window.location.reload()} style={{ marginLeft: '1rem', background: 'none', border: 'none', color: '#e53e3e', textDecoration: 'underline', cursor: 'pointer', fontWeight: 'bold' }}>Reintentar</button>
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className={styles.form}>
                             {step === 1 && (
                                 <>

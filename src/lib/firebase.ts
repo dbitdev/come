@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore, getFirestore, Firestore, terminate } from "firebase/firestore";
+import { initializeFirestore, getFirestore, Firestore, terminate, setLogLevel } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -24,11 +24,14 @@ if (isConfigValid) {
         
         // Use singleton pattern for Firestore to avoid multiple initialization errors
         if (typeof window !== "undefined") {
+            // Enable debug logging to help identify why it hangs
+            setLogLevel('debug');
+            
             // Force long polling on client side for maximum compatibility
             db = initializeFirestore(app, {
                 experimentalForceLongPolling: true,
             });
-            console.log("Firebase & Firestore initialized successfully (Long Polling enabled)");
+            console.log("Firebase & Firestore initialized successfully (Long Polling & Debug enabled)");
         } else {
             db = getFirestore(app);
         }
