@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import styles from './RegisterBusiness.module.css';
 
 export default function RegisterBusinessPage() {
@@ -15,6 +16,8 @@ export default function RegisterBusinessPage() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const { user } = useAuth();
+    const [error, setError] = useState<string | null>(null);
     
     // Menu States
     const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -62,25 +65,45 @@ export default function RegisterBusinessPage() {
             }
 
             setLoading(true);
+            setError(null);
             try {
+                console.log("Iniciando registro de negocio...");
+                console.log("DB instance:", !!db);
+                console.log("User authenticated:", !!user, user?.uid);
+                
                 if (!db) {
                     throw new Error("Firebase no está inicializado correctamente. Verifica tu conexión o configuración.");
                 }
 
-                await addDoc(collection(db, "business_leads"), {
+                const docData = {
                     restaurantName,
                     category,
                     subdomain: `${subdomain}.come.mx`,
                     email,
                     menu: menuItems,
+                    userId: user?.uid || 'guest',
                     createdAt: serverTimestamp(),
                     status: 'pending'
-                });
+                };
+                
+                console.log("Intentando guardar datos en Firestore:", docData);
+
+                // Timeout of 15 seconds to prevent permanent hang
+                const savePromise = addDoc(collection(db, "business_leads"), docData);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error("La conexión con el servidor tardó demasiado. Por favor verifica tu internet o intenta más tarde.")), 15000)
+                );
+
+                await Promise.race([savePromise, timeoutPromise]);
+                
+                console.log("Registro guardado con éxito.");
                 setSuccess(true);
                 setTimeout(() => router.push('/perfil'), 4000);
             } catch (err: any) {
                 console.error("Error saving to Firestore:", err);
-                alert(err.message || "Hubo un error al registrar tu negocio. Por favor intenta de nuevo.");
+                const msg = err.message || "Hubo un error al registrar tu negocio. Por favor intenta de nuevo.";
+                setError(msg);
+                alert(msg);
             } finally {
                 setLoading(false);
             }
