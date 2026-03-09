@@ -42,7 +42,11 @@ export default function Hero() {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Searching for", query, "in", location);
+        const params = new URLSearchParams();
+        if (query) params.set("search", query);
+        if (location) params.set("location", location);
+        
+        window.location.href = `/lugares?${params.toString()}`;
     };
 
     return (

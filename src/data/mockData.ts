@@ -94,20 +94,20 @@ const generateRestaurants = (): Restaurant[] => {
     return Array.from({ length: 100 }).map((_, i) => {
         const id = (i + 1).toString();
         const isMichelin = michelinIds.includes(id);
-        const category = isMichelin ? "Alta Cocina Michelin" : categories[Math.floor(Math.random() * categories.length)];
-        const rating = isMichelin ? (4.8 + Math.random() * 0.2) : (4.0 + Math.random() * 0.9);
+        const category = isMichelin ? "Alta Cocina Michelin" : categories[i % categories.length];
+        const rating = isMichelin ? (4.8 + (i % 2) * 0.1) : (4.0 + (i % 10) * 0.1);
 
         // Slight random offset for map spreading (roughly 10-15 km radius)
-        const lat = baseLat + (Math.random() - 0.5) * 0.1;
-        const lng = baseLng + (Math.random() - 0.5) * 0.1;
+        const lat = baseLat + ((i % 20) - 10) * 0.005;
+        const lng = baseLng + ((i % 20) - 10) * 0.005;
 
         let name = `Restaurante ${id}`;
         if (isMichelin) {
-            name = michelinBaseNames[i] || name;
+            name = michelinBaseNames[i % michelinBaseNames.length] || name;
         } else {
             const prefixes = ["La Casa de", "El Rincón del", "Fonda", "Cantina", "Bistrot", "Taller", "Cocina de"];
             const suffixes = ["Abuela", "Sabor", "Fuego", "Mar", "Tierra", "Sol", "Maíz", "Agave"];
-            name = `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${suffixes[Math.floor(Math.random() * suffixes.length)]} ${id}`;
+            name = `${prefixes[i % prefixes.length]} ${suffixes[i % suffixes.length]} ${id}`;
         }
 
         const restaurant: Restaurant = {
@@ -118,9 +118,9 @@ const generateRestaurants = (): Restaurant[] => {
             image: `https://images.unsplash.com/photo-${1500000000000 + i * 1000}?auto=format&fit=crop&w=800&q=60`,
             lat,
             lng,
-            address: `Av. Gastronomía #${Math.floor(Math.random() * 1000)}, CDMX`,
+            address: `Av. Gastronomía #${i * 10}, ${i % 2 === 0 ? "CDMX" : "Monterrey"}`,
             isMichelin,
-            michelinStars: isMichelin ? Math.floor(Math.random() * 2) + 1 : 0,
+            michelinStars: isMichelin ? (i % 2) + 1 : 0,
             socials: {
                 instagram: `https://instagram.com/restaurante${id}`,
                 facebook: `https://facebook.com/restaurante${id}`,

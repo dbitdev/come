@@ -14,6 +14,10 @@ export default function RegisterBusinessPage() {
     const [subdomain, setSubdomain] = useState("");
     const [restaurantName, setRestaurantName] = useState("");
     const [category, setCategory] = useState("Comida Mexicana");
+    const [address, setAddress] = useState("");
+    const [phone, setPhone] = useState("");
+    const [awards, setAwards] = useState("");
+    const [schedule, setSchedule] = useState("");
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -99,6 +103,10 @@ export default function RegisterBusinessPage() {
                     category,
                     subdomain: `${subdomain}.come.mx`,
                     email,
+                    phone,
+                    address,
+                    awards,
+                    schedule,
                     menu: menuItems,
                     userId: user?.uid || 'guest',
                     createdAt: serverTimestamp(),
@@ -154,26 +162,41 @@ export default function RegisterBusinessPage() {
                         <form onSubmit={handleSubmit} className={styles.form}>
                             {step === 1 && (
                                 <>
-                                    <div>
-                                        <label className={styles.label}>Nombre del Restaurante</label>
-                                        <input required type="text" value={restaurantName} placeholder="Ej. Tacos El Pastor" className={styles.input}
-                                            onChange={(e) => {
-                                                setRestaurantName(e.target.value);
-                                                // Autogenerate subdomain suggestion
-                                                const val = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-                                                setSubdomain(val);
-                                            }} />
+                                    <div className={styles.grid}>
+                                        <div>
+                                            <label className={styles.label}>Nombre del Restaurante</label>
+                                            <input required type="text" value={restaurantName} placeholder="Ej. Tacos El Pastor" className={styles.input} 
+                                                onChange={(e) => {
+                                                    setRestaurantName(e.target.value);
+                                                    const val = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                                    setSubdomain(val);
+                                                }} />
+                                        </div>
+                                        <div>
+                                            <label className={styles.label}>Categoría</label>
+                                            <select value={category} onChange={e => setCategory(e.target.value)} className={styles.select}>
+                                                <option>Comida Mexicana</option>
+                                                <option>Tacos</option>
+                                                <option>Mariscos</option>
+                                                <option>Antojitos</option>
+                                                <option>Alta Cocina</option>
+                                                <option>Otro</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label className={styles.label}>Categoría</label>
-                                        <select value={category} onChange={e => setCategory(e.target.value)} className={styles.select}>
-                                            <option>Comida Mexicana</option>
-                                            <option>Tacos</option>
-                                            <option>Mariscos</option>
-                                            <option>Antojitos</option>
-                                            <option>Alta Cocina</option>
-                                            <option>Otro</option>
-                                        </select>
+                                        <label className={styles.label}>Dirección Física</label>
+                                        <input required type="text" value={address} placeholder="Calle, Número, Colonia, Ciudad" className={styles.input} onChange={e => setAddress(e.target.value)} />
+                                    </div>
+                                    <div className={styles.grid}>
+                                        <div>
+                                            <label className={styles.label}>Teléfono</label>
+                                            <input required type="tel" value={phone} placeholder="55 1234 5678" className={styles.input} onChange={e => setPhone(e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label className={styles.label}>Horario</label>
+                                            <input type="text" value={schedule} placeholder="Ej. Lun-Dom 9am-10pm" className={styles.input} onChange={e => setSchedule(e.target.value)} />
+                                        </div>
                                     </div>
                                     <button type="submit" className={styles['button-primary']}>Continuar</button>
                                 </>
@@ -181,18 +204,23 @@ export default function RegisterBusinessPage() {
 
                             {step === 2 && (
                                 <>
-                                    <div>
-                                        <label className={styles.label}>Subdominio Personalizado</label>
-                                        <div className={styles['subdomain-wrapper']}>
-                                            <input required type="text" value={subdomain} onChange={e => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))} className={styles['subdomain-input']} />
-                                            <span className={styles['subdomain-suffix']}>.come.mx</span>
+                                    <div className={styles.grid}>
+                                        <div>
+                                            <label className={styles.label}>Subdominio Personalizado</label>
+                                            <div className={styles['subdomain-wrapper']}>
+                                                <input required type="text" value={subdomain} onChange={e => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))} className={styles['subdomain-input']} />
+                                                <span className={styles['subdomain-suffix']}>.come.mx</span>
+                                            </div>
                                         </div>
-                                        <p className={styles.hint}>Tus clientes verán tu menú en esta dirección.</p>
+                                        <div>
+                                            <label className={styles.label}>Email de Contacto</label>
+                                            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" className={styles.input} />
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className={styles.label}>Email de Contacto</label>
-                                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" className={styles.input} />
+                                        <label className={styles.label}>Premios o Reconocimientos</label>
+                                        <textarea value={awards} onChange={e => setAwards(e.target.value)} placeholder="Ej. Mejor Taco de la Ciudad 2023, Guía Michelin, etc." className={styles.textarea} style={{ height: '80px' }} />
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '1rem' }}>
@@ -252,6 +280,11 @@ export default function RegisterBusinessPage() {
                                         <div>
                                             <label className={styles.label} style={{ fontSize: '0.85rem' }}>Descripción Corta</label>
                                             <textarea value={currentDish.description} onChange={e => setCurrentDish({ ...currentDish, description: e.target.value })} placeholder="Cuenta de qué trata este platillo..." className={styles.textarea} />
+                                        </div>
+
+                                        <div>
+                                            <label className={styles.label} style={{ fontSize: '0.85rem' }}>URL de Imagen del Platillo</label>
+                                            <input type="url" value={currentDish.image} onChange={e => setCurrentDish({ ...currentDish, image: e.target.value })} placeholder="https://ejemplo.com/imagen.jpg" className={styles.input} />
                                         </div>
 
                                         <button type="button" onClick={addDish} className={styles['add-dish-btn']}>+ Agregar Platillo al Menú</button>

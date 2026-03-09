@@ -1,42 +1,106 @@
-import React from "react";
-import Link from "next/link";
-import { Metadata } from "next";
-import { restaurantsData } from "@/data/mockData";
-import styles from "./lugares.module.css";
-import { FaStar } from "react-icons/fa";
+"use client";
 
-export const metadata: Metadata = {
-    title: "Explora Restaurantes - Come Guía",
-    description: "Encuentra los mejores restaurantes en México. Filtra por categoría y descubre experiencias culinarias únicas.",
-};
+import React, { useEffect, useState, use } from "react";
+import Link from "next/link";
+import { restaurantsData as initialMockData } from "@/data/mockData";
+import styles from "./lugares.module.css";
+import { FaStar, FaAward, FaExternalLinkAlt } from "react-icons/fa";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import BusinessModal from "@/components/BusinessModal";
+
+// Metadata cannot be used in a Client Component. Page titles are managed via side effects if needed.
 
 export default function LugaresPage({
     searchParams,
 }: {
-    searchParams: { search?: string };
+    searchParams: Promise<{ search?: string, location?: string }>;
 }) {
-    const query = searchParams.search?.toLowerCase() || "";
+    const resolvedSearchParams = use(searchParams);
+    const rawQuery = resolvedSearchParams.search || "";
+    const rawLocation = resolvedSearchParams.location || "";
+    const query = rawQuery.toLowerCase();
+    const location = rawLocation.toLowerCase();
     
-    // Filter restaurants based on search query
-    const filteredRestaurants = query 
-        ? restaurantsData.filter(r => 
+    const [allRestaurants, setAllRestaurants] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleCardClick = (place: any) => {
+        setSelectedBusiness(place);
+        setIsModalOpen(true);
+    };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch from Firestore
+                let firestoreRestaurants: any[] = [];
+                if (db) {
+                    const querySnapshot = await getDocs(collection(db, "business_leads"));
+                    firestoreRestaurants = querySnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            name: data.restaurantName,
+                            category: data.category,
+                            address: data.address || "Dirección no disponible",
+                            image: (data.menu && data.menu[0]?.image) || "/placeholder-restaurant.jpg",
+                            rating: "Nuevo",
+                            isMichelin: !!data.awards,
+                            awards: data.awards,
+                            subdomain: data.subdomain,
+                            isFirebase: true
+                        };
+                    });
+                }
+
+                // Combine with mock data
+                setAllRestaurants([...firestoreRestaurants, ...initialMockData]);
+            } catch (error) {
+                console.error("Error fetching places:", error);
+                // Important: Even if Firestore fails (permissions), show mock data
+                setAllRestaurants(initialMockData);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const filteredRestaurants = allRestaurants.filter(r => {
+        const matchesSearch = !query || 
             r.name.toLowerCase().includes(query) || 
             r.category.toLowerCase().includes(query) ||
-            r.description?.toLowerCase().includes(query)
-          )
-        : restaurantsData;
+            (r.description && r.description.toLowerCase().includes(query));
+            
+        const matchesLocation = !location || 
+            (r.address && r.address.toLowerCase().includes(location)) ||
+            (r.name && r.name.toLowerCase().includes(location));
 
-    // Group restaurants by category
+        return matchesSearch && matchesLocation;
+    });
+
     const categories = Array.from(new Set(filteredRestaurants.map(r => r.category)));
     
     const restaurantsByCategory = categories.reduce((acc, category) => {
         acc[category] = filteredRestaurants.filter(r => r.category === category);
-        // If it's a search result, show all in that category, otherwise slice for overview
         if (!query) {
             acc[category] = acc[category].slice(0, 4);
         }
         return acc;
-    }, {} as Record<string, typeof restaurantsData>);
+    }, {} as Record<string, any[]>);
+
+    if (loading) {
+        return (
+            <div className={styles.loadingWrapper}>
+                <div className={styles.spinner}></div>
+                <p>Descubriendo los mejores lugares...</p>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>
@@ -63,27 +127,34 @@ export default function LugaresPage({
                             )}
                         </div>
                         <div className={styles.grid}>
-                            {restaurantsByCategory[category].map(restaurant => (
-                                <Link key={restaurant.id} href={`/lugares/${restaurant.id}`} className={styles.cardLink}>
+                            {restaurantsByCategory[category].map((restaurant: any) => (
+                                <div key={restaurant.id} className={styles.cardWrapper} onClick={() => handleCardClick(restaurant)} style={{ cursor: 'pointer' }}>
                                     <div className={styles.card}>
                                         <div className={styles.imageWrapper}>
                                             <img src={restaurant.image} alt={restaurant.name} className={styles.image} />
                                             {restaurant.isMichelin && (
                                                 <div className={styles.michelinBadge}>
-                                                    <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />
+                                                    {restaurant.isFirebase ? <FaAward /> : <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />}
                                                 </div>
                                             )}
                                         </div>
                                         <div className={styles.cardContent}>
                                             <h3 className={styles.restaurantName}>{restaurant.name}</h3>
                                             <p className={styles.address}>{restaurant.address}</p>
-                                            <div className={styles.rating}>
-                                                <FaStar className={styles.starIcon} />
-                                                <span>{restaurant.rating}</span>
+                                            <div className={styles.cardFooter}>
+                                                <div className={styles.rating}>
+                                                    <FaStar className={styles.starIcon} />
+                                                    <span>{restaurant.rating}</span>
+                                                </div>
+                                                {restaurant.isFirebase && (
+                                                    <span className={styles.digitalMenuHint}>
+                                                        <FaExternalLinkAlt /> Info y Menú
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
-                                </Link>
+                                </div>
                             ))}
                         </div>
                     </section>
@@ -94,6 +165,12 @@ export default function LugaresPage({
                     <Link href="/lugares" className={styles.resetSearch}>Ver todos los lugares</Link>
                 </div>
             )}
+
+            <BusinessModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                business={selectedBusiness} 
+            />
         </div>
     );
 }

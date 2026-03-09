@@ -1,19 +1,81 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Hero from "@/components/Hero";
 import PlacesList from "@/components/PlacesList";
 import NewsSection from "@/components/NewsSection";
 import Banner from "@/components/Banner";
 import HomeMap from "@/components/HomeMap";
 import styles from "./page.module.css";
-import { restaurantsData } from "@/data/mockData";
+import { restaurantsData as initialMockData } from "@/data/mockData";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
 
 export default function Home() {
-  const popularPlaces = restaurantsData.filter(r => !r.isMichelin).slice(0, 6);
-  const michelinPlaces = restaurantsData.filter(r => r.isMichelin).slice(0, 3);
+  const [popularPlaces, setPopularPlaces] = useState<any[]>(initialMockData.filter(r => !r.isMichelin).slice(0, 6));
+  const [michelinPlaces, setMichelinPlaces] = useState<any[]>(initialMockData.filter(r => r.isMichelin).slice(0, 3));
+  const [newestPlaces, setNewestPlaces] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        let firestorePlaces: any[] = [];
+        if (db) {
+          const q = query(collection(db, "business_leads"), orderBy("createdAt", "desc"), limit(10));
+          const querySnapshot = await getDocs(q);
+          firestorePlaces = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.restaurantName,
+              category: data.category,
+              rating: 5.0,
+              image: (data.menu && data.menu[0]?.image) || "/placeholder-restaurant.jpg",
+              subdomain: data.subdomain,
+              isFirebase: true,
+              isMichelin: !!data.awards,
+              awards: data.awards,
+              address: data.address,
+              phone: data.phone,
+              schedule: data.schedule
+            };
+          });
+        }
+
+        const allPopular = [...firestorePlaces, ...initialMockData.filter(r => !r.isMichelin)].slice(0, 6);
+        const allMichelin = [...firestorePlaces.filter(p => p.isMichelin), ...initialMockData.filter(r => r.isMichelin)].slice(0, 3);
+        const allNewest = [...firestorePlaces].slice(0, 6);
+        
+        setPopularPlaces(allPopular);
+        setMichelinPlaces(allMichelin);
+        setNewestPlaces(allNewest);
+      } catch (error) {
+        console.error("Error fetching homepage data:", error);
+        setPopularPlaces(initialMockData.filter(r => !r.isMichelin).slice(0, 6));
+        setMichelinPlaces(initialMockData.filter(r => r.isMichelin).slice(0, 3));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  }, []);
 
   return (
     <div className={styles.page}>
       <main className={styles.main}>
         <Hero />
+        
+        {newestPlaces.length > 0 && (
+          <PlacesList
+            title="Lo Nuevo"
+            subtitle="Las últimas incorporaciones a nuestra guía"
+            places={newestPlaces}
+            isCarousel={true}
+          />
+        )}
+
         <PlacesList
           title="Dónde comer"
           subtitle="Los lugares más populares y cercanos a ti"
@@ -43,7 +105,7 @@ export default function Home() {
                 </div>
               </div>
               <div className={styles.mapWrapper}>
-              <HomeMap />
+                <HomeMap />
               </div>
             </div>
           </div>
@@ -51,10 +113,11 @@ export default function Home() {
 
         <PlacesList
           title="Restaurantes Exclusivos"
-          subtitle="Galardonados con estrella Michelin"
+          subtitle="Galardonados con estrella Michelin o reconocimientos"
           places={michelinPlaces}
           showMichelin={true}
         />
+        
         <NewsSection />
         <Banner />
       </main>

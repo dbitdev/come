@@ -1,6 +1,9 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import styles from "./PlacesList.module.css";
+import BusinessModal from "./BusinessModal";
 
 interface Place {
     id: string;
@@ -8,6 +11,8 @@ interface Place {
     category: string;
     rating: number;
     image: string;
+    subdomain?: string;
+    isFirebase?: boolean;
 }
 
 interface PlacesListProps {
@@ -19,6 +24,14 @@ interface PlacesListProps {
 }
 
 export default function PlacesList({ title, subtitle, places, showMichelin = false, isCarousel = false }: PlacesListProps) {
+    const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleCardClick = (e: React.MouseEvent, place: any) => {
+        e.preventDefault();
+        setSelectedBusiness(place);
+        setIsModalOpen(true);
+    };
     return (
         <section className={`${styles.section} ${isCarousel ? styles.carouselSection : ""}`}>
             <div className={styles.container}>
@@ -29,7 +42,7 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
 
                 <div className={isCarousel ? styles.carouselContainer : styles.grid}>
                     {places.map((place) => (
-                        <Link key={place.id} href={`/lugares/${place.id}`} className={styles.cardLink}>
+                        <div key={place.id} onClick={(e) => handleCardClick(e, place)} style={{ cursor: 'pointer' }}>
                             <article className={styles.card}>
                                 <div className={styles.imageWrapper}>
                                     <img
@@ -46,15 +59,21 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
                                         <div className={styles.category}>{place.category}</div>
                                         <h3 className={styles.name}>{place.name}</h3>
                                         <div className={styles.rating}>
-                                            <span>★</span> {place.rating.toFixed(1)}
+                                            <span>★</span> {typeof place.rating === 'number' ? place.rating.toFixed(1) : place.rating}
                                         </div>
                                     </div>
                                 </div>
                             </article>
-                        </Link>
+                        </div>
                     ))}
                 </div>
             </div>
+
+            <BusinessModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                business={selectedBusiness} 
+            />
         </section>
     );
 }

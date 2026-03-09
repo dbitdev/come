@@ -61,12 +61,12 @@ export default function Navbar() {
         <nav className={`${styles.nav} ${isMenuOpen ? styles.navActive : ""}`}>
           <Link href="/lugares" onClick={() => setIsMenuOpen(false)}>Lugares</Link>
           <Link href="/mapa" onClick={() => setIsMenuOpen(false)}>Mapa</Link>
-
           <div className={styles.dropdown}>
             <button className={styles.dropbtn}>Guías</button>
             <div className={styles.dropdownContent}>
               <Link href="/guias/con-estrellas" onClick={() => setIsMenuOpen(false)}>Con Estrellas</Link>
               <Link href="/guias/chefs" onClick={() => setIsMenuOpen(false)}>Chefs</Link>
+              <Link href="/nomina-chef" onClick={() => setIsMenuOpen(false)}>Nominar Chef</Link>
               <Link href="/guias/recetas" onClick={() => setIsMenuOpen(false)}>Recetas</Link>
             </div>
           </div>

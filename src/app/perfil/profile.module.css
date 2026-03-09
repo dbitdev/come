@@ -201,6 +201,84 @@
     to { transform: rotate(360deg); }
 }
 
+.businessGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.businessCard {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.businessCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border-color: var(--primary);
+}
+
+.businessCard h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: #111;
+}
+
+.bizCategory {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.bizSubdomain {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    word-break: break-all;
+}
+
+.bizSubdomain a {
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.bizSubdomain a:hover {
+    color: var(--primary);
+}
+
+.bizActions {
+    margin-top: auto;
+}
+
+.editBtn {
+    display: block;
+    width: 100%;
+    padding: 0.8rem;
+    background: #f1f1f1;
+    color: #111;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.editBtn:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
 @media (max-width: 1024px) {
     .container {
         grid-template-columns: 1fr;
@@ -215,6 +293,9 @@
         padding: 2rem;
     }
     .infoGrid {
+        grid-template-columns: 1fr;
+    }
+    .businessGrid {
         grid-template-columns: 1fr;
     }
 }

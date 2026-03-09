@@ -1,26 +1,38 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './NewsSection.module.css';
 import { newsArticlesData, restaurantsData, NewsArticle } from '@/data/mockData';
 import { FaMapMarkerAlt, FaPlay } from 'react-icons/fa';
 import { fetchMexicaGourmetNews } from '@/lib/MexicaTVService';
 
-export default async function NewsSection() {
-    let articles: NewsArticle[] = [];
-    let isLive = false;
+export default function NewsSection() {
+    const [articles, setArticles] = useState<NewsArticle[]>([]);
+    const [isLive, setIsLive] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    try {
-        const liveArticles = await fetchMexicaGourmetNews();
-        if (liveArticles && liveArticles.length > 0) {
-            articles = liveArticles;
-            isLive = true;
-        } else {
-            articles = newsArticlesData;
-        }
-    } catch (error) {
-        console.error("Using fallback news data due to API error");
-        articles = newsArticlesData;
-    }
+    useEffect(() => {
+        const loadNews = async () => {
+            try {
+                const liveArticles = await fetchMexicaGourmetNews();
+                if (liveArticles && liveArticles.length > 0) {
+                    setArticles(liveArticles);
+                    setIsLive(true);
+                } else {
+                    setArticles(newsArticlesData);
+                }
+            } catch (error) {
+                console.error("Using fallback news data due to API error");
+                setArticles(newsArticlesData);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadNews();
+    }, []);
+
+    if (loading) return <div className={styles.loading}>Cargando noticias...</div>;
 
     // Keyword-based restaurant linking for live articles
     const processedArticles = articles.map(article => {

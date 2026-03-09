@@ -21,6 +21,7 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         const fetchLeads = async () => {
+            if (!db) return;
             try {
                 const q = query(collection(db, "business_leads"), orderBy("createdAt", "desc"), limit(5));
                 const querySnapshot = await getDocs(q);
@@ -36,6 +37,7 @@ export default function AdminDashboard() {
 
     const handleCreateChef = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!db) return;
         try {
             await addDoc(collection(db, "Chefs"), { ...newChef, createdAt: serverTimestamp() });
             alert("Chef registrado con éxito");
@@ -45,6 +47,7 @@ export default function AdminDashboard() {
 
     const handleCreateRestaurant = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!db) return;
         try {
             await addDoc(collection(db, "Restaurantes"), { ...newRestaurant, createdAt: serverTimestamp() });
             alert("Restaurante registrado con éxito");
