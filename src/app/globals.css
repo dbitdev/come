@@ -29,7 +29,6 @@ body {
 *::before,
 *::after {
   box-sizing: inherit;
-  border-radius: var(--border-radius);
 }
 
 a {
@@ -56,7 +55,7 @@ button:hover {
 input,
 select,
 textarea {
-  border-radius: var(--border-radius);
+  border-radius: 0;
   border: 1px solid #eaeaea;
   padding: 0.5rem;
   font-family: inherit;

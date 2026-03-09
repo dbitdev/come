@@ -7,7 +7,7 @@ import styles from "./page.module.css";
 import { restaurantsData } from "@/data/mockData";
 
 export default function Home() {
-  const popularPlaces = restaurantsData.slice(15, 21); // Grab some non-michelin
+  const popularPlaces = restaurantsData.filter(r => !r.isMichelin).slice(0, 6);
   const michelinPlaces = restaurantsData.filter(r => r.isMichelin).slice(0, 3);
 
   return (
