@@ -44,7 +44,7 @@ export default function Home() {
 
         const allPopular = [...firestorePlaces].slice(0, 6);
         const allMichelin = [...firestorePlaces.filter(p => p.isMichelin)].slice(0, 3);
-        const allNewest = [...firestorePlaces].slice(0, 6);
+        const allNewest = [...firestorePlaces]; // Show all as per user request
         
         setPopularPlaces(allPopular);
         setMichelinPlaces(allMichelin);

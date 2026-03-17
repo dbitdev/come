@@ -59,7 +59,7 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
                                         <div className={styles.category}>{place.category}</div>
                                         <h3 className={styles.name}>{place.name}</h3>
                                         <div className={styles.rating}>
-                                            <span>★</span> {typeof place.rating === 'number' ? place.rating.toFixed(1) : place.rating}
+                                            <span>★</span> {typeof place.rating === 'number' ? place.rating.toFixed(1) : (Number(place.rating) ? Number(place.rating).toFixed(1) : place.rating)}
                                         </div>
                                     </div>
                                 </div>

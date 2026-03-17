@@ -57,10 +57,12 @@ export default function NewsSection() {
         if (article.relatedRestaurantIds && article.relatedRestaurantIds.length > 0) return article;
         
         // Simple keyword matching for demo/live data
-        const related = restaurants.find(r => 
-            article.title.toLowerCase().includes((r.name || "").toLowerCase()) || 
-            article.excerpt.toLowerCase().includes((r.name || "").toLowerCase())
-        );
+        const related = restaurants.find(r => {
+            const rName = (r.name || "").toLowerCase();
+            const aTitle = (article.title || "").toLowerCase();
+            const aExcerpt = (article.excerpt || "").toLowerCase();
+            return rName && (aTitle.includes(rName) || aExcerpt.includes(rName));
+        });
 
         return {
             ...article,
@@ -117,7 +119,7 @@ export default function NewsSection() {
                                     <div className={styles.overlay}>
                                         <div className={styles.meta}>
                                             <span className={styles.date}>{news.date}</span>
-                                            {relatedRest && (
+                                            {relatedRest && relatedRest.address && (
                                                 <span className={styles.location}>
                                                     <FaMapMarkerAlt /> {relatedRest.address.split(',')[0]}
                                                 </span>

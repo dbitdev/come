@@ -89,7 +89,7 @@
 .searchForm {
     display: flex;
     background: #f5f0e7;
-    padding: 0.6rem;
+    padding: 0.4rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
     align-items: center;
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -102,7 +102,7 @@
     display: flex;
     align-items: center;
     flex: 1;
-    padding: 0 1.5rem;
+    padding: 0 1.2rem;
 }
 
 .icon {
@@ -126,7 +126,7 @@
 .input {
     border: none;
     width: 100%;
-    padding: 1rem 0;
+    padding: 0.8rem 0;
     font-size: 1rem;
     outline: none;
     background: transparent;
@@ -139,7 +139,7 @@
 
 .divider {
     width: 1px;
-    height: 30px;
+    height: 24px;
     background: #eaeaea;
     margin: 0 0.5rem;
 }
@@ -147,13 +147,13 @@
 .searchButton {
     background-color: var(--primary);
     color: #fff;
-    padding: 0 3rem;
-    font-size: 1rem;
+    padding: 0 2.5rem;
+    font-size: 0.95rem;
     font-weight: 600;
     border: none;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    height: 60px;
+    height: 48px;
     border-radius: 50px;
 }
 
