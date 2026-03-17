@@ -10,10 +10,11 @@ import {
 } from '@vis.gl/react-google-maps';
 import styles from './MapComponent.module.css';
 
-import { restaurantsData, Restaurant, newsArticlesData } from '@/data/mockData';
 import { FaInstagram, FaFacebook, FaTwitter, FaGlobe, FaPhone, FaUtensils, FaStar, FaTimes, FaNewspaper, FaDirections } from 'react-icons/fa';
 import Link from 'next/link';
 import GoogleMapsWrapper from './GoogleMapsWrapper';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 export default function MapComponent() {
     return (
@@ -28,20 +29,43 @@ function MapContent() {
     const [center, setCenter] = useState(defaultCenter);
     const [zoom, setZoom] = useState(12);
     const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-    const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+    const [restaurants, setRestaurants] = useState<any[]>([]);
+    const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [infoWindowOpen, setInfoWindowOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const map = useMap();
 
-    const filteredRestaurants = restaurantsData.filter(r => 
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    useEffect(() => {
+        const fetchRestaurants = async () => {
+            if (!db) return;
+            try {
+                const querySnapshot = await getDocs(collection(db, "business_leads"));
+                const data = querySnapshot.docs.map(doc => {
+                    const d = doc.data();
+                    return {
+                        id: doc.id,
+                        name: d.restaurantName || d.name,
+                        lat: d.lat || 19.4326,
+                        lng: d.lng || -99.1332,
+                        ...d
+                    };
+                });
+                setRestaurants(data);
+            } catch (err) {
+                console.error("Error fetching map restaurants:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const relatedNotes = selectedRestaurant 
-        ? newsArticlesData.filter(article => article.relatedRestaurantIds?.includes(selectedRestaurant.id))
-        : [];
+        fetchRestaurants();
+    }, []);
+
+    const filteredRestaurants = restaurants.filter(r => 
+        (r.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.category || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         if (typeof window !== "undefined" && "geolocation" in navigator) {
@@ -57,23 +81,24 @@ function MapContent() {
         }
     }, []);
 
-    const handleRestaurantSelect = useCallback((restaurant: Restaurant) => {
+    const handleRestaurantSelect = useCallback((restaurant: any) => {
         const pos = { lat: restaurant.lat, lng: restaurant.lng };
         setCenter(pos);
         setSelectedRestaurant(restaurant);
-        setInfoWindowOpen(true);
     }, []);
 
     const googleMapsUrl = selectedRestaurant 
         ? `https://www.google.com/maps/dir/?api=1&destination=${selectedRestaurant.lat},${selectedRestaurant.lng}`
         : "#";
 
+    if (loading) return <div style={{ height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f9' }}>Cargando restaurantes...</div>;
+
     return (
         <div className={styles.mapContainer}>
             <div className={styles.sidebar}>
                 <div className={styles.sidebarHeader}>
                     <h2>Explorar</h2>
-                    <p>Encuentra los 100 mejores restaurantes cerca de ti.</p>
+                    <p>Encuentra los mejores restaurantes en el mapa.</p>
                     <div className={styles.searchBox}>
                         <input 
                             type="text" 
@@ -158,7 +183,7 @@ function MapContent() {
                         <div className={styles.miniMapColumn}>
                             <div className={styles.miniMapWrapper}>
                                 <Map
-                                    mapId="bf50a91342b3225"
+                                    mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
                                     center={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }}
                                     zoom={15}
                                     style={{ height: '100%', width: '100%' }}
@@ -174,24 +199,13 @@ function MapContent() {
                                 <FaDirections /> Cómo llegar
                             </a>
                             
-                            {relatedNotes.length > 0 && (
-                                <div style={{ padding: '2rem' }}>
-                                    <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#888' }}><FaNewspaper /> NOTAS RELACIONADAS</h4>
-                                    {relatedNotes.map(note => (
-                                        <div key={note.id} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #f0f0f0' }}>
-                                            <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{note.title}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#999' }}>{note.date}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
             )}
 
             <Map
-                mapId="bf50a91342b3225"
+                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
                 defaultCenter={center}
                 defaultZoom={zoom}
                 center={center}

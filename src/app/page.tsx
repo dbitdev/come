@@ -7,13 +7,12 @@ import NewsSection from "@/components/NewsSection";
 import Banner from "@/components/Banner";
 import HomeMap from "@/components/HomeMap";
 import styles from "./page.module.css";
-import { restaurantsData as initialMockData } from "@/data/mockData";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
 
 export default function Home() {
-  const [popularPlaces, setPopularPlaces] = useState<any[]>(initialMockData.filter(r => !r.isMichelin).slice(0, 6));
-  const [michelinPlaces, setMichelinPlaces] = useState<any[]>(initialMockData.filter(r => r.isMichelin).slice(0, 3));
+  const [popularPlaces, setPopularPlaces] = useState<any[]>([]);
+  const [michelinPlaces, setMichelinPlaces] = useState<any[]>([]);
   const [newestPlaces, setNewestPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +27,13 @@ export default function Home() {
             const data = doc.data();
             return {
               id: doc.id,
-              name: data.restaurantName,
+              name: data.restaurantName || data.name,
               category: data.category,
-              rating: 5.0,
-              image: (data.menu && data.menu[0]?.image) || "/placeholder-restaurant.jpg",
+              rating: data.rating || 5.0,
+              image: (data.menu && data.menu[0]?.image) || data.image || "/placeholder-restaurant.jpg",
               subdomain: data.subdomain,
               isFirebase: true,
-              isMichelin: !!data.awards,
+              isMichelin: !!data.awards || !!data.isMichelin,
               awards: data.awards,
               address: data.address,
               phone: data.phone,
@@ -43,8 +42,8 @@ export default function Home() {
           });
         }
 
-        const allPopular = [...firestorePlaces, ...initialMockData.filter(r => !r.isMichelin)].slice(0, 6);
-        const allMichelin = [...firestorePlaces.filter(p => p.isMichelin), ...initialMockData.filter(r => r.isMichelin)].slice(0, 3);
+        const allPopular = [...firestorePlaces].slice(0, 6);
+        const allMichelin = [...firestorePlaces.filter(p => p.isMichelin)].slice(0, 3);
         const allNewest = [...firestorePlaces].slice(0, 6);
         
         setPopularPlaces(allPopular);
@@ -52,8 +51,8 @@ export default function Home() {
         setNewestPlaces(allNewest);
       } catch (error) {
         console.error("Error fetching homepage data:", error);
-        setPopularPlaces(initialMockData.filter(r => !r.isMichelin).slice(0, 6));
-        setMichelinPlaces(initialMockData.filter(r => r.isMichelin).slice(0, 3));
+        setPopularPlaces([]);
+        setMichelinPlaces([]);
       } finally {
         setLoading(false);
       }

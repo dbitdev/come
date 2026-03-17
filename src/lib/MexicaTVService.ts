@@ -1,4 +1,4 @@
-import { NewsArticle } from '../data/mockData';
+import { NewsArticle } from '../types';
 
 const BASE_URL = 'https://mexicatv.com/wp-json/wp/v2';
 const GOURMET_CATEGORY_ID = 9;

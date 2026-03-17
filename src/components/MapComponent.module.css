@@ -18,14 +18,16 @@
     top: 1.5rem;
     left: 1.5rem;
     bottom: 1.5rem;
-    width: 380px;
-    background-color: var(--background);
+    width: 400px;
+    background-color: #f5f0e7;
     z-index: 900;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--glass-shadow);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebarHeader {
@@ -52,12 +54,20 @@
 
 .searchInput {
     width: 100%;
-    padding: 0.8rem 1.2rem;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: var(--border-radius-md);
     font-size: 0.95rem;
+    font-weight: 500;
     outline: none;
-    background: #f9f9f9;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(202, 15, 43, 0.1);
 }
 
 .placesList {
@@ -69,19 +79,19 @@
 }
 
 .placeItem {
-    padding: 1.2rem 2rem;
-    border-bottom: 1px solid #f8f8f8;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--glass-border);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .placeItem:hover {
-    background-color: #fcfcfc;
+    background-color: rgba(255, 255, 255, 0.4);
     padding-left: 2.2rem;
 }
 
 .placeItem.active {
-    background-color: #fef8f8;
+    background-color: rgba(202, 15, 43, 0.05);
     border-left: 4px solid var(--primary);
 }
 
@@ -116,7 +126,7 @@
 }
 
 .modalContent {
-    background: var(--background);
+    background: #f5f0e7;
     width: 100%;
     max-width: 900px;
     max-height: 90vh;
@@ -248,6 +258,17 @@
 }
 
 @media (max-width: 768px) {
+    .mapContainer {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 70px);
+    }
+
+    .map {
+        height: 60vh !important;
+        width: 100%;
+    }
+
     .sidebar {
         position: relative;
         top: 0;
@@ -255,6 +276,8 @@
         width: 100%;
         height: 40vh;
         border-radius: 0;
+        border: none;
+        order: 2; /* Move list below map */
     }
 
     .modalOverlay {

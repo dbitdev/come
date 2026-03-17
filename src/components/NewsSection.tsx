@@ -3,33 +3,51 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './NewsSection.module.css';
-import { newsArticlesData, restaurantsData, NewsArticle } from '@/data/mockData';
+import { NewsArticle } from '@/types';
 import { FaMapMarkerAlt, FaPlay } from 'react-icons/fa';
 import { fetchMexicaGourmetNews } from '@/lib/MexicaTVService';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 export default function NewsSection() {
     const [articles, setArticles] = useState<NewsArticle[]>([]);
     const [isLive, setIsLive] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [restaurants, setRestaurants] = useState<any[]>([]);
 
     useEffect(() => {
-        const loadNews = async () => {
+        const loadData = async () => {
             try {
-                const liveArticles = await fetchMexicaGourmetNews();
-                if (liveArticles && liveArticles.length > 0) {
-                    setArticles(liveArticles);
-                    setIsLive(true);
-                } else {
-                    setArticles(newsArticlesData);
+                // Load News
+                if (db) {
+                    const newsSnapshot = await getDocs(collection(db, "news"));
+                    const newsData = newsSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    })) as any[];
+                    
+                    if (newsData.length > 0) {
+                        setArticles(newsData);
+                    }
+                }
+
+                // Load Restaurants for linking
+                if (db) {
+                    const querySnapshot = await getDocs(collection(db, "business_leads"));
+                    const restData = querySnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        name: doc.data().restaurantName || doc.data().name,
+                        ...doc.data()
+                    }));
+                    setRestaurants(restData);
                 }
             } catch (error) {
-                console.error("Using fallback news data due to API error");
-                setArticles(newsArticlesData);
+                console.error("Error loading news feed:", error);
             } finally {
                 setLoading(false);
             }
         };
-        loadNews();
+        loadData();
     }, []);
 
     if (loading) return <div className={styles.loading}>Cargando noticias...</div>;
@@ -39,9 +57,9 @@ export default function NewsSection() {
         if (article.relatedRestaurantIds && article.relatedRestaurantIds.length > 0) return article;
         
         // Simple keyword matching for demo/live data
-        const related = restaurantsData.find(r => 
-            article.title.toLowerCase().includes(r.name.toLowerCase()) || 
-            article.excerpt.toLowerCase().includes(r.name.toLowerCase())
+        const related = restaurants.find(r => 
+            article.title.toLowerCase().includes((r.name || "").toLowerCase()) || 
+            article.excerpt.toLowerCase().includes((r.name || "").toLowerCase())
         );
 
         return {
@@ -66,7 +84,7 @@ export default function NewsSection() {
                 <div className={styles.grid}>
                     {processedArticles.map((news, index) => {
                         const relatedRest = news.relatedRestaurantIds && news.relatedRestaurantIds.length > 0
-                            ? restaurantsData.find(r => r.id === news.relatedRestaurantIds![0])
+                            ? restaurants.find(r => r.id === news.relatedRestaurantIds![0])
                             : null;
 
                         const isFeatured = index === 0;
@@ -117,15 +135,17 @@ export default function NewsSection() {
                             </article>
                         );
 
-                        if (relatedRest) {
-                            return (
-                                <Link key={news.id} href={`/lugares/${relatedRest.id}`} className={styles.cardLink}>
-                                    {cardContent}
-                                </Link>
-                            );
-                        }
-
-                        return <div key={news.id} className={styles.cardWrapper}>{cardContent}</div>;
+                        return (
+                            <a 
+                                key={news.id} 
+                                href="https://mexicatv.com/gourmet/" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className={styles.cardLink}
+                            >
+                                {cardContent}
+                            </a>
+                        );
                     })}
                 </div>
             </div>

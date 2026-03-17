@@ -8,5 +8,11 @@ service cloud.firestore {
     match /chef_nominations/{document=**} {
       allow read, write: if true;
     }
+    match /chefs/{document=**} {
+      allow read, write: if true;
+    }
+    match /news/{document=**} {
+      allow read, write: if true;
+    }
   }
 }

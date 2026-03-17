@@ -1,10 +1,34 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import PlacesList from '@/components/PlacesList';
-import { restaurantsData } from '@/data/mockData';
 import MapWrapper from '@/components/MapWrapper';
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 export default function MichelinGuidePage() {
-    const michelinPlaces = restaurantsData.filter(r => r.isMichelin);
+    const [michelinPlaces, setMichelinPlaces] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchMichelin = async () => {
+            if (!db) return;
+            try {
+                const snapshot = await getDocs(collection(db, "business_leads"));
+                const data = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter((r: any) => r.isMichelin);
+                setMichelinPlaces(data);
+            } catch (err) {
+                console.error("Error fetching michelin places:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMichelin();
+    }, []);
+
+    if (loading) return <div style={{ padding: '100px', textAlign: 'center' }}>Cargando guía...</div>;
 
     return (
         <div style={{ paddingTop: '80px', minHeight: '100vh', backgroundColor: '#fff' }}>

@@ -7,6 +7,7 @@ const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 export default function GoogleMapsWrapper({ children }: { children: React.ReactNode }) {
   if (!API_KEY) {
+    console.error("Google Maps API Key is missing in environment variables (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)");
     return (
       <div style={{ 
         height: '100%', 
@@ -14,18 +15,24 @@ export default function GoogleMapsWrapper({ children }: { children: React.ReactN
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        background: '#f0f0f0',
-        color: '#666',
+        background: '#f8d7da',
+        color: '#721c24',
         padding: '20px',
-        textAlign: 'center'
+        textAlign: 'center',
+        borderRadius: '8px',
+        border: '1px solid #f5c6cb'
       }}>
-        Falta la clave de API de Google Maps (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).
+        Falta la clave de API de Google Maps. Configúrala en el archivo .env.local.
       </div>
     );
   }
 
   return (
-    <APIProvider apiKey={API_KEY}>
+    <APIProvider 
+      apiKey={API_KEY} 
+      onLoad={() => console.log('Google Maps API loaded successfully')}
+      onError={(err) => console.error('Google Maps API failed to load:', err)}
+    >
       {children}
     </APIProvider>
   );

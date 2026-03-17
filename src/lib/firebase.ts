@@ -32,7 +32,7 @@ if (isConfigValid) {
             db = initializeFirestore(app, {
                 experimentalForceLongPolling: true,
             }, "come");
-            console.log("Firebase & Firestore ('come' db) initialized successfully (Long Polling & Debug enabled)");
+            console.log("Firebase & Firestore ('come' db) initialized successfully");
         } else {
             db = getFirestore(app, "come");
         }

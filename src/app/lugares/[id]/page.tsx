@@ -1,19 +1,39 @@
-import React from 'react';
-import { notFound } from 'next/navigation';
-import { restaurantsData } from '@/data/mockData';
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { notFound, useParams } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import SinglePlaceMapWrapper from '@/components/SinglePlaceMapWrapper';
 import { FaMapMarkerAlt, FaStar, FaUtensils, FaGlobe, FaPhone, FaInstagram, FaFacebook, FaTwitter, FaDirections } from 'react-icons/fa';
 import Link from 'next/link';
 import styles from './profile.module.css';
 
-// Required for static export (Firebase Hosting)
-export function generateStaticParams() {
-    return restaurantsData.map((r) => ({ id: r.id }));
-}
+export default function RestaurantProfile() {
+    const params = useParams();
+    const id = params?.id as string;
+    const [restaurant, setRestaurant] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-export default function RestaurantProfile({ params }: { params: { id: string } }) {
-    const restaurant = restaurantsData.find(r => r.id === params.id);
+    useEffect(() => {
+        const fetchRestaurant = async () => {
+            if (!id || !db) return;
+            try {
+                const docRef = doc(db, "business_leads", id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setRestaurant({ id: docSnap.id, ...docSnap.data() });
+                }
+            } catch (err) {
+                console.error("Error fetching restaurant profile:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRestaurant();
+    }, [id]);
 
+    if (loading) return <div className={styles.loading}>Cargando perfil...</div>;
     if (!restaurant) {
         notFound();
     }
@@ -75,7 +95,7 @@ export default function RestaurantProfile({ params }: { params: { id: string } }
                             <section className={styles.signatureSection}>
                                 <h3>Platillos Insignia</h3>
                                 <div className={styles.dishList}>
-                                    {restaurant.signatureDishes.map((dish, idx) => (
+                                    {restaurant.signatureDishes.map((dish: string, idx: number) => (
                                         <div key={idx} className={styles.dishItem}>
                                             {dish}
                                         </div>

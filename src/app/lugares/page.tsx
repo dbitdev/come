@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { restaurantsData as initialMockData } from "@/data/mockData";
 import styles from "./lugares.module.css";
 import { FaStar, FaAward, FaExternalLinkAlt } from "react-icons/fa";
 import { db } from "@/lib/firebase";
@@ -35,33 +34,34 @@ export default function LugaresPage({
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch from Firestore
-                let firestoreRestaurants: any[] = [];
                 if (db) {
                     const querySnapshot = await getDocs(collection(db, "business_leads"));
-                    firestoreRestaurants = querySnapshot.docs.map(doc => {
+                    const firestoreRestaurants = querySnapshot.docs.map(doc => {
                         const data = doc.data();
                         return {
                             id: doc.id,
-                            name: data.restaurantName,
+                            name: data.restaurantName || data.name,
                             category: data.category,
                             address: data.address || "Dirección no disponible",
-                            image: (data.menu && data.menu[0]?.image) || "/placeholder-restaurant.jpg",
-                            rating: "Nuevo",
-                            isMichelin: !!data.awards,
+                            image: (data.menu && data.menu[0]?.image) || data.image || "/placeholder-restaurant.jpg",
+                            rating: data.rating || "Nuevo",
+                            isMichelin: !!data.awards || !!data.isMichelin,
+                            michelinStars: data.michelinStars || 0,
                             awards: data.awards,
                             subdomain: data.subdomain,
+                            chef: data.chef,
+                            description: data.description,
+                            signatureDishes: data.signatureDishes,
                             isFirebase: true
                         };
                     });
+                    setAllRestaurants(firestoreRestaurants);
+                } else {
+                    setAllRestaurants([]);
                 }
-
-                // Combine with mock data
-                setAllRestaurants([...firestoreRestaurants, ...initialMockData]);
             } catch (error) {
                 console.error("Error fetching places:", error);
-                // Important: Even if Firestore fails (permissions), show mock data
-                setAllRestaurants(initialMockData);
+                setAllRestaurants([]);
             } finally {
                 setLoading(false);
             }

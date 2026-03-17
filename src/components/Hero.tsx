@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { FaMapMarkerAlt, FaSearch } from "react-icons/fa";
-import { restaurantsData, newsArticlesData } from "@/data/mockData";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 import styles from "./Hero.module.css";
 
 export default function Hero() {
@@ -10,17 +11,52 @@ export default function Hero() {
     const [query, setQuery] = useState("");
     const [activeRestIdx, setActiveRestIdx] = useState(0);
     const [activeNewsIdx, setActiveNewsIdx] = useState(0);
-
-    const editorRestaurants = restaurantsData.slice(0, 10);
-    const topNews = newsArticlesData.slice(0, 10);
+    const [editorRestaurants, setEditorRestaurants] = useState<any[]>([]);
+    const [topNews, setTopNews] = useState<any[]>([]);
 
     useEffect(() => {
+        const fetchData = async () => {
+            if (!db) return;
+            try {
+                const restSnapshot = await getDocs(collection(db, "business_leads"));
+                const restData = restSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        name: data.restaurantName || data.name,
+                        image: (data.menu && data.menu[0]?.image) || data.image || "/placeholder-restaurant.jpg",
+                        category: data.category,
+                        ...data
+                    };
+                }).filter(r => r.image && r.image !== "/placeholder-restaurant.jpg").slice(0, 10);
+                setEditorRestaurants(restData);
+
+                const newsSnapshot = await getDocs(collection(db, "news"));
+                const newsData = newsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })).slice(0, 10);
+                setTopNews(newsData);
+            } catch (err) {
+                console.error("Error fetching hero data:", err);
+            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (editorRestaurants.length === 0 && topNews.length === 0) return;
+
         const restInterval = setInterval(() => {
-            setActiveRestIdx(prev => (prev + 1) % editorRestaurants.length);
+            if (editorRestaurants.length > 0) {
+                setActiveRestIdx(prev => (prev + 1) % editorRestaurants.length);
+            }
         }, 5000);
 
         const newsInterval = setInterval(() => {
-            setActiveNewsIdx(prev => (prev + 1) % topNews.length);
+            if (topNews.length > 0) {
+                setActiveNewsIdx(prev => (prev + 1) % topNews.length);
+            }
         }, 7000);
 
         return () => {

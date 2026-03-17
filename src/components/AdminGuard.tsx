@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
 // List of admin emails (In production, use Firebase Custom Claims or an 'admins' collection)
-const ADMIN_EMAILS = ['dbitdev@gmail.com', 'admin@come.mx'];
+const ADMIN_EMAILS = ['dbitdev@gmail.com', 'admin@come.mx', 'parradabito@gmail.com'];
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();

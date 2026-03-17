@@ -9,13 +9,34 @@ import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
     const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        try {
+            const { signInWithEmailAndPassword } = await import("firebase/auth");
+            await signInWithEmailAndPassword(auth, email, password);
+            router.push('/admin'); // Redirect to admin after login
+        } catch (err: any) {
+            console.error(err);
+            if (err.code === 'auth/user-not-found') {
+                setError("El usuario no existe. Por favor regístrate.");
+            } else if (err.code === 'auth/wrong-password') {
+                setError("Contraseña incorrecta.");
+            } else {
+                setError("Error al iniciar sesión. Verifica tus credenciales.");
+            }
+        }
+    };
 
     const handleGoogleLogin = async () => {
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
-            router.push('/perfil');
+            router.push('/admin');
         } catch (err: any) {
             console.error(err);
             setError("Error al iniciar sesión con Google. Inténtalo de nuevo.");
@@ -69,9 +90,23 @@ export default function LoginPage() {
                     <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#fff', padding: '0 10px', color: '#888', fontSize: '0.9rem' }}>o con email</span>
                 </div>
 
-                <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <input type="email" placeholder="Correo electrónico" style={{ padding: '0.8rem', border: '1px solid #ddd', width: '100%' }} />
-                    <input type="password" placeholder="Contraseña" style={{ padding: '0.8rem', border: '1px solid #ddd', width: '100%' }} />
+                <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <input 
+                        type="email" 
+                        placeholder="Correo electrónico" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        style={{ padding: '0.8rem', border: '1px solid #ddd', width: '100%' }} 
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Contraseña" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={{ padding: '0.8rem', border: '1px solid #ddd', width: '100%' }} 
+                    />
                     <button type="submit" style={{ padding: '0.8rem', background: 'var(--primary)', color: '#fff', fontWeight: 'bold', marginTop: '1rem' }}>Ingresar</button>
                 </form>
 

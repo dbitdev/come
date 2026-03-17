@@ -1,14 +1,31 @@
-import React from "react";
-import { Metadata } from "next";
-import { chefsData } from "@/data/mockData";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 import styles from "./chefs.module.css";
 
-export const metadata: Metadata = {
-    title: "Guía de Chefs - Los Mejores de México | Come",
-    description: "Conoce a las mentes brillantes detrás de la gastronomía mexicana. Una selección exclusiva de los chefs más influyentes y premiados de México.",
-};
-
 export default function ChefsGuidePage() {
+    const [chefs, setChefs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchChefs = async () => {
+            if (!db) return;
+            try {
+                const snapshot = await getDocs(collection(db, "chefs"));
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setChefs(data);
+            } catch (err) {
+                console.error("Error fetching chefs:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchChefs();
+    }, []);
+
+    if (loading) return <div style={{ padding: '100px', textAlign: 'center' }}>Cargando guía...</div>;
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -21,32 +38,36 @@ export default function ChefsGuidePage() {
             </header>
 
             <div className={styles.chefsGrid}>
-                {chefsData.map((chef) => (
+                {chefs.map((chef) => (
                     <div key={chef.id} className={styles.chefCard}>
                         <div className={styles.imageContainer}>
-                            <img src={chef.image} alt={chef.name} className={styles.chefImage} />
+                            <img src={chef.image || "/placeholder-chef.jpg"} alt={chef.nombre} className={styles.chefImage} />
                             <div className={styles.chefOverlay}>
-                                <div className={styles.chefAwardBadge}>
-                                    {chef.awards?.[0]}
-                                </div>
+                                {chef.estrellas > 0 && (
+                                    <div className={styles.chefAwardBadge}>
+                                        {chef.estrellas} ★ Michelin
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className={styles.chefInfo}>
-                            <h2 className={styles.chefName}>{chef.name}</h2>
-                            <span className={styles.chefSpecialty}>{chef.specialty}</span>
+                            <h2 className={styles.chefName}>{chef.nombre}</h2>
+                            <span className={styles.chefSpecialty}>{chef.ubicacion}</span>
                             <div className={styles.restaurantTag}>
-                                <span>Restaurante:</span> {chef.restaurant}
+                                <span>Restaurante:</span> {chef.restaurante_principal}
                             </div>
-                            <p className={chef.bio}>{chef.bio}</p>
+                            <p className={styles.chefBio}>{chef.biografia_corta}</p>
                             
-                            {chef.awards && (
+                            {chef.logro_clave && (
                                 <div className={styles.awardsList}>
-                                    {chef.awards.slice(1).map((award, i) => (
-                                        <span key={i} className={styles.awardItem}>{award}</span>
-                                    ))}
+                                    <span className={styles.awardItem}>{chef.logro_clave}</span>
                                 </div>
                             )}
                             
+                            <div className={styles.chefMeta}>
+                                <span className={styles.redes}>{chef.redes}</span>
+                            </div>
+
                             <button className={styles.profileBtn}>Ver Biografía Completa</button>
                         </div>
                     </div>
