@@ -17,7 +17,7 @@ export default function Footer() {
                     </div>
                     <div className={styles.column}>
                         <h3>Negocios</h3>
-                        <Link href="/registra-negocio">Registra tu negocio</Link>
+                        <Link href="/nomina-chef">Nominar un lugar</Link>
                         <Link href="/login">Acceso Partners</Link>
                         <Link href="/publicidad">Publicidad</Link>
                     </div>
@@ -54,7 +54,7 @@ export default function Footer() {
                 </div>
 
                 <div className={styles.bottomBar}>
-                    <p>&copy; {new Date().getFullYear()} Come México. Todos los derechos reservados.</p>
+                    <p>&copy; {new Date().getFullYear()} Mexica Medios y Entretenimiento S.A. de C.V. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>

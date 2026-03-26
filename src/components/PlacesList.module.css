@@ -1,6 +1,6 @@
 .section {
     padding: 8rem 2rem;
-    background: radial-gradient(circle at top left, rgba(202, 15, 43, 0.02), transparent 30%);
+    background: radial-gradient(circle at top left, rgba(138, 26, 26, 0.02), transparent 40%);
 }
 
 .carouselSection {
@@ -8,43 +8,43 @@
 }
 
 .container {
-    max-width: 1400px; /* Wider container for carousel */
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
 }
 
 .header {
-    margin-bottom: 5rem;
+    margin-bottom: 4rem;
     text-align: left;
     padding-left: 0;
 }
 
 .header h2 {
-    font-size: 3rem;
-    font-weight: 800;
+    font-size: 3.5rem;
+    font-weight: 600;
     margin-bottom: 0.8rem;
     color: var(--foreground);
-    letter-spacing: -0.04em;
+    line-height: 1.1;
 }
 
 .subtitle {
-    font-size: 1.1rem;
-    color: #666;
-    font-weight: 500;
+    font-size: 1.15rem;
+    color: #555;
+    font-weight: 400;
 }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2.5rem;
 }
 
 .carouselContainer {
     display: flex;
     align-items: stretch;
-    gap: 2rem;
+    gap: 2.5rem;
     overflow-x: auto;
-    padding: 1rem 0 2rem;
+    padding: 1rem 0 3rem;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -61,37 +61,35 @@
 }
 
 .carouselContainer .cardLink {
-    flex: 0 0 380px;
+    flex: 0 0 360px;
     scroll-snap-align: start;
 }
 
 .card {
-    background-color: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: transparent;
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: pointer;
     overflow: hidden;
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    aspect-ratio: 1 / 1;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    aspect-ratio: 4 / 5;
     position: relative;
+    transform: translateZ(0); /* Hardware acceleration */
 }
 
 .carouselContainer .card {
-    width: 100%;
-    aspect-ratio: 1 / 1;
+    width: 360px; /* Fixed width for horizontal scrolling */
+    aspect-ratio: 4 / 5;
 }
 
 .card:hover {
-    transform: scale(1.02) translateY(-10px);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
 .imageWrapper {
     position: absolute;
-    inset: 0; /* Fill the entire square card */
+    inset: 0;
     overflow: hidden;
 }
 
@@ -99,32 +97,33 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.7s ease;
-    opacity: 0.9;
+    transition: transform 1s ease;
+    opacity: 0.95;
 }
 
 .card:hover .image {
-    transform: scale(1.05);
+    transform: scale(1.08);
     opacity: 1;
 }
 
 .michelinBadge {
     position: absolute;
     top: 1.5rem;
-    right: 1.5rem; /* Moved to right */
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 0.5rem;
+    right: 1.5rem;
+    background-color: rgba(253, 251, 247, 0.95);
+    padding: 0.6rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     z-index: 10;
+    backdrop-filter: blur(4px);
 }
 
 .michelinIcon {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     object-fit: contain;
 }
 
@@ -133,43 +132,52 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 3rem 2rem 2rem;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+    padding: 4rem 2rem 2rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
     color: #fff;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    transition: all 0.4s ease;
+    transition: all 0.5s ease;
+}
+
+.card:hover .overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
 }
 
 .category {
-    font-size: 0.85rem;
-    color: var(--primary);
+    font-size: 0.75rem;
+    color: #efefef;
     text-transform: uppercase;
     font-weight: 700;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.1em;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.15em;
+    opacity: 0.9;
 }
 
 .name {
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
     color: #fff;
-    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+    line-height: 1.1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .rating {
     display: flex;
     align-items: center;
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: #fff;
+    letter-spacing: 0.05em;
 }
 
 .rating span {
-    color: #f5c518;
-    margin-right: 0.4rem;
+    color: #d4af37; /* Gold for premium rating */
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
 }
 
 @media (max-width: 768px) {
@@ -178,11 +186,15 @@
     }
 
     .carouselContainer .card {
+        width: 280px;
         flex: 0 0 280px;
-        aspect-ratio: 1 / 1;
+    }
+
+    .header h2 {
+        font-size: 2.5rem;
     }
 
     .name {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
     }
 }

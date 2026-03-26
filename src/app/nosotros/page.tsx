@@ -101,8 +101,8 @@ export default function Nosotros() {
                         <Link href="/lugares" className={styles.primaryBtn}>
                             Explorar Restaurantes
                         </Link>
-                        <Link href="/registra-negocio" className={styles.secondaryBtn}>
-                            Registrar mi Negocio
+                        <Link href="/nomina-chef" className={styles.secondaryBtn}>
+                            Nominar un Lugar
                         </Link>
                     </div>
                 </div>

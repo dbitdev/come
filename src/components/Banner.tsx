@@ -6,13 +6,12 @@ export default function Banner() {
     return (
         <section className={styles.banner}>
             <div className={styles.content}>
-                <h2>¿Eres dueño de un restaurante?</h2>
+                <h2>¿Conoces un lugar extraordinario?</h2>
                 <p>
-                    Únete a la red más grande de Latinoamérica. Registra tu negocio totalmente gratis y
-                    genera un menú digital interactivo con subdominio personalizado al instante.
+                    La excelencia merece ser compartida. Nomina a ese chef o restaurante que todo mundo debería conocer en nuestro exclusivo club gastronómico.
                 </p>
-                <Link href="/registra-negocio" className={styles.button}>
-                    Registra tu negocio gratis
+                <Link href="/nomina-chef" className={styles.button}>
+                    Nominar un Lugar
                 </Link>
             </div>
         </section>

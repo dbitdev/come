@@ -1,16 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary: #ca0f2b;
-  --background: #FFFFFF;
-  --foreground: #1c1c1e;
+  --primary: #9e1414; /* Deep Corporate Red */
+  --primary-light: #ca0f2b; 
+  --primary-dark: #7a0d0d;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  /* Apple Liquid Glass tokens */
   --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-dark: rgba(15, 23, 42, 0.72);
   --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-blur: blur(20px);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
-  --border-radius-lg: 24px;
-  --border-radius-md: 16px;
-  --border-radius-sm: 12px;
+  --glass-border-dark: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(25px) saturate(190%);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
+  
+  --border-radius-xl: 24px;
+  --border-radius-lg: 16px;
+  --border-radius-md: 12px;
+  --border-radius-sm: 8px;
+  
+  --font-modern: 'Outfit', 'Inter', -apple-system, sans-serif;
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--border-radius-lg);
+}
+
+.dark .liquid-glass {
+  background: var(--glass-bg-dark);
+  border: 1px solid var(--glass-border-dark);
 }
 
 html,
@@ -18,11 +43,22 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-modern);
   background-color: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
-  scroll-behavior: smooth;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(0, 78%, 35%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(0, 78%, 35%, 0.05) 0px, transparent 50%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-modern);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
 *,
@@ -45,18 +81,32 @@ button {
   font-size: 0.95rem;
   font-weight: 600;
   border-radius: var(--border-radius-md);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(202, 15, 43, 0.2);
+  transition: var(--transition-smooth);
+  box-shadow: 0 4px 12px rgba(158, 20, 20, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(202, 15, 43, 0.3);
-  opacity: 0.95;
+  background-color: var(--primary-light);
+  box-shadow: 0 8px 24px rgba(158, 20, 20, 0.3);
 }
 
 button:active {
   transform: translateY(0);
+}
+
+button.secondary {
+  background: var(--glass-bg);
+  color: var(--foreground);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+}
+
+button.secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 input,
@@ -67,13 +117,16 @@ textarea {
   padding: 0.8rem 1rem;
   font-family: inherit;
   color: var(--foreground);
-  background-color: rgba(0, 0, 0, 0.02);
-  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  transition: var(--transition-smooth);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid var(--primary);
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--primary);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(158, 20, 20, 0.1);
 }

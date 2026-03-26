@@ -73,8 +73,8 @@ export default function UserProfilePage() {
                     <nav className={styles.sideNav}>
                         <button className={styles.navItemActive}><FaUserCircle /> Mi Cuenta</button>
                         <button className={styles.navItem}><FaStar /> Favoritos</button>
-                        <Link href="/registra-negocio" className={styles.navItem} style={{ textDecoration: 'none' }}>
-                            <FaPlusCircle /> Registrar Negocio
+                        <Link href="/nomina-chef" className={styles.navItem} style={{ textDecoration: 'none' }}>
+                            <FaPlusCircle /> Nominar un Lugar
                         </Link>
                         <button onClick={handleLogout} className={styles.logoutBtn}><FaSignOutAlt /> Cerrar Sesión</button>
                     </nav>
@@ -95,37 +95,7 @@ export default function UserProfilePage() {
                         </div>
                     </section>
 
-                    <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Tus Negocios Registrados</h2>
-                        {fetchingBusinesses ? (
-                            <p>Cargando tus negocios...</p>
-                        ) : userBusinesses.length > 0 ? (
-                            <div className={styles.businessGrid}>
-                                {userBusinesses.map(biz => (
-                                    <div key={biz.id} className={styles.businessCard}>
-                                        <h3>{biz.restaurantName}</h3>
-                                        <p className={styles.bizCategory}>{biz.category}</p>
-                                        <p className={styles.bizSubdomain}>
-                                            <a href={`https://${biz.subdomain}`} target="_blank" rel="noopener noreferrer">
-                                                {biz.subdomain}
-                                            </a>
-                                        </p>
-                                        <div className={styles.bizActions}>
-                                            <Link href={`/gestiona-negocio/${biz.id}`} className={styles.editBtn}>
-                                                Gestionar Menú
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className={styles.emptyState}>
-                                <FaPlusCircle className={styles.emptyIcon} />
-                                <p>Aún no has registrado ningún negocio.</p>
-                                <Link href="/registra-negocio" className={styles.exploreBtn}>Registrar ahora</Link>
-                            </div>
-                        )}
-                    </section>
+
 
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>Tus Restaurantes Favoritos</h2>

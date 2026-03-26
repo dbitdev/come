@@ -66,7 +66,7 @@ export default function Navbar() {
             <div className={styles.dropdownContent}>
               <Link href="/guias/con-estrellas" onClick={() => setIsMenuOpen(false)}>Con Estrellas</Link>
               <Link href="/guias/chefs" onClick={() => setIsMenuOpen(false)}>Chefs</Link>
-              <Link href="/nomina-chef" onClick={() => setIsMenuOpen(false)}>Nominar Chef</Link>
+              <Link href="/nomina-chef" onClick={() => setIsMenuOpen(false)}>Nominar Lugar/Chef</Link>
               <Link href="/guias/recetas" onClick={() => setIsMenuOpen(false)}>Recetas</Link>
             </div>
           </div>

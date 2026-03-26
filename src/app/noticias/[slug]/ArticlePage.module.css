@@ -1,0 +1,144 @@
+.page {
+    min-height: 100vh;
+    background-color: var(--background);
+}
+
+.main {
+    padding-top: 0;
+}
+
+.hero {
+    height: 60vh;
+    min-height: 400px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+}
+
+.heroOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 5rem;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 2rem;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    transition: var(--transition-smooth);
+}
+
+.backLink:hover {
+    color: #fff;
+    transform: translateX(-5px);
+}
+
+.badge {
+    display: inline-block;
+    color: var(--primary-light);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 4rem;
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+}
+
+.meta {
+    display: flex;
+    gap: 2rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contentContainer {
+    max-width: 900px;
+    margin: -4rem auto 8rem;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+.contentCard {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    padding: 5rem;
+    border-radius: var(--border-radius-xl);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+.content {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: var(--foreground);
+}
+
+.content p {
+    margin-bottom: 2rem;
+}
+
+.content h2, .content h3 {
+    margin: 3rem 0 1.5rem;
+    color: var(--foreground);
+}
+
+.content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius-lg);
+    margin: 2rem 0;
+}
+
+@media (max-width: 1024px) {
+    .title {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        height: 50vh;
+    }
+    .title {
+        font-size: 2.2rem;
+    }
+    .contentCard {
+        padding: 2.5rem 1.5rem;
+        margin-top: -2rem;
+    }
+    .content {
+        font-size: 1.1rem;
+    }
+}

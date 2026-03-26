@@ -1,46 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import styles from './NewsSection.module.css';
-import { NewsArticle } from '@/types';
-import { FaMapMarkerAlt, FaPlay } from 'react-icons/fa';
-import { fetchMexicaGourmetNews } from '@/lib/MexicaTVService';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import Link from 'next/link';
+import { FaPlay, FaRegClock, FaArrowRight } from 'react-icons/fa';
+import { getLatestNews } from '@/lib/wordpress';
 
 export default function NewsSection() {
-    const [articles, setArticles] = useState<NewsArticle[]>([]);
-    const [isLive, setIsLive] = useState(false);
+    const [articles, setArticles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [restaurants, setRestaurants] = useState<any[]>([]);
+    const [activeIdx, setActiveIdx] = useState(0);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                // Load News
-                if (db) {
-                    const newsSnapshot = await getDocs(collection(db, "news"));
-                    const newsData = newsSnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })) as any[];
-                    
-                    if (newsData.length > 0) {
-                        setArticles(newsData);
-                    }
-                }
-
-                // Load Restaurants for linking
-                if (db) {
-                    const querySnapshot = await getDocs(collection(db, "business_leads"));
-                    const restData = querySnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        name: doc.data().restaurantName || doc.data().name,
-                        ...doc.data()
-                    }));
-                    setRestaurants(restData);
-                }
+                // Fetching only 'gourmet' and 'come' tags
+                const news = await getLatestNews(6, undefined, ["gourmet", "come"]);
+                setArticles(news);
             } catch (error) {
                 console.error("Error loading news feed:", error);
             } finally {
@@ -50,105 +26,108 @@ export default function NewsSection() {
         loadData();
     }, []);
 
-    if (loading) return <div className={styles.loading}>Cargando noticias...</div>;
+    // Auto-slide for the featured "slider" card
+    useEffect(() => {
+        if (articles.length <= 1) return;
+        const interval = setInterval(() => {
+            setActiveIdx(prev => (prev + 1) % Math.min(articles.length, 3));
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [articles.length]);
 
-    // Keyword-based restaurant linking for live articles
-    const processedArticles = articles.map(article => {
-        if (article.relatedRestaurantIds && article.relatedRestaurantIds.length > 0) return article;
-        
-        // Simple keyword matching for demo/live data
-        const related = restaurants.find(r => {
-            const rName = (r.name || "").toLowerCase();
-            const aTitle = (article.title || "").toLowerCase();
-            const aExcerpt = (article.excerpt || "").toLowerCase();
-            return rName && (aTitle.includes(rName) || aExcerpt.includes(rName));
-        });
+    if (loading) return (
+        <div className={styles.loadingWrapper}>
+            <div className={styles.loader}></div>
+            <p>Sincronizando con el mundo gourmet...</p>
+        </div>
+    );
 
-        return {
-            ...article,
-            relatedRestaurantIds: related ? [related.id] : []
-        };
-    });
+    if (articles.length === 0) return null;
+
+    const featured = articles[activeIdx] || articles[0];
+    const sideArticles = articles.filter((_, i) => i !== activeIdx).slice(0, 2);
 
     return (
-        <section className={styles.section}>
+        <section className={styles.section} id="noticias">
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <div className={styles.titleRow}>
-                        <h2>
-                            Noticias y Tendencias
-                            {isLive && <span className={styles.liveBadge}>En Vivo</span>}
-                        </h2>
-                    </div>
-                    <p className={styles.subtitle}>Lo último de Mexica Gourmet y el mundo gastronómico</p>
+                    <div className={styles.badge}>Editorial</div>
+                    <h2 className={styles.title}>Crónicas Gastronómicas</h2>
                 </div>
 
-                <div className={styles.grid}>
-                    {processedArticles.map((news, index) => {
-                        const relatedRest = news.relatedRestaurantIds && news.relatedRestaurantIds.length > 0
-                            ? restaurants.find(r => r.id === news.relatedRestaurantIds![0])
-                            : null;
-
-                        const isFeatured = index === 0;
-                        const hasVideo = !!news.videoUrl;
-
-                        const cardContent = (
-                            <article className={`${styles.card} ${isFeatured ? styles.featured : ""} ${hasVideo && !isFeatured ? styles.hasVideo : ""}`}>
-                                <div className={styles.imageWrapper}>
-                                    {isFeatured && hasVideo && news.videoUrl ? (
-                                        <div className={styles.videoContainer}>
-                                            <iframe 
-                                                src={`${news.videoUrl}?autoplay=1&mute=1&loop=1&playlist=${news.videoUrl.split('/').pop()?.split('?')[0]}`}
-                                                title={news.title}
-                                                frameBorder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                allowFullScreen
-                                                className={styles.videoFrame}
-                                            ></iframe>
+                <div className={styles.layoutGrid}>
+                    {/* Main Featured Slider-like card */}
+                    <div className={styles.mainColumn}>
+                        <article 
+                            className={`${styles.mainCard} liquid-glass`}
+                            style={{ backgroundImage: `url(${featured.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
+                        >
+                            <div className={styles.cardOverlay}>
+                                <div className={styles.content}>
+                                    <div className={styles.meta}>
+                                        <span className={styles.category}>
+                                            {featured.categories?.nodes?.[0]?.name || 'Gourmet'}
+                                        </span>
+                                        <span className={styles.date}>
+                                            <FaRegClock /> {new Date(featured.date).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <Link href={`/noticias/${featured.slug}`}>
+                                        <h3 className={styles.mainTitle}>{featured.title}</h3>
+                                    </Link>
+                                    <div 
+                                        className={styles.mainExcerpt}
+                                        dangerouslySetInnerHTML={{ __html: featured.excerpt }}
+                                    />
+                                    <div className={styles.actions}>
+                                        <Link 
+                                            href={`/noticias/${featured.slug}`} 
+                                            className={styles.primaryBtn}
+                                        >
+                                            Leer Historia <FaArrowRight />
+                                        </Link>
+                                        <div className={styles.sliderDots}>
+                                            {articles.slice(0, 3).map((_, i) => (
+                                                <span 
+                                                    key={i} 
+                                                    className={`${styles.dot} ${i === activeIdx ? styles.activeDot : ""}`}
+                                                    onClick={() => setActiveIdx(i)}
+                                                />
+                                            ))}
                                         </div>
-                                    ) : (
-                                        <img src={news.image} alt={news.title} className={styles.image} />
-                                    )}
-                                    
-                                    {hasVideo && !isFeatured && (
-                                        <div className={styles.playIcon}>
-                                            <FaPlay />
-                                        </div>
-                                    )}
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
 
-                                    <div className={styles.overlay}>
-                                        <div className={styles.meta}>
-                                            <span className={styles.date}>{news.date}</span>
-                                            {relatedRest && relatedRest.address && (
-                                                <span className={styles.location}>
-                                                    <FaMapMarkerAlt /> {relatedRest.address.split(',')[0]}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <h3 className={styles.title}>{news.title}</h3>
-                                        <p className={isFeatured ? styles.featuredExcerpt : styles.excerpt}>
-                                            {news.excerpt}
-                                        </p>
-                                        <button className={styles.readMore}>
-                                            {hasVideo ? 'Ver Video' : 'Leer artículo'}
-                                        </button>
+                    {/* Side Small Cards */}
+                    <div className={styles.sideColumn}>
+                        {sideArticles.map((news) => (
+                            <article 
+                                key={news.id} 
+                                className={`${styles.sideCard} liquid-glass`}
+                                style={{ backgroundImage: `url(${news.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
+                            >
+                                <div className={styles.cardOverlay}>
+                                    <div className={styles.sideContent}>
+                                        <span className={styles.sideCategory}>
+                                            {news.categories?.nodes?.[0]?.name || 'Gourmet'}
+                                        </span>
+                                        <Link href={`/noticias/${news.slug}`}>
+                                            <h4 className={styles.sideTitle}>{news.title}</h4>
+                                        </Link>
+                                        <Link 
+                                            href={`/noticias/${news.slug}`} 
+                                            className={styles.sideLink}
+                                        >
+                                            Ver más
+                                        </Link>
                                     </div>
                                 </div>
                             </article>
-                        );
-
-                        return (
-                            <a 
-                                key={news.id} 
-                                href="https://mexicatv.com/gourmet/" 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className={styles.cardLink}
-                            >
-                                {cardContent}
-                            </a>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
             </div>
         </section>
