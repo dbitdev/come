@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 
 :root {
   --primary: #9e1414; /* Deep Corporate Red */
@@ -20,6 +20,7 @@
   --border-radius-md: 12px;
   --border-radius-sm: 8px;
   
+  --font-serif: 'Playfair Display', serif;
   --font-modern: 'Outfit', 'Inter', -apple-system, sans-serif;
   --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -79,19 +80,20 @@ button {
   color: #fff;
   padding: 0.8rem 1.8rem;
   font-size: 0.95rem;
-  font-weight: 600;
-  border-radius: var(--border-radius-md);
+  font-weight: 500;
+  border-radius: 4px; /* Less rounded for more elegant look */
   transition: var(--transition-smooth);
-  box-shadow: 0 4px 12px rgba(158, 20, 20, 0.2);
+  box-shadow: none; /* Removed bulky shadow */
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 button:hover {
-  transform: translateY(-2px);
-  background-color: var(--primary-light);
-  box-shadow: 0 8px 24px rgba(158, 20, 20, 0.3);
+  background-color: var(--primary-dark);
 }
 
 button:active {

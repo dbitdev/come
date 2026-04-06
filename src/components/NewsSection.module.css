@@ -31,9 +31,9 @@
 
 .layoutGrid {
     display: grid;
-    grid-template-columns: 1.8fr 1fr;
-    gap: 2rem;
-    height: 600px;
+    grid-template-columns: 1fr 2.2fr 1fr;
+    gap: 1.5rem;
+    min-height: 600px;
 }
 
 .mainColumn {
@@ -230,13 +230,13 @@
     .layoutGrid {
         grid-template-columns: 1fr;
         height: auto;
+        min-height: auto;
     }
     .mainCard {
         height: 500px;
     }
     .sideColumn {
-        flex-direction: row;
-        height: 300px;
+        display: none; /* Hide side notes on tablet for focus, or stack them? Let's stack them below. */
     }
 }
 
@@ -244,12 +244,20 @@
     .section {
         padding: 5rem 1.5rem;
     }
-    .mainTitle {
-        font-size: 2rem;
+    .layoutGrid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
     }
     .sideColumn {
+        display: flex;
         flex-direction: column;
-        height: auto;
+        order: 2;
+    }
+    .mainColumn {
+        order: 1;
+    }
+    .mainTitle {
+        font-size: 2rem;
     }
     .sideCard {
         height: 250px;

@@ -1,9 +1,8 @@
-"use client";
-
 import React, { useState } from "react";
 import Link from "next/link";
+import { Star } from "lucide-react";
 import styles from "./PlacesList.module.css";
-import BusinessModal from "./BusinessModal";
+import { slugify } from "@/lib/utils";
 
 interface Place {
     id: string;
@@ -24,14 +23,6 @@ interface PlacesListProps {
 }
 
 export default function PlacesList({ title, subtitle, places, showMichelin = false, isCarousel = false }: PlacesListProps) {
-    const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const handleCardClick = (e: React.MouseEvent, place: any) => {
-        e.preventDefault();
-        setSelectedBusiness(place);
-        setIsModalOpen(true);
-    };
     return (
         <section className={`${styles.section} ${isCarousel ? styles.carouselSection : ""}`}>
             <div className={styles.container}>
@@ -42,7 +33,7 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
 
                 <div className={isCarousel ? styles.carouselContainer : styles.grid}>
                     {places.map((place) => (
-                        <div key={place.id} onClick={(e) => handleCardClick(e, place)} style={{ cursor: 'pointer' }}>
+                        <Link key={place.id} href={`/lugares/${slugify(place.name)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                             <article className={styles.card}>
                                 <div className={styles.imageWrapper}>
                                     <img
@@ -59,21 +50,15 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
                                         <div className={styles.category}>{place.category}</div>
                                         <h3 className={styles.name}>{place.name}</h3>
                                         <div className={styles.rating}>
-                                            <span>★</span> {typeof place.rating === 'number' ? place.rating.toFixed(1) : (Number(place.rating) ? Number(place.rating).toFixed(1) : place.rating)}
+                                            <Star size={12} fill="currentColor" /> {typeof place.rating === 'number' ? place.rating.toFixed(1) : (Number(place.rating) ? Number(place.rating).toFixed(1) : place.rating)}
                                         </div>
                                     </div>
                                 </div>
                             </article>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>
-
-            <BusinessModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                business={selectedBusiness} 
-            />
         </section>
     );
 }

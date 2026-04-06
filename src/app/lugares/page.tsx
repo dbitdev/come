@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import styles from "./lugares.module.css";
-import { FaStar, FaAward, FaExternalLinkAlt } from "react-icons/fa";
+import { Star, Award, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import BusinessModal from "@/components/BusinessModal";
 
 // Metadata cannot be used in a Client Component. Page titles are managed via side effects if needed.
 
@@ -23,12 +23,10 @@ export default function LugaresPage({
     
     const [allRestaurants, setAllRestaurants] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const router = useRouter();
 
-    const handleCardClick = (place: any) => {
-        setSelectedBusiness(place);
-        setIsModalOpen(true);
+    const handleCardClick = (id: string) => {
+        router.push(`/lugares/${id}`);
     };
 
     useEffect(() => {
@@ -128,13 +126,13 @@ export default function LugaresPage({
                         </div>
                         <div className={styles.grid}>
                             {restaurantsByCategory[category].map((restaurant: any) => (
-                                <div key={restaurant.id} className={styles.cardWrapper} onClick={() => handleCardClick(restaurant)} style={{ cursor: 'pointer' }}>
+                                <div key={restaurant.id} className={styles.cardWrapper} onClick={() => handleCardClick(restaurant.id)} style={{ cursor: 'pointer' }}>
                                     <div className={styles.card}>
                                         <div className={styles.imageWrapper}>
                                             <img src={restaurant.image} alt={restaurant.name} className={styles.image} />
                                             {restaurant.isMichelin && (
                                                 <div className={styles.michelinBadge}>
-                                                    {restaurant.isFirebase ? <FaAward /> : <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />}
+                                                    {restaurant.isFirebase ? <Award size={18} /> : <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />}
                                                 </div>
                                             )}
                                         </div>
@@ -143,12 +141,12 @@ export default function LugaresPage({
                                             <p className={styles.address}>{restaurant.address}</p>
                                             <div className={styles.cardFooter}>
                                                 <div className={styles.rating}>
-                                                    <FaStar className={styles.starIcon} />
+                                                    <Star className={styles.starIcon} size={14} fill="currentColor" />
                                                     <span>{restaurant.rating}</span>
                                                 </div>
                                                 {restaurant.isFirebase && (
                                                     <span className={styles.digitalMenuHint}>
-                                                        <FaExternalLinkAlt /> Info y Menú
+                                                        <ExternalLink size={14} /> Info y Menú
                                                     </span>
                                                 )}
                                             </div>
@@ -165,12 +163,6 @@ export default function LugaresPage({
                     <Link href="/lugares" className={styles.resetSearch}>Ver todos los lugares</Link>
                 </div>
             )}
-
-            <BusinessModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                business={selectedBusiness} 
-            />
         </div>
     );
 }

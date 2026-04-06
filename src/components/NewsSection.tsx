@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from './NewsSection.module.css';
 import Link from 'next/link';
-import { FaPlay, FaRegClock, FaArrowRight } from 'react-icons/fa';
+import { Play, Clock, ArrowRight } from 'lucide-react';
 import { getLatestNews } from '@/lib/wordpress';
 
 export default function NewsSection() {
@@ -45,7 +45,9 @@ export default function NewsSection() {
     if (articles.length === 0) return null;
 
     const featured = articles[activeIdx] || articles[0];
-    const sideArticles = articles.filter((_, i) => i !== activeIdx).slice(0, 2);
+    // Pick two other articles for the sides (cyclical relative to activeIdx)
+    const leftArticle = articles[(activeIdx + articles.length - 1) % articles.length];
+    const rightArticle = articles[(activeIdx + 1) % articles.length];
 
     return (
         <section className={styles.section} id="noticias">
@@ -56,7 +58,29 @@ export default function NewsSection() {
                 </div>
 
                 <div className={styles.layoutGrid}>
-                    {/* Main Featured Slider-like card */}
+                    {/* Left Small Card */}
+                    <div className={styles.sideColumn}>
+                        <article 
+                            className={`${styles.sideCard} liquid-glass`}
+                            style={{ backgroundImage: `url(${leftArticle.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
+                        >
+                            <div className={styles.cardOverlay}>
+                                <div className={styles.sideContent}>
+                                    <span className={styles.sideCategory}>
+                                        {leftArticle.categories?.nodes?.[0]?.name || 'Gourmet'}
+                                    </span>
+                                    <Link href={`/noticias/${leftArticle.slug}`}>
+                                        <h4 className={styles.sideTitle}>{leftArticle.title}</h4>
+                                    </Link>
+                                    <Link href={`/noticias/${leftArticle.slug}`} className={styles.sideLink}>
+                                        Ver más
+                                    </Link>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    {/* Main Featured Center Card */}
                     <div className={styles.mainColumn}>
                         <article 
                             className={`${styles.mainCard} liquid-glass`}
@@ -69,22 +93,18 @@ export default function NewsSection() {
                                             {featured.categories?.nodes?.[0]?.name || 'Gourmet'}
                                         </span>
                                         <span className={styles.date}>
-                                            <FaRegClock /> {new Date(featured.date).toLocaleDateString()}
+                                            <Clock size={16} strokeWidth={1.5} /> {new Date(featured.date).toLocaleDateString()}
                                         </span>
                                     </div>
                                     <Link href={`/noticias/${featured.slug}`}>
                                         <h3 className={styles.mainTitle}>{featured.title}</h3>
                                     </Link>
-                                    <div 
-                                        className={styles.mainExcerpt}
-                                        dangerouslySetInnerHTML={{ __html: featured.excerpt }}
-                                    />
                                     <div className={styles.actions}>
                                         <Link 
                                             href={`/noticias/${featured.slug}`} 
                                             className={styles.primaryBtn}
                                         >
-                                            Leer Historia <FaArrowRight />
+                                            Leer Historia <ArrowRight size={18} strokeWidth={1.5} />
                                         </Link>
                                         <div className={styles.sliderDots}>
                                             {articles.slice(0, 3).map((_, i) => (
@@ -101,32 +121,26 @@ export default function NewsSection() {
                         </article>
                     </div>
 
-                    {/* Side Small Cards */}
+                    {/* Right Small Card */}
                     <div className={styles.sideColumn}>
-                        {sideArticles.map((news) => (
-                            <article 
-                                key={news.id} 
-                                className={`${styles.sideCard} liquid-glass`}
-                                style={{ backgroundImage: `url(${news.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
-                            >
-                                <div className={styles.cardOverlay}>
-                                    <div className={styles.sideContent}>
-                                        <span className={styles.sideCategory}>
-                                            {news.categories?.nodes?.[0]?.name || 'Gourmet'}
-                                        </span>
-                                        <Link href={`/noticias/${news.slug}`}>
-                                            <h4 className={styles.sideTitle}>{news.title}</h4>
-                                        </Link>
-                                        <Link 
-                                            href={`/noticias/${news.slug}`} 
-                                            className={styles.sideLink}
-                                        >
-                                            Ver más
-                                        </Link>
-                                    </div>
+                        <article 
+                            className={`${styles.sideCard} liquid-glass`}
+                            style={{ backgroundImage: `url(${rightArticle.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
+                        >
+                            <div className={styles.cardOverlay}>
+                                <div className={styles.sideContent}>
+                                    <span className={styles.sideCategory}>
+                                        {rightArticle.categories?.nodes?.[0]?.name || 'Gourmet'}
+                                    </span>
+                                    <Link href={`/noticias/${rightArticle.slug}`}>
+                                        <h4 className={styles.sideTitle}>{rightArticle.title}</h4>
+                                    </Link>
+                                    <Link href={`/noticias/${rightArticle.slug}`} className={styles.sideLink}>
+                                        Ver más
+                                    </Link>
                                 </div>
-                            </article>
-                        ))}
+                            </div>
+                        </article>
                     </div>
                 </div>
             </div>

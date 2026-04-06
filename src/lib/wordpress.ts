@@ -33,8 +33,8 @@ export async function getLatestNews(perPage = 10, categoryId?: number | string, 
 
     const data = await fetchAPI(
       `
-      query GetLatestNews($first: Int, $categoryIdIn: [Int], $tagSlugIn: [String]) {
-        posts(first: $first, where: { categoryIdIn: $categoryIdIn, tagSlugIn: $tagSlugIn }) {
+      query GetLatestNews($first: Int, $categoryIn: [ID], $tagSlugIn: [String]) {
+        posts(first: $first, where: { categoryIn: $categoryIn, tagSlugIn: $tagSlugIn }) {
           nodes {
             id
             title
@@ -58,7 +58,7 @@ export async function getLatestNews(perPage = 10, categoryId?: number | string, 
       {
         variables: {
           first: perPage,
-          categoryIdIn: categoryIds,
+          categoryIn: categoryIds,
           tagSlugIn: tagSlugs || null,
         },
       }
@@ -115,5 +115,41 @@ export async function getPostBySlug(slug: string) {
   } catch (error) {
     console.error("Error fetching post by slug:", error);
     return null;
+  }
+}
+
+export async function searchArticles(query: string, first = 3) {
+  try {
+    const data = await fetchAPI(
+      `
+      query SearchArticles($first: Int, $search: String) {
+        posts(first: $first, where: { search: $search }) {
+          nodes {
+            id
+            title
+            excerpt
+            slug
+            date
+            featuredImage {
+              node {
+                sourceUrl
+              }
+            }
+          }
+        }
+      }
+    `,
+      {
+        variables: {
+          first,
+          search: query,
+        },
+      }
+    );
+
+    return data?.posts?.nodes || [];
+  } catch (error) {
+    console.error("Error searching articles from WordPress:", error);
+    return [];
   }
 }

@@ -1,16 +1,30 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Map, 
   AdvancedMarker, 
   InfoWindow, 
   useMap,
+  useMapsLibrary,
   Pin
 } from '@vis.gl/react-google-maps';
 import styles from './MapComponent.module.css';
+import { slugify } from '@/lib/utils';
 
-import { FaInstagram, FaFacebook, FaTwitter, FaGlobe, FaPhone, FaUtensils, FaStar, FaTimes, FaNewspaper, FaDirections } from 'react-icons/fa';
+import { 
+    Globe, 
+    Phone, 
+    UtensilsCrossed, 
+    Star, 
+    X, 
+    Newspaper, 
+    Navigation,
+    Search,
+    MapPin
+} from 'lucide-react';
+import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
 import Link from 'next/link';
 import GoogleMapsWrapper from './GoogleMapsWrapper';
 import { db } from '@/lib/firebase';
@@ -33,8 +47,10 @@ function MapContent() {
     const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     const map = useMap();
+    const geocodingLib = useMapsLibrary('geocoding');
 
     useEffect(() => {
         const fetchRestaurants = async () => {
@@ -81,11 +97,42 @@ function MapContent() {
         }
     }, []);
 
+    useEffect(() => {
+        const fetchMissingCoords = async () => {
+            if (!geocodingLib || restaurants.length === 0) return;
+            
+            const geocoder = new geocodingLib.Geocoder();
+            const updatedRestaurants = [...restaurants];
+            let changed = false;
+
+            for (let i = 0; i < updatedRestaurants.length; i++) {
+                const r = updatedRestaurants[i];
+                // Only geocode if coordinates are missing and address is present
+                if ((!r.lat || !r.lng || r.lat === 19.4326 && r.lng === -99.1332) && r.address) {
+                    try {
+                        const result = await geocoder.geocode({ address: r.address });
+                        if (result.results && result.results[0]) {
+                            const { lat, lng } = result.results[0].geometry.location;
+                            updatedRestaurants[i] = { ...r, lat: lat(), lng: lng() };
+                            changed = true;
+                        }
+                    } catch (e) {
+                        console.error("Geocoding failed for", r.name, e);
+                    }
+                }
+            }
+
+            if (changed) {
+                setRestaurants(updatedRestaurants);
+            }
+        };
+        fetchMissingCoords();
+    }, [geocodingLib, restaurants, searchQuery]); // Added dependencies to trigger when lib loads or data changes
+
     const handleRestaurantSelect = useCallback((restaurant: any) => {
-        const pos = { lat: restaurant.lat, lng: restaurant.lng };
-        setCenter(pos);
-        setSelectedRestaurant(restaurant);
-    }, []);
+        const name = restaurant.restaurantName || restaurant.name;
+        router.push(`/lugares/${slugify(name)}`);
+    }, [router]);
 
     const googleMapsUrl = selectedRestaurant 
         ? `https://www.google.com/maps/dir/?api=1&destination=${selectedRestaurant.lat},${selectedRestaurant.lng}`
@@ -100,6 +147,7 @@ function MapContent() {
                     <h2>Explorar</h2>
                     <p>Encuentra los mejores restaurantes en el mapa.</p>
                     <div className={styles.searchBox}>
+                        <Search className={styles.searchIcon} size={18} />
                         <input 
                             type="text" 
                             placeholder="Buscar especialidad o nombre..." 
@@ -113,7 +161,7 @@ function MapContent() {
                     {filteredRestaurants.slice(0, 50).map(place => (
                         <li 
                             key={place.id} 
-                            className={`${styles.placeItem} ${selectedRestaurant?.id === place.id ? styles.active : ""}`} 
+                            className={styles.placeItem} 
                             onClick={() => handleRestaurantSelect(place)}
                         >
                             <div className={styles.placeName}>{place.name}</div>
@@ -122,87 +170,6 @@ function MapContent() {
                     ))}
                 </ul>
             </div>
-
-            {selectedRestaurant && (
-                <div className={styles.modalOverlay} onClick={() => setSelectedRestaurant(null)}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-                        <button className={styles.closeBtn} onClick={() => setSelectedRestaurant(null)}>
-                            <FaTimes />
-                        </button>
-
-                        <div className={styles.modalMain}>
-                            <img src={selectedRestaurant.image} alt={selectedRestaurant.name} className={styles.modalCover} />
-                            
-                            <div className={styles.modalBody}>
-                                <div className={styles.modalHeaderRow}>
-                                    <div>
-                                        <h2 className={styles.modalTitle}>{selectedRestaurant.name}</h2>
-                                        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                                            <span className={styles.placeCategory}>{selectedRestaurant.category}</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', color: '#f5c518', fontWeight: 'bold' }}>
-                                                <FaStar style={{ marginRight: '4px' }} /> {selectedRestaurant.rating}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {selectedRestaurant.isMichelin && (
-                                        <div className={styles.michelinBadge}>
-                                            <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />
-                                            <span>Guía Michelin</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <p style={{ fontSize: '1.1rem', color: '#555', marginBottom: '2rem' }}>{selectedRestaurant.address}</p>
-
-                                <div className={styles.modalInfoGrid}>
-                                    <div className={styles.infoCol}>
-                                        <h4 style={{ marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.8rem', color: '#888' }}>Contacto</h4>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                            <a href={`tel:${selectedRestaurant.phone}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '8px' }}><FaPhone color="var(--primary)"/> {selectedRestaurant.phone}</a>
-                                            <a href={selectedRestaurant.website} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '8px' }}><FaGlobe color="var(--primary)"/> Web Oficial</a>
-                                        </div>
-                                    </div>
-                                    <div className={styles.infoCol}>
-                                        <h4 style={{ marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.8rem', color: '#888' }}>Redes Sociales</h4>
-                                        <div style={{ display: 'flex', gap: '1.5rem', fontSize: '1.5rem' }}>
-                                            {selectedRestaurant.socials?.instagram && <a href={selectedRestaurant.socials.instagram} target="_blank" rel="noreferrer" style={{ color: '#E1306C' }}><FaInstagram /></a>}
-                                            {selectedRestaurant.socials?.facebook && <a href={selectedRestaurant.socials.facebook} target="_blank" rel="noreferrer" style={{ color: '#4267B2' }}><FaFacebook /></a>}
-                                            {selectedRestaurant.socials?.twitter && <a href={selectedRestaurant.socials.twitter} target="_blank" rel="noreferrer" style={{ color: '#1DA1F2' }}><FaTwitter /></a>}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem' }}>
-                                    <Link href={`/lugares/menu/${selectedRestaurant.id}`} className={styles.directionsBtn} style={{ flex: 1, backgroundColor: '#000' }}>
-                                        <FaUtensils /> Ver Menú Digital
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={styles.miniMapColumn}>
-                            <div className={styles.miniMapWrapper}>
-                                <Map
-                                    mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
-                                    center={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }}
-                                    zoom={15}
-                                    style={{ height: '100%', width: '100%' }}
-                                    disableDefaultUI={true}
-                                    gestureHandling={'none'}
-                                >
-                                    <AdvancedMarker position={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }}>
-                                        <Pin background={'#000'} glyphColor={'#fff'} borderColor={'#000'} />
-                                    </AdvancedMarker>
-                                </Map>
-                            </div>
-                            <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className={styles.directionsBtn}>
-                                <FaDirections /> Cómo llegar
-                            </a>
-                            
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <Map
                 mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
@@ -218,7 +185,9 @@ function MapContent() {
             >
                 {userLocation && (
                     <AdvancedMarker position={userLocation}>
-                        <Pin background={'#ff0000'} glyphColor={'#fff'} borderColor={'#ff0000'} scale={1.2} />
+                        <div className={styles.userLocationMarker}>
+                            <div className={styles.userLocationDot} />
+                        </div>
                     </AdvancedMarker>
                 )}
 
@@ -228,7 +197,9 @@ function MapContent() {
                         position={{ lat: place.lat, lng: place.lng }} 
                         onClick={() => handleRestaurantSelect(place)}
                     >
-                        <Pin background={'#000'} glyphColor={'#fff'} borderColor={'#000'} />
+                        <div className={`${styles.customMarker} ${place.isMichelin ? styles.michelinMarker : ""}`}>
+                            {place.isMichelin ? <Star size={14} fill="currentColor" /> : <MapPin size={16} fill="white" />}
+                        </div>
                     </AdvancedMarker>
                 ))}
             </Map>

@@ -10,7 +10,7 @@ export default function Banner() {
                 <p>
                     La excelencia merece ser compartida. Nomina a ese chef o restaurante que todo mundo debería conocer en nuestro exclusivo club gastronómico.
                 </p>
-                <Link href="/nomina-chef" className={styles.button}>
+                <Link href="/nomina-lugar" className={styles.button}>
                     Nominar un Lugar
                 </Link>
             </div>

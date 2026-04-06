@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import styles from "./Footer.module.css";
+import { Globe, Mail, Award, ExternalLink } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube, FaLinkedinIn } from "react-icons/fa";
 
 export default function Footer() {

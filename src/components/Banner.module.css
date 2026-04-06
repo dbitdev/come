@@ -1,11 +1,13 @@
 .banner {
     background-color: var(--primary);
     color: #fff;
-    padding: 6rem 2rem;
+    padding: 6rem 4rem;
     text-align: center;
     position: relative;
     overflow: hidden;
-    margin-bottom: 4rem;
+    margin: 4rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 /* Subtle background pattern/gradient */

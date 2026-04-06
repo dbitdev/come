@@ -2,7 +2,18 @@
 
 import React from 'react';
 import styles from './BusinessModal.module.css';
-import { FaTimes, FaMapMarkerAlt, FaClock, FaPhone, FaEnvelope, FaAward, FaExternalLinkAlt, FaStar } from 'react-icons/fa';
+import { 
+    X, 
+    MapPin, 
+    Clock, 
+    Phone, 
+    Mail, 
+    Award, 
+    ExternalLink, 
+    Star 
+} from 'lucide-react';
+import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
+import { slugify } from '@/lib/utils';
 
 interface BusinessModalProps {
     isOpen: boolean;
@@ -21,7 +32,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
         <div className={styles.overlay} onClick={handleOverlayClick}>
             <div className={styles.modal}>
                 <button className={styles.closeBtn} onClick={onClose}>
-                    <FaTimes />
+                    <X size={20} strokeWidth={1.5} />
                 </button>
 
                 <div className={styles.hero}>
@@ -30,7 +41,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
                         <div className={styles.category}>{business.category}</div>
                         <h2 className={styles.name}>{business.name}</h2>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <FaStar style={{ color: '#ffc107' }} />
+                            <Star size={16} fill="#ffc107" color="#ffc107" />
                             <span style={{ fontWeight: 700 }}>{business.rating}</span>
                         </div>
                     </div>
@@ -55,7 +66,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
                                     {business.awards.toLowerCase().includes('michelin') ? (
                                         <img src="/michelin-star.png" alt="Michelin" style={{ width: '20px', height: '20px' }} />
                                     ) : (
-                                        <FaAward />
+                                        <Award size={18} strokeWidth={1.5} />
                                     )}
                                     <span>{business.awards}</span>
                                 </div>
@@ -66,7 +77,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
                             <h3 className={styles.sectionTitle}>Contacto</h3>
                             <div className={styles.infoList}>
                                 <div className={styles.infoItem}>
-                                    <FaMapMarkerAlt className={styles.infoIcon} />
+                                    <MapPin className={styles.infoIcon} size={18} strokeWidth={1.5} />
                                     <div>
                                         <span className={styles.infoLabel}>Dirección</span>
                                         <span className={styles.infoValue}>{business.address}</span>
@@ -74,7 +85,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
                                 </div>
                                 {business.schedule && (
                                     <div className={styles.infoItem}>
-                                        <FaClock className={styles.infoIcon} />
+                                        <Clock className={styles.infoIcon} size={18} strokeWidth={1.5} />
                                         <div>
                                             <span className={styles.infoLabel}>Horario</span>
                                             <span className={styles.infoValue}>{business.schedule}</span>
@@ -83,7 +94,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
                                 )}
                                 {business.phone && (
                                     <div className={styles.infoItem}>
-                                        <FaPhone className={styles.infoIcon} />
+                                        <Phone className={styles.infoIcon} size={18} strokeWidth={1.5} />
                                         <div>
                                             <span className={styles.infoLabel}>Teléfono</span>
                                             <span className={styles.infoValue}>{business.phone}</span>
@@ -92,7 +103,7 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
                                 )}
                                 {business.email && (
                                     <div className={styles.infoItem}>
-                                        <FaEnvelope className={styles.infoIcon} />
+                                        <Mail className={styles.infoIcon} size={18} strokeWidth={1.5} />
                                         <div>
                                             <span className={styles.infoLabel}>Email</span>
                                             <span className={styles.infoValue}>{business.email}</span>
@@ -105,12 +116,12 @@ export default function BusinessModal({ isOpen, onClose, business }: BusinessMod
 
                     <div className={styles.footer}>
                         <a 
-                            href={business.isFirebase ? `https://${business.subdomain}` : `/lugares/${business.id}`} 
+                            href={business.isFirebase ? `https://${business.subdomain}` : `/lugares/${slugify(business.restaurantName || business.name)}`} 
                             target={business.isFirebase ? "_blank" : "_self"}
                             className={styles.menuBtn}
                             rel="noopener noreferrer"
                         >
-                            Ver Menú Digital <FaExternalLinkAlt style={{ marginLeft: '8px', fontSize: '0.8em' }} />
+                            Ver Menú Digital <ExternalLink style={{ marginLeft: '8px', fontSize: '0.8em' }} size={16} strokeWidth={1.5} />
                         </a>
                     </div>
                 </div>
