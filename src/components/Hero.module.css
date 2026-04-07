@@ -1,9 +1,15 @@
 .hero {
     position: relative;
     width: 100%;
-    background: #fff;
-    padding: 2rem 0;
+    margin-top: -80px; /* Offset the header height on desktop */
+    background: transparent;
+    padding: 0 !important;
     overflow: hidden;
+}
+@media (max-width: 768px) {
+    .hero {
+        margin-top: -65px; /* Offset the header height on mobile */
+    }
 }
 
 .bgSlide {
@@ -62,11 +68,10 @@
     position: relative;
     z-index: 10;
     width: 100%;
-    max-width: 1400px;
+    max-width: 1500px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 80px 1.5rem 0 1.5rem; /* Push content below 80px transparent header */
     display: flex;
-    gap: 2rem;
     align-items: stretch;
 }
 
@@ -74,7 +79,6 @@
     flex: 2;
     position: relative;
     height: 550px;
-    border-radius: 8px;
     overflow: hidden;
     background: #000;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -95,6 +99,7 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    padding: 0 2rem 0 0; /* Add back padding for the side sections to not touch edges */
 }
 
 .textContent {
@@ -331,9 +336,18 @@
 
     .container {
         flex-direction: column;
-        padding-top: 140px;
+        padding: 65px 0 0 0 !important; /* Push content below 65px transparent header */
         gap: 4rem;
         text-align: center;
+        margin-top: 0 !important;
+    }
+
+    .heroContent {
+        padding: 2rem 1.5rem; /* Reduced horizontal padding */
+    }
+
+    .heroBox {
+        border-radius: 0; /* Ensure it spans full width */
     }
 
     .leftSection {

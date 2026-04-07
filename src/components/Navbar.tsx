@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, User, Menu, X, LogOut } from "lucide-react";
+import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
 import styles from "./Navbar.module.css";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
@@ -11,6 +12,7 @@ import { auth } from "@/lib/firebase";
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isGuiasOpen, setIsGuiasOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileSearch, setMobileSearch] = useState("");
   const { user } = useAuth();
@@ -57,12 +59,23 @@ export default function Navbar() {
           </Link>
         </div>
 
+
         <nav className={`${styles.nav} ${isMenuOpen ? styles.navActive : ""}`}>
-          <Link href="/" onClick={() => setIsMenuOpen(false)}>Inicio</Link>
-          <Link href="/lugares" onClick={() => setIsMenuOpen(false)}>Lugares</Link>
-          <Link href="/mapa" onClick={() => setIsMenuOpen(false)}>Mapa</Link>
-          <div className={styles.dropdown}>
-            <button className={styles.dropbtn}>Guías</button>
+          <Link href="/" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Inicio</Link>
+          <Link href="/lugares" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Lugares</Link>
+          <Link href="/mapa" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Mapa</Link>
+          <div className={`${styles.dropdown} ${isGuiasOpen ? styles.dropdownMobileActive : ""}`}>
+            <button 
+              className={styles.dropbtn} 
+              onClick={(e) => {
+                if (window.innerWidth <= 768) {
+                  e.preventDefault();
+                  setIsGuiasOpen(!isGuiasOpen);
+                }
+              }}
+            >
+              Guías
+            </button>
             <div className={styles.dropdownContent}>
               <Link href="/guias/con-estrellas" onClick={() => setIsMenuOpen(false)}>Con Estrellas</Link>
               <Link href="/guias/chefs" onClick={() => setIsMenuOpen(false)}>Chefs</Link>
@@ -71,7 +84,13 @@ export default function Navbar() {
             </div>
           </div>
 
-          <Link href="https://mexicatv.com/gourmet/" onClick={() => setIsMenuOpen(false)}>Mexica Gourmet</Link>
+          <Link href="https://mexicatv.com/gourmet/" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Mexica Gourmet</Link>
+
+          <div className={styles.navSocial}>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebookF /></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FaTwitter /></a>
+          </div>
         </nav>
 
         <div className={styles.actions}>
