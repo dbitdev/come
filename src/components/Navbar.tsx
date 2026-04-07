@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, Menu, X, LogOut } from "lucide-react";
+import { Search, User, Menu, X, LogOut, ChevronDown } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
 import styles from "./Navbar.module.css";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +17,7 @@ export default function Navbar() {
   const [mobileSearch, setMobileSearch] = useState("");
   const { user } = useAuth();
   const pathname = usePathname();
+  const guiasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,9 +31,18 @@ export default function Navbar() {
     };
     window.addEventListener("keydown", handleKeyDown);
 
+    // Close dropdown on click outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (guiasRef.current && !guiasRef.current.contains(event.target as Node)) {
+        setIsGuiasOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -64,23 +74,25 @@ export default function Navbar() {
           <Link href="/" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Inicio</Link>
           <Link href="/lugares" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Lugares</Link>
           <Link href="/mapa" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Mapa</Link>
-          <div className={`${styles.dropdown} ${isGuiasOpen ? styles.dropdownMobileActive : ""}`}>
+          <div 
+            ref={guiasRef}
+            className={`${styles.dropdown} ${isGuiasOpen ? styles.dropdownActive : ""}`}
+          >
             <button 
               className={styles.dropbtn} 
               onClick={(e) => {
-                if (window.innerWidth <= 768) {
-                  e.preventDefault();
-                  setIsGuiasOpen(!isGuiasOpen);
-                }
+                e.preventDefault();
+                setIsGuiasOpen(!isGuiasOpen);
               }}
             >
               Guías
+              <ChevronDown size={14} className={`${styles.chevron} ${isGuiasOpen ? styles.chevronRotated : ""}`} />
             </button>
             <div className={styles.dropdownContent}>
-              <Link href="/guias/con-estrellas" onClick={() => setIsMenuOpen(false)}>Con Estrellas</Link>
-              <Link href="/guias/chefs" onClick={() => setIsMenuOpen(false)}>Chefs</Link>
-              <Link href="/nomina-chef" onClick={() => setIsMenuOpen(false)}>Nominar Lugar/Chef</Link>
-              <Link href="/guias/recetas" onClick={() => setIsMenuOpen(false)}>Recetas</Link>
+              <Link href="/guias/con-estrellas" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Con Estrellas</Link>
+              <Link href="/guias/chefs" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Chefs</Link>
+              <Link href="/nomina-chef" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Nominar Lugar/Chef</Link>
+              <Link href="/guias/recetas" onClick={() => { setIsMenuOpen(false); setIsGuiasOpen(false); }}>Recetas</Link>
             </div>
           </div>
 
