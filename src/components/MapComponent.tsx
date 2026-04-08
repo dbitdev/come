@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Map, 
@@ -22,7 +22,8 @@ import {
     Newspaper, 
     Navigation,
     Search,
-    MapPin
+    MapPin,
+    Crosshair
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
 import Link from 'next/link';
@@ -47,55 +48,84 @@ function MapContent() {
     const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
+    const [locating, setLocating] = useState(false);
     const router = useRouter();
 
     const map = useMap();
     const geocodingLib = useMapsLibrary('geocoding');
 
-    useEffect(() => {
-        const fetchRestaurants = async () => {
-            if (!db) return;
-            try {
-                const querySnapshot = await getDocs(collection(db, "business_leads"));
-                const data = querySnapshot.docs.map(doc => {
-                    const d = doc.data();
-                    return {
-                        id: doc.id,
-                        name: d.restaurantName || d.name,
-                        lat: d.lat || 19.4326,
-                        lng: d.lng || -99.1332,
-                        ...d
-                    };
-                });
-                setRestaurants(data);
-            } catch (err) {
-                console.error("Error fetching map restaurants:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchRestaurants();
+    const fetchRestaurants = useCallback(async () => {
+        if (!db) return;
+        try {
+            const querySnapshot = await getDocs(collection(db, "business_leads"));
+            const data = querySnapshot.docs.map(doc => {
+                const d = doc.data();
+                return {
+                    id: doc.id,
+                    name: d.restaurantName || d.name,
+                    lat: d.lat || 19.4326,
+                    lng: d.lng || -99.1332,
+                    ...d
+                };
+            });
+            setRestaurants(data);
+        } catch (err) {
+            console.error("Error fetching map restaurants:", err);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchRestaurants();
+    }, [fetchRestaurants]);
 
     const filteredRestaurants = restaurants.filter(r => 
         (r.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (r.category || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    useEffect(() => {
+    const handleLocateUser = useCallback(() => {
         if (typeof window !== "undefined" && "geolocation" in navigator) {
+            setLocating(true);
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     setUserLocation(loc);
                     setCenter(loc);
-                    setZoom(14);
+                    setZoom(15);
+                    setLocating(false);
+                    if (map) {
+                        map.panTo(loc);
+                        map.setZoom(15);
+                    }
                 },
-                (err) => console.warn(err)
+                (err) => {
+                    console.warn("Geolocation error:", err);
+                    setLocating(false);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         }
-    }, []);
+    }, [map]);
+
+    useEffect(() => {
+        handleLocateUser();
+    }, []); // Only run once on mount
+
+    useEffect(() => {
+        if (!map || filteredRestaurants.length === 0) return;
+        
+        const bounds = new google.maps.LatLngBounds();
+        filteredRestaurants.forEach(r => bounds.extend({ lat: r.lat, lng: r.lng }));
+        
+        map.fitBounds(bounds, {
+            top: 100,
+            right: 50,
+            bottom: 50,
+            left: 350 // Account for the sidebar width
+        });
+    }, [map, filteredRestaurants, searchQuery]); // Also trigger on search query change for immediacy
 
     useEffect(() => {
         const fetchMissingCoords = async () => {
@@ -107,7 +137,6 @@ function MapContent() {
 
             for (let i = 0; i < updatedRestaurants.length; i++) {
                 const r = updatedRestaurants[i];
-                // Only geocode if coordinates are missing and address is present
                 if ((!r.lat || !r.lng || r.lat === 19.4326 && r.lng === -99.1332) && r.address) {
                     try {
                         const result = await geocoder.geocode({ address: r.address });
@@ -127,18 +156,19 @@ function MapContent() {
             }
         };
         fetchMissingCoords();
-    }, [geocodingLib, restaurants, searchQuery]); // Added dependencies to trigger when lib loads or data changes
+    }, [geocodingLib, restaurants, searchQuery]);
 
     const handleRestaurantSelect = useCallback((restaurant: any) => {
         const name = restaurant.restaurantName || restaurant.name;
         router.push(`/lugares/${slugify(name)}`);
     }, [router]);
 
-    const googleMapsUrl = selectedRestaurant 
-        ? `https://www.google.com/maps/dir/?api=1&destination=${selectedRestaurant.lat},${selectedRestaurant.lng}`
-        : "#";
-
-    if (loading) return <div style={{ height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f9' }}>Cargando restaurantes...</div>;
+    if (loading) return <div style={{ height: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+        <div style={{ textAlign: 'center' }}>
+            <div className={styles.spinner}></div>
+            <p style={{ marginTop: '1rem', color: '#64748b', fontWeight: 500 }}>Explorando la ciudad...</p>
+        </div>
+    </div>;
 
     return (
         <div className={styles.mapContainer}>
@@ -168,41 +198,57 @@ function MapContent() {
                             <div className={styles.placeCategory}>{place.category}</div>
                         </li>
                     ))}
+                    {filteredRestaurants.length === 0 && (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+                            <p>No se encontraron lugares.</p>
+                        </div>
+                    )}
                 </ul>
             </div>
 
-            <Map
-                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
-                defaultCenter={center}
-                defaultZoom={zoom}
-                center={center}
-                zoom={zoom}
-                onCenterChanged={ev => setCenter(ev.detail.center)}
-                onZoomChanged={ev => setZoom(ev.detail.zoom)}
-                className={styles.map}
-                gestureHandling={'greedy'}
-                disableDefaultUI={false}
-            >
-                {userLocation && (
-                    <AdvancedMarker position={userLocation}>
-                        <div className={styles.userLocationMarker}>
-                            <div className={styles.userLocationDot} />
-                        </div>
-                    </AdvancedMarker>
-                )}
+            <div className={styles.mapWrapper}>
+                <Map
+                    mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
+                    defaultCenter={defaultCenter}
+                    defaultZoom={zoom}
+                    center={center}
+                    zoom={zoom}
+                    onCenterChanged={ev => setCenter(ev.detail.center)}
+                    onZoomChanged={ev => setZoom(ev.detail.zoom)}
+                    className={styles.map}
+                    gestureHandling={'greedy'}
+                    disableDefaultUI={false}
+                >
+                    {userLocation && (
+                        <AdvancedMarker position={userLocation}>
+                            <div className={styles.userLocationMarker}>
+                                <div className={styles.userLocationDot} />
+                                <div className={styles.userLocationPulse} />
+                            </div>
+                        </AdvancedMarker>
+                    )}
 
-                {filteredRestaurants.map((place) => (
-                    <AdvancedMarker 
-                        key={place.id} 
-                        position={{ lat: place.lat, lng: place.lng }} 
-                        onClick={() => handleRestaurantSelect(place)}
-                    >
-                        <div className={`${styles.customMarker} ${place.isMichelin ? styles.michelinMarker : ""}`}>
-                            {place.isMichelin ? <Star size={14} fill="currentColor" /> : <MapPin size={16} fill="white" />}
-                        </div>
-                    </AdvancedMarker>
-                ))}
-            </Map>
+                    {filteredRestaurants.map((place) => (
+                        <AdvancedMarker 
+                            key={place.id} 
+                            position={{ lat: place.lat, lng: place.lng }} 
+                            onClick={() => handleRestaurantSelect(place)}
+                        >
+                            <div className={`${styles.customMarker} ${place.isMichelin ? styles.michelinMarker : ""}`}>
+                                {place.isMichelin ? <Star size={14} fill="currentColor" /> : <MapPin size={16} fill="white" />}
+                            </div>
+                        </AdvancedMarker>
+                    ))}
+                </Map>
+                
+                <button 
+                    className={`${styles.locateBtn} ${locating ? styles.locating : ""}`}
+                    onClick={handleLocateUser}
+                    title="Mi ubicación"
+                >
+                    <Crosshair size={20} />
+                </button>
+            </div>
         </div>
     );
 }

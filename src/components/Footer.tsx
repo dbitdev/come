@@ -12,13 +12,14 @@ export default function Footer() {
                     <div className={styles.column}>
                         <h3>Descubre</h3>
                         <Link href="/lugares">Lugares Populares</Link>
-                        <Link href="/guias/con-estrellas">Estrellas Michelin</Link>
+                        <Link href="/lugares/con-estrellas">Estrellas Michelin</Link>
                         <Link href="/mapa">Mapa interactivo</Link>
                         <Link href="/mexica-gourmet">Mexica Gourmet</Link>
                     </div>
                     <div className={styles.column}>
-                        <h3>Negocios</h3>
+                        <h3>Partners</h3>
                         <Link href="/nomina-chef">Nominar un lugar</Link>
+                        <Link href="/nomina-chef">Nominar un Chef</Link>
                         <Link href="/login">Acceso Partners</Link>
                         <Link href="/publicidad">Publicidad</Link>
                     </div>
@@ -56,6 +57,9 @@ export default function Footer() {
 
                 <div className={styles.bottomBar}>
                     <p>&copy; {new Date().getFullYear()} Mexica Medios y Entretenimiento S.A. de C.V. Todos los derechos reservados.</p>
+                    <p className={styles.poweredBy}>
+                        Powered by <a href="https://dotco.com.mx/" target="_blank" rel="noopener noreferrer">Dot</a>
+                    </p>
                 </div>
             </div>
         </footer>

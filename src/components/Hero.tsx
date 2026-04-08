@@ -15,13 +15,25 @@ export default function Hero() {
     const [activeRestIdx, setActiveRestIdx] = useState(0);
     const [activeNewsIdx, setActiveNewsIdx] = useState(0);
     const [activeSideRestIdx, setActiveSideRestIdx] = useState(0);
+    const [activeGuidesIdx, setActiveGuidesIdx] = useState(0);
     const [editorRestaurants, setEditorRestaurants] = useState<any[]>([]);
     const [latestNews, setLatestNews] = useState<any[]>([]);
+    const [heroGuides, setHeroGuides] = useState<any[]>([]);
+    const [dataLoaded, setDataLoaded] = useState(false);
+
+    // Local placeholders to prevent layout collapse
+    const placeholders = {
+        restaurant: { name: "Explora la ciudad", category: "Lugares", image: "/placeholder-restaurant.jpg", slug: "" },
+        news: { title: "Cultura Gastronómica", categories: { nodes: [{ name: "Editorial" }] }, featuredImage: { node: { sourceUrl: "/news-placeholder.jpg" } }, slug: "" },
+        guide: { title: "Guías de Temporada", heroImage: "/guide-placeholder.jpg", description: "Las mejores rutas para hoy.", slug: "" }
+    };
 
     useEffect(() => {
+        let isMounted = true;
         const fetchData = async () => {
             if (!db) return;
             try {
+                // Restaurants
                 const restSnapshot = await getDocs(collection(db, "business_leads"));
                 const restData = restSnapshot.docs.map(doc => {
                     const data = doc.data();
@@ -32,26 +44,36 @@ export default function Hero() {
                         slug: slugify(name),
                         image: (data.menu && data.menu[0]?.image) || data.image || "/placeholder-restaurant.jpg",
                         category: data.category,
+                        description: data.description || "Descubre los mejores sabores locales.",
                         ...data
                     };
                 }).filter(r => r.image && r.image !== "/placeholder-restaurant.jpg").slice(0, 10);
-                setEditorRestaurants(restData);
+                
+                if (isMounted) setEditorRestaurants(restData);
+
+                // Guides
+                const guidesSnapshot = await getDocs(collection(db, "guides"));
+                const guidesData = guidesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })).slice(0, 5);
+                if (isMounted) setHeroGuides(guidesData);
+
+                // News
+                const news = await getLatestNews(5);
+                if (isMounted) setLatestNews(news);
             } catch (err) {
                 console.error("Error fetching hero data:", err);
-            }
-
-            try {
-                const news = await getLatestNews(5);
-                setLatestNews(news);
-            } catch (err) {
-                console.error("Error fetching news for hero:", err);
+            } finally {
+                if (isMounted) setDataLoaded(true);
             }
         };
         fetchData();
+        return () => { isMounted = false; };
     }, []);
 
     useEffect(() => {
-        if (editorRestaurants.length === 0) return;
+        if (editorRestaurants.length < 2) return;
 
         const restInterval = setInterval(() => {
             setActiveRestIdx(prev => (prev + 1) % editorRestaurants.length);
@@ -62,19 +84,20 @@ export default function Hero() {
 
     // Independent interval for side sliders
     useEffect(() => {
-        if (editorRestaurants.length === 0 && latestNews.length === 0) return;
-
         const sideInterval = setInterval(() => {
-            if (editorRestaurants.length > 0) {
+            if (editorRestaurants.length > 1) {
                 setActiveSideRestIdx(prev => (prev + 1) % Math.min(editorRestaurants.length, 5));
             }
-            if (latestNews.length > 0) {
+            if (latestNews.length > 1) {
                 setActiveNewsIdx(prev => (prev + 1) % latestNews.length);
             }
-        }, 5000);
+            if (heroGuides.length > 1) {
+                setActiveGuidesIdx(prev => (prev + 1) % heroGuides.length);
+            }
+        }, 10000);
 
         return () => clearInterval(sideInterval);
-    }, [editorRestaurants.length, latestNews.length]);
+    }, [editorRestaurants.length, latestNews.length, heroGuides.length]);
 
     const handleGeolocation = () => {
         if ("geolocation" in navigator) {
@@ -91,7 +114,7 @@ export default function Hero() {
         const params = new URLSearchParams();
         if (query) params.set("search", query);
         if (location) params.set("location", location);
-        
+
         window.location.href = `/lugares?${params.toString()}`;
     };
 
@@ -101,8 +124,8 @@ export default function Hero() {
                 <div className={styles.heroBox}>
                     {/* Background images now limited to this box */}
                     {editorRestaurants.map((rest, idx) => (
-                        <div 
-                            key={rest.id} 
+                        <div
+                            key={rest.id}
                             className={`${styles.bgSlide} ${idx === activeRestIdx ? styles.activeSlide : ""}`}
                             style={{ backgroundImage: `url(${rest.image})` }}
                         >
@@ -118,7 +141,7 @@ export default function Hero() {
 
                     <div className={styles.heroContent}>
                         <div className={styles.textContent}>
-                            <span className={styles.eyebrow}>Club Gastronómico</span>
+                            <span className={styles.eyebrow}>Guia Gastronómica</span>
                             <h1 className={styles.title}>Eres donde Comes</h1>
                         </div>
 
@@ -148,14 +171,14 @@ export default function Hero() {
                         </form>
 
                         <div className={styles.textContent}>
-                            <p className={styles.subtitle}>La guía definitiva y curada de las mejores experiencias gastronómicas en México, reservada para los paladares más exigentes.</p>
+                            <p className={styles.subtitle}>La guía definitiva y curada de las mejores experiencias gastronómicas en México.</p>
                         </div>
                     </div>
 
                     <div className={styles.dots}>
                         {editorRestaurants.map((_, idx) => (
-                            <span 
-                                key={idx} 
+                            <span
+                                key={idx}
                                 className={`${styles.dot} ${idx === activeRestIdx ? styles.activeDot : ""}`}
                                 onClick={() => setActiveRestIdx(idx)}
                             />
@@ -164,51 +187,53 @@ export default function Hero() {
                 </div>
 
                 <div className={styles.rightSection}>
-                    {/* Top Slider: Restaurants */}
-                    <div className={styles.sideSliderBox}>
-                        <div className={styles.sliderLabel}>Destacados</div>
-                        {editorRestaurants.length > 0 && (
-                            <Link href={`/lugares/${editorRestaurants[activeSideRestIdx].slug}`} className={styles.sliderLink}>
-                                <div 
-                                    className={styles.sliderItem}
-                                    style={{ backgroundImage: `url(${editorRestaurants[activeSideRestIdx].image})` }}
-                                >
-                                    <div className={styles.sliderOverlay}>
-                                        <span className={styles.sliderCategory}>{editorRestaurants[activeSideRestIdx].category}</span>
-                                        <h3 className={styles.sliderTitle}>{editorRestaurants[activeSideRestIdx].name}</h3>
-                                    </div>
+                    {/* Slide 1: Featured Restaurants (Magazine Style) */}
+                    {(() => {
+                        const item = editorRestaurants[activeSideRestIdx] || placeholders.restaurant;
+                        return (
+                            <Link href={item.slug ? `/lugares/${item.slug}` : '#'} className={styles.magazineCard}>
+                                <div className={styles.cardThumb} style={{ backgroundImage: `url(${item.image})` }} />
+                                <div className={styles.cardBody}>
+                                    <span className={styles.cardEyebrow}>Lugares</span>
+                                    <h3 className={styles.cardTitle}>{item.name}</h3>
+                                    <p className={styles.cardExcerpt}>{item.description?.substring(0, 80)}...</p>
                                 </div>
                             </Link>
-                        )}
-                        <div className={styles.miniDots}>
-                            {editorRestaurants.slice(0, 5).map((_, i) => (
-                                <span key={i} className={`${styles.miniDot} ${i === activeSideRestIdx ? styles.miniDotActive : ""}`} />
-                            ))}
-                        </div>
-                    </div>
+                        );
+                    })()}
 
-                    {/* Bottom Slider: Publications */}
-                    <div className={styles.sideSliderBox}>
-                        <div className={styles.sliderLabel}>Editorial</div>
-                        {latestNews.length > 0 && (
-                            <Link href={`/noticias/${latestNews[activeNewsIdx].slug}`} className={styles.sliderLink}>
-                                <div 
-                                    className={styles.sliderItem}
-                                    style={{ backgroundImage: `url(${latestNews[activeNewsIdx].featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
-                                >
-                                    <div className={styles.sliderOverlay}>
-                                        <span className={styles.sliderCategory}>{latestNews[activeNewsIdx].categories?.nodes?.[0]?.name || 'Gourmet'}</span>
-                                        <h3 className={styles.sliderTitle}>{latestNews[activeNewsIdx].title}</h3>
-                                    </div>
+                    {/* Slide 2: Editorial News (Magazine Style) */}
+                    {(() => {
+                        const item = latestNews[activeNewsIdx] || placeholders.news;
+                        const thumbUrl = item.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg";
+                        return (
+                            <Link href={item.slug ? `/noticias/${item.slug}` : '#'} className={styles.magazineCard}>
+                                <div className={styles.cardThumb} style={{ backgroundImage: `url(${thumbUrl})` }} />
+                                <div className={styles.cardBody}>
+                                    <span className={styles.cardEyebrow}>Editorial</span>
+                                    <h3 className={styles.cardTitle}>{item.title}</h3>
+                                    <p className={styles.cardExcerpt}>
+                                        {item.excerpt ? item.excerpt.replace(/<[^>]*>/g, '').substring(0, 80) : "Actualidad gourmet y más."}...
+                                    </p>
                                 </div>
                             </Link>
-                        )}
-                        <div className={styles.miniDots}>
-                            {latestNews.map((_, i) => (
-                                <span key={i} className={`${styles.miniDot} ${i === activeNewsIdx ? styles.miniDotActive : ""}`} />
-                            ))}
-                        </div>
-                    </div>
+                        );
+                    })()}
+
+                    {/* Slide 3: Interactive Guides (Magazine Style) */}
+                    {(() => {
+                        const item = heroGuides[activeGuidesIdx] || placeholders.guide;
+                        return (
+                            <Link href={item.slug ? `/guias/${item.slug}` : '#'} className={styles.magazineCard}>
+                                <div className={styles.cardThumb} style={{ backgroundImage: `url(${item.heroImage || "/guide-placeholder.jpg"})` }} />
+                                <div className={styles.cardBody}>
+                                    <span className={styles.cardEyebrow}>Guías</span>
+                                    <h3 className={styles.cardTitle}>{item.title}</h3>
+                                    <p className={styles.cardExcerpt}>{item.description?.substring(0, 80) || "Las mejores rutas curadas."}...</p>
+                                </div>
+                            </Link>
+                        );
+                    })()}
                 </div>
             </div>
         </section>

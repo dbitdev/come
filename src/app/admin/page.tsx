@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { db } from '@/lib/firebase';
 import AdminGuard from "@/components/AdminGuard";
+import MediaUploader from "@/components/MediaUploader";
+import { slugify } from '@/lib/utils';
 import { 
     collection, 
     getDocs, 
@@ -27,12 +29,14 @@ import { storage } from "@/lib/firebase";
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus' | 'guias' | 'config'>('dashboard');
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [chefs, setChefs] = useState<any[]>([]);
+    const [guides, setGuides] = useState<any[]>([]);
     const [leads, setLeads] = useState<any[]>([]);
     const [editingRestaurant, setEditingRestaurant] = useState<any>(null);
     const [editingChef, setEditingChef] = useState<any>(null);
+    const [editingGuide, setEditingGuide] = useState<any>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isSyncingChefs, setIsSyncingChefs] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -61,6 +65,11 @@ export default function AdminDashboard() {
             const chefsSnapshot = await getDocs(collection(db, "chefs"));
             const chefsData = chefsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setChefs(chefsData);
+
+            // Fetch Guides
+            const guidesSnapshot = await getDocs(collection(db, "guides"));
+            const guidesData = guidesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setGuides(guidesData);
         } catch (err) {
             console.error("Error fetching data:", err);
         } finally {
@@ -304,6 +313,47 @@ export default function AdminDashboard() {
             alert("Error al guardar chef");
         }
     };
+    const handleSaveGuide = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!db || !editingGuide) return;
+        try {
+            const { id, ...data } = editingGuide;
+            const guideSlug = data.slug || slugify(data.title);
+            
+            const gData = {
+                ...data,
+                slug: guideSlug,
+                updatedAt: new Date().toISOString(),
+                restaurantIds: data.stops?.map((s: any) => s.location?.restaurantId).filter(Boolean) || []
+            };
+
+            if (id) {
+                await updateDoc(doc(db, "guides", id), gData);
+            } else {
+                await addDoc(collection(db, "guides"), {
+                    ...gData,
+                    createdAt: new Date().toISOString(),
+                    status: 'published'
+                });
+            }
+            setEditingGuide(null);
+            fetchData();
+            alert("Guía guardada con éxito");
+        } catch (err) {
+            console.error(err);
+            alert("Error al guardar guía");
+        }
+    };
+
+    const handleDeleteGuide = async (id: string) => {
+        if (!db || !window.confirm("¿Estás seguro de eliminar esta guía?")) return;
+        try {
+            await deleteDoc(doc(db, "guides", id));
+            fetchData();
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const handleDeleteChef = async (id: string) => {
         if (!db || !window.confirm("¿Estás seguro de eliminar este chef?")) return;
@@ -326,6 +376,7 @@ export default function AdminDashboard() {
                         <button onClick={() => setActiveSection('dashboard')} className={activeSection === 'dashboard' ? styles.navItemActive : styles.navItem}><FaChartBar /> Dashboard</button>
                         <button onClick={() => setActiveSection('restaurantes')} className={activeSection === 'restaurantes' ? styles.navItemActive : styles.navItem}><FaUtensils /> Negocios / Lugares</button>
                         <button onClick={() => setActiveSection('chefs')} className={activeSection === 'chefs' ? styles.navItemActive : styles.navItem}><FaUsers /> Directorio de Chefs</button>
+                        <button onClick={() => setActiveSection('guias')} className={activeSection === 'guias' ? styles.navItemActive : styles.navItem}><FaMapMarkerAlt /> Guías Interactivas</button>
                         <button onClick={() => setActiveSection('menus')} className={activeSection === 'menus' ? styles.navItemActive : styles.navItem}><FaBookOpen /> Menús Digitales</button>
                     </nav>
                     
@@ -474,34 +525,10 @@ export default function AdminDashboard() {
                                                     />
 
                                                     <label>Imagen del Restaurante</label>
-                                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                                        <div className={styles.imagePlaceholder} style={{ 
-                                                            backgroundImage: editingRestaurant.image ? `url(${editingRestaurant.image})` : 'none',
-                                                            backgroundSize: 'cover',
-                                                            backgroundPosition: 'center',
-                                                            width: '60px', 
-                                                            height: '60px', 
-                                                            borderRadius: '8px',
-                                                            backgroundColor: '#f0f0f0',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            color: '#ccc',
-                                                            overflow: 'hidden'
-                                                        }}>
-                                                            {!editingRestaurant.image && <FaImage size={24} />}
-                                                        </div>
-                                                        <input 
-                                                            type="file" 
-                                                            accept="image/*"
-                                                            onChange={handleFileUpload}
-                                                            style={{ display: 'none' }}
-                                                            id="image-upload"
-                                                        />
-                                                        <label htmlFor="image-upload" className={styles.editBtn} style={{ cursor: 'pointer', padding: '0.8rem 1.2rem', width: 'auto', display: 'flex', gap: '8px', border: '1px solid #ddd', borderRadius: '30px' }}>
-                                                            <FaUpload /> {isUploading ? "Subiendo..." : "Subir Foto"}
-                                                        </label>
-                                                    </div>
+                                                    <MediaUploader 
+                                                        folder="restaurants" 
+                                                        onUploadComplete={(url) => setEditingRestaurant({...editingRestaurant, image: url})} 
+                                                    />
                                                     <input 
                                                         value={editingRestaurant.image || ''} 
                                                         onChange={e => setEditingRestaurant({...editingRestaurant, image: e.target.value})}
@@ -617,7 +644,7 @@ export default function AdminDashboard() {
                                                             <label>Ubicación</label>
                                                             <input 
                                                                 value={editingChef.ubicacion || ''} 
-                                                                onChange={e => setEditingChef({...editingChef, ubicacion: e.target.value})}
+                                                                onChange={e => setEditingChef({...editingChef, nombre: e.target.value})}
                                                             />
                                                         </div>
                                                         <div style={{ width: '100px' }}>
@@ -637,10 +664,15 @@ export default function AdminDashboard() {
                                                         rows={3}
                                                     />
 
-                                                    <label>Logro Clave</label>
+                                                    <label>Imagen del Chef</label>
+                                                    <MediaUploader 
+                                                        folder="chefs" 
+                                                        onUploadComplete={(url) => setEditingChef({...editingChef, image: url})} 
+                                                    />
                                                     <input 
-                                                        value={editingChef.logro_clave || ''} 
-                                                        onChange={e => setEditingChef({...editingChef, logro_clave: e.target.value})}
+                                                        value={editingChef.image || ''} 
+                                                        onChange={e => setEditingChef({...editingChef, image: e.target.value})}
+                                                        placeholder="URL de la foto..."
                                                     />
 
                                                     <label>Redes Sociales</label>
@@ -658,6 +690,107 @@ export default function AdminDashboard() {
                                                 <div className={styles.emptyState}>
                                                     <FaUsers size={40} />
                                                     <p>Selecciona un chef para editar o crea uno nuevo.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
+                             {activeSection === 'guias' && (
+                                <section>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                                        <h2>Gestión de Guías</h2>
+                                        <button className={styles.primaryBtn} onClick={() => setEditingGuide({ title: '', description: '', stops: [], restaurantIds: [] })}><FaPlus /> Nueva Guía</button>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                        <div className={styles.tableSection}>
+                                            <table className={styles.adminTable}>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Guía</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {guides.map(guide => (
+                                                        <tr key={guide.id} style={{ background: editingGuide?.id === guide.id ? '#f0f7ff' : 'transparent' }}>
+                                                            <td>
+                                                                <div style={{ fontWeight: 700 }}>{guide.title}</div>
+                                                                <div style={{ fontSize: '0.8rem', color: '#888' }}>{guide.stops?.length || 0} paradas / {guide.status}</div>
+                                                            </td>
+                                                            <td className={styles.actions}>
+                                                                <button className={styles.editBtn} onClick={() => setEditingGuide(guide)}><FaEdit /></button>
+                                                                <button className={styles.deleteBtn} onClick={() => handleDeleteGuide(guide.id)}><FaTrash /></button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className={styles.formOuter}>
+                                            {editingGuide ? (
+                                                <form onSubmit={handleSaveGuide} className={styles.adminForm}>
+                                                    <h3>{editingGuide.id ? "Editar Guía" : "Nueva Guía"}</h3>
+                                                    
+                                                    <label>Título de la Guía</label>
+                                                    <input 
+                                                        value={editingGuide.title || ''} 
+                                                        onChange={e => setEditingGuide({...editingGuide, title: e.target.value})}
+                                                    />
+
+                                                    <label>Imagen de Portada (Hero)</label>
+                                                    <MediaUploader 
+                                                        folder="guides" 
+                                                        onUploadComplete={(url) => setEditingGuide({...editingGuide, heroImage: url})} 
+                                                    />
+                                                    <input 
+                                                        value={editingGuide.heroImage || ''} 
+                                                        onChange={e => setEditingGuide({...editingGuide, heroImage: e.target.value})}
+                                                        placeholder="URL de la imagen..."
+                                                    />
+
+                                                    <label>Descripción</label>
+                                                    <textarea 
+                                                        value={editingGuide.description || ''} 
+                                                        onChange={e => setEditingGuide({...editingGuide, description: e.target.value})}
+                                                        rows={3}
+                                                    />
+
+                                                    <label>Autor</label>
+                                                    <input 
+                                                        value={editingGuide.authorName || 'Admin'} 
+                                                        onChange={e => setEditingGuide({...editingGuide, authorName: e.target.value})}
+                                                    />
+
+                                                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
+                                                        <h4 style={{ marginBottom: '1rem' }}>Paradas ({editingGuide.stops?.length || 0})</h4>
+                                                        <button 
+                                                            type="button" 
+                                                            className={styles.editBtn}
+                                                            onClick={() => {
+                                                                const newStop = { id: Date.now().toString(), title: '', content: '', order: (editingGuide.stops?.length || 0) + 1, location: { lat: 0, lng: -99.1332, name: '', address: '' } };
+                                                                setEditingGuide({...editingGuide, stops: [...(editingGuide.stops || []), newStop]});
+                                                            }}
+                                                        >
+                                                            <FaPlus /> Agregar Parada
+                                                        </button>
+                                                        
+                                                        <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#666' }}>
+                                                            * El editor avanzado de paradas y mapas proximamente. Use el JSON para edición manual avanzada.
+                                                        </p>
+                                                    </div>
+
+                                                    <button type="submit" className={styles.primaryBtn} style={{ marginTop: '2rem' }}>
+                                                        <FaSave /> Guardar Guía
+                                                    </button>
+                                                </form>
+                                            ) : (
+                                                <div className={styles.emptyState}>
+                                                    <FaMapMarkerAlt size={40} />
+                                                    <p>Selecciona una guía para editar o crea una nueva.</p>
                                                 </div>
                                             )}
                                         </div>

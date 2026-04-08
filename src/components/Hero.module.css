@@ -70,17 +70,19 @@
     width: 100%;
     max-width: 1500px;
     margin: 0 auto;
-    padding: 80px 1.5rem 0 1.5rem; /* Push content below 80px transparent header */
-    display: flex;
+    padding: 80px 40px 40px 40px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     align-items: stretch;
+    gap: 2rem;
 }
 
 .heroBox {
-    flex: 2;
     position: relative;
-    height: 550px;
+    height: 100%;
+    min-height: 550px;
     overflow: hidden;
-    background: #000;
+    background: #111; /* Dark background as fallback */
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
@@ -92,14 +94,14 @@
     flex-direction: column;
     justify-content: center;
     padding: 4rem;
+    background: transparent !important;
 }
 
 .rightSection {
-    flex: 0 0 380px;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    padding: 0 2rem 0 0; /* Add back padding for the side sections to not touch edges */
+    gap: 1rem;
+    padding: 0;
 }
 
 .textContent {
@@ -138,15 +140,13 @@
 
 .searchForm {
     display: flex;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: #ffffff;
     padding: 0.4rem;
     border-radius: 4px;
     width: 100%;
     max-width: 850px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255, 255, 255, 1);
     align-items: center;
     transition: var(--transition-smooth);
     margin: 2rem 0;
@@ -154,7 +154,7 @@
 
 .searchForm:focus-within {
     border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
 }
 
 .inputGroup {
@@ -167,11 +167,11 @@
 .divider {
     width: 1px;
     height: 24px;
-    background: rgba(255, 255, 255, 0.15);
+    background: #eee;
 }
 
 .icon {
-    color: rgba(255, 255, 255, 0.6);
+    color: #666;
     margin-right: 0.8rem;
 }
 
@@ -189,12 +189,12 @@
     font-size: 0.95rem;
     outline: none;
     background: transparent;
-    color: #fff;
+    color: #1a1a1a;
     font-family: var(--font-modern);
 }
 
 .input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: #999;
 }
 
 .searchButton {
@@ -216,62 +216,76 @@
     background-color: var(--primary-dark);
 }
 
-.sideSliderBox {
-    position: relative;
-    height: 220px;
+.magazineCard {
+    display: flex !important;
+    background: #fdfaf5;
+    text-decoration: none;
+    flex: 1; /* Match height of container equally */
+    min-height: 140px;
     border-radius: 4px;
     overflow: hidden;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0,0,0,0.03);
 }
 
-.sideSliderBox:hover {
-    transform: translateY(-8px);
+.magazineCard:hover {
+    transform: translateX(-5px);
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-.sliderLabel {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    z-index: 20;
-    background: var(--primary);
-    color: #fff;
-    padding: 0.25rem 0.6rem;
-    border-radius: 2px;
-    font-size: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+.cardThumb {
+    flex: 0 0 180px;
+    min-width: 180px;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #eee; /* Fallback for slow images */
 }
 
-.sliderOverlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
+.cardBody {
+    flex: 1;
+    padding: 1rem 1.2rem;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    padding: 1.5rem;
+    justify-content: center;
+    min-width: 0; /* Important for text truncation in flex */
 }
 
-.sliderCategory {
-    color: var(--primary);
-    font-size: 0.65rem;
-    font-weight: 700;
+.cardEyebrow {
+    color: #e65100;
+    font-size: 0.6rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
     margin-bottom: 0.3rem;
 }
 
-.sliderTitle {
-    color: #fff;
-    font-size: 1.15rem;
-    font-family: var(--font-serif);
-    font-weight: 400;
-    line-height: 1.25;
+.cardTitle {
+    color: #1a1a1a;
+    font-size: 1rem;
+    font-family: var(--font-modern);
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 0.4rem 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cardExcerpt {
+    color: #666;
+    font-size: 0.8rem;
+    line-height: 1.4;
     margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .miniDots {
@@ -328,51 +342,40 @@
 }
 
 @media (max-width: 1024px) {
-    .hero {
-        height: auto;
-        min-height: 100vh;
-        padding-bottom: 4rem;
-    }
-
     .container {
+        display: flex;
         flex-direction: column;
-        padding: 65px 0 0 0 !important; /* Push content below 65px transparent header */
-        gap: 4rem;
+        padding: 65px 0 0 0 !important;
+        gap: 2rem;
         text-align: center;
         margin-top: 0 !important;
     }
 
-    .heroContent {
-        padding: 2rem 1.5rem; /* Reduced horizontal padding */
-    }
-
     .heroBox {
-        border-radius: 0; /* Ensure it spans full width */
+        width: 100%;
+        min-height: 500px;
+        border-radius: 0;
     }
 
-    .leftSection {
-        align-items: center;
+    .heroContent {
+        padding: 4rem 1.5rem 2rem 1.5rem;
     }
 
-    .subtitle {
-        margin: 0 auto;
+    .title {
+        font-size: clamp(2.5rem, 8vw, 3.5rem);
     }
 
     .searchForm {
         flex-direction: column;
-        gap: 1rem;
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        padding: 0;
+        gap: 0.8rem;
+        background: #ffffff;
+        padding: 1rem;
+        margin: 1.5rem 0;
     }
 
     .inputGroup {
         width: 100%;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1rem;
+        border: 1px solid #eee;
         border-radius: 4px;
     }
 
@@ -387,7 +390,21 @@
 
     .rightSection {
         width: 100%;
-        max-width: 600px;
+        padding: 0 1rem 4rem 1rem;
+    }
+
+    .magazineCard {
+        min-height: 120px;
+        text-align: left;
+    }
+
+    .cardThumb {
+        flex: 0 0 140px;
+        min-width: 140px;
+    }
+
+    .cardBody {
+        padding: 0.8rem 1rem;
     }
 
     .activeRestInfo, .dots {

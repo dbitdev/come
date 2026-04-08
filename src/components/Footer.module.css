@@ -117,9 +117,27 @@
 }
 
 .bottomBar p {
+    margin: 0.2rem 0;
     color: #475569;
     font-size: 0.85rem;
     font-weight: 500;
+}
+
+.poweredBy {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 0.25rem !important;
+}
+
+.poweredBy a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.poweredBy a:hover {
+    color: var(--primary);
 }
 
 @media (max-width: 1024px) {

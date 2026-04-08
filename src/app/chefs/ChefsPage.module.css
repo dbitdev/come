@@ -1,0 +1,162 @@
+.container {
+    padding-top: 100px;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.hero {
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1600&q=80');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    padding: 6rem 2rem;
+    text-align: center;
+}
+
+.heroContent h1 {
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.heroContent p {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.main {
+    max-width: 1200px;
+    margin: -3rem auto 5rem;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+.searchBar {
+    background: #fff;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 4rem;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.searchBar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1.1rem;
+    font-family: inherit;
+}
+
+.chefsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2.5rem;
+}
+
+.chefCard {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chefCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.imageWrapper {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+.imageWrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.chefCard:hover img {
+    transform: scale(1.1);
+}
+
+.starsBadge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: #000;
+    color: #f5c518;
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.info {
+    padding: 1.5rem;
+}
+
+.specialty {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #000;
+}
+
+.restaurant {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.viewBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #000;
+    transition: color 0.2s;
+}
+
+.chefCard:hover .viewBtn {
+    color: var(--primary);
+}
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    .chefsGrid {
+        grid-template-columns: 1fr;
+    }
+}

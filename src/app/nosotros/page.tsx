@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaHeart, FaMagic, FaUsers, FaGlobe, FaAward, FaRocket } from 'react-icons/fa';
+import { Heart, Sparkles, Users, Globe, Award, Rocket, ChevronRight } from 'lucide-react';
 import styles from './nosotros.module.css';
 
 export default function Nosotros() {
@@ -49,13 +49,13 @@ export default function Nosotros() {
             <section className={`${styles.section} ${styles.missionVision}`}>
                 <div className={styles.mvGrid}>
                     <div className={styles.mvCard}>
-                        <h3><FaRocket /> Nuestra Misión</h3>
+                        <h3><Rocket size={32} /> Nuestra Misión</h3>
                         <p>
                             Facilitar el descubrimiento de experiencias gastronómicas inigualables, proporcionando herramientas digitales de vanguardia tanto para comensales como para dueños de negocios, fomentando un ecosistema culinario vibrante y sostenible.
                         </p>
                     </div>
                     <div className={styles.mvCard}>
-                        <h3><FaGlobe /> Nuestra Visión</h3>
+                        <h3><Globe size={32} /> Nuestra Visión</h3>
                         <p>
                             Convertirnos en el referente mundial de la gastronomía mexicana, siendo la plataforma indispensable para proyectar el talento nacional y las tradiciones que nos definen ante los ojos del mundo.
                         </p>
@@ -69,22 +69,22 @@ export default function Nosotros() {
                     <h2>Nuestros Valores</h2>
                     <div className={styles.valuesGrid}>
                         <div className={styles.valueCard}>
-                            <FaHeart className={styles.valueIcon} />
+                            <Heart className={styles.valueIcon} />
                             <h4>Pasión</h4>
                             <p>Amamos lo que hacemos y celebramos la entrega de quienes hacen posible la magia en la cocina.</p>
                         </div>
                         <div className={styles.valueCard}>
-                            <FaAward className={styles.valueIcon} />
+                            <Award className={styles.valueIcon} />
                             <h4>Excelencia</h4>
                             <p>Buscamos y destacamos solo lo mejor, manteniendo estándares que inspiran confianza.</p>
                         </div>
                         <div className={styles.valueCard}>
-                            <FaUsers className={styles.valueIcon} />
+                            <Users className={styles.valueIcon} />
                             <h4>Comunidad</h4>
                             <p>Crecemos juntos, apoyando a los negocios locales y escuchando a nuestros usuarios.</p>
                         </div>
                         <div className={styles.valueCard}>
-                            <FaMagic className={styles.valueIcon} />
+                            <Sparkles className={styles.valueIcon} />
                             <h4>Innovación</h4>
                             <p>Utilizamos la tecnología para simplificar y enriquecer cada paso de la experiencia culinaria.</p>
                         </div>

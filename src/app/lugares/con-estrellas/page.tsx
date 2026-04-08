@@ -16,7 +16,14 @@ export default function MichelinGuidePage() {
             try {
                 const snapshot = await getDocs(collection(db, "business_leads"));
                 const data = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .map(doc => {
+                        const d = doc.data();
+                        return { 
+                            id: doc.id, 
+                            ...d, 
+                            name: d.restaurantName || d.name || "Sin nombre" 
+                        };
+                    })
                     .filter((r: any) => r.isMichelin);
                 setMichelinPlaces(data);
             } catch (err) {

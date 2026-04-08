@@ -1,0 +1,143 @@
+.container {
+    padding-top: 80px;
+    min-height: 100vh;
+    background-color: #fff;
+    font-family: 'Outfit', sans-serif;
+}
+
+.hero {
+    padding: 6rem 2rem;
+    background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+    color: #fff;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.heroContent {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.heroContent h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+}
+
+.heroContent p {
+    font-size: 1.25rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+}
+
+.main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 3rem;
+}
+
+.recipeCard {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.recipeCard:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.imageWrapper {
+    height: 250px;
+    position: relative;
+}
+
+.imageWrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.difficultyBadge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.info {
+    padding: 2rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #1a1a1a;
+}
+
+.meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.viewBtn {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #1a1a1a;
+    background: none;
+    color: #1a1a1a;
+    font-weight: 800;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.viewBtn:hover {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.comingSoon {
+    margin-top: 6rem;
+    text-align: center;
+    padding: 4rem;
+    background: #fafafa;
+    border-radius: 30px;
+    border: 2px dashed #eee;
+    color: #888;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .heroContent h1 { font-size: 2.5rem; }
+    .grid { grid-template-columns: 1fr; }
+}

@@ -10,7 +10,8 @@ import {
     Globe, 
     Phone, 
     Navigation, 
-    ChevronRight
+    ChevronRight,
+    BookOpen
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaTwitter } from 'react-icons/fa';
 import { slugify } from '@/lib/utils';
@@ -130,6 +131,16 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                 .map(d => ({ id: d.id, ...d.data() } as any))
                 .filter(p => p.id !== id)
                 .slice(0, 4);
+
+            // NEW: Fetch guides where this restaurant appears
+            const qGuides = query(
+                collection(db, "guides"),
+                where("restaurantIds", "array-contains", id),
+                limit(3)
+            );
+            const guidesSnap = await getDocs(qGuides);
+            const featuredInGuides = guidesSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+            (restaurant as any).featuredInGuides = featuredInGuides;
         }
     } catch (err) {
         console.error("Error fetching restaurant profile data:", err);
@@ -214,6 +225,28 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                 <div className={styles.grid}>
                     {/* Main Content Column */}
                     <main className={styles.mainColumn}>
+                        {/* Featured In Guides Section */}
+                        {(restaurant as any).featuredInGuides && (restaurant as any).featuredInGuides.length > 0 && (
+                            <section className={styles.extraSection}>
+                                <h2 className={styles.sectionHeading}>Aparece en estas guías</h2>
+                                <div className={styles.guidesGrid}>
+                                    {(restaurant as any).featuredInGuides.map((guide: any) => (
+                                        <Link key={guide.id} href={`/guias/${guide.slug}`} className={styles.guideMiniCard}>
+                                            <div className={styles.guideMiniThumb}>
+                                                <img src={guide.heroImage || "/news-placeholder.jpg"} alt={guide.title} />
+                                            </div>
+                                            <div className={styles.guideMiniInfo}>
+                                                <h3>{guide.title}</h3>
+                                                <div className={styles.guideMiniMeta}>
+                                                    <BookOpen size={14} /> Artículo Interactivo
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         <section className={styles.aboutSection}>
                             <h2>Experiencia Gastronómica</h2>
                             <p className={styles.description}>
@@ -223,7 +256,9 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                             {restaurant.chef && (
                                 <div className={styles.chefSection}>
                                     <span className={styles.chefLabel}>Liderado por</span>
-                                    <div className={styles.chefName}>{restaurant.chef}</div>
+                                    <Link href={`/chefs/${slugify(restaurant.chef)}`} className={styles.chefLink}>
+                                        <div className={styles.chefName}>{restaurant.chef}</div>
+                                    </Link>
                                     <p style={{ marginTop: '1rem', color: '#666' }}>
                                         Visionario de la cocina {restaurant.category.toLowerCase()}, cuya pasión por los ingredientes locales ha posicionado a {restaurant.name} como un referente internacional.
                                     </p>
