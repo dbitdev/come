@@ -47,17 +47,27 @@ export default function GoogleMapsWrapper({ children }: { children: React.ReactN
       minHeight: '400px'
     }}>
       <h3 style={{ marginBottom: '15px', fontSize: '1.5rem' }}>Aviso de Google Maps</h3>
-      <p style={{ marginBottom: '10px' }}>
+      <p style={{ marginBottom: '10px', fontWeight: 'bold' }}>
         {errorStatus === 'RefererNotAllowedMapError' 
-          ? 'Tu entorno local (localhost:3000) no tiene acceso autorizado para esta clave de API.' 
-          : 'Hubo un problema al inicializar el mapa de Google.'}
+          ? 'Acceso denegado (Referrer Restriction).' 
+          : errorStatus === 'ApiNotActivatedMapError'
+          ? 'API no activada en la consola.'
+          : 'Error de Autenticación (AuthFailure).'}
       </p>
-      <p style={{ fontSize: '0.95rem', marginTop: '10px', maxWidth: '500px', lineHeight: 1.5 }}>
-        Por favor, sigue las instrucciones en la <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style={{ color: '#856404', fontWeight: 'bold', textDecoration: 'underline' }}>Consola de Google Cloud</a> para autorizar localhost o desactivar las restricciones de dominio temporalmente.
+      <div style={{ fontSize: '0.95rem', marginTop: '10px', maxWidth: '500px', lineHeight: 1.6 }}>
+        <p>Asegúrate de que:</p>
+        <ul style={{ textAlign: 'left', display: 'inline-block', marginTop: '10px' }}>
+          <li>La <strong>Maps JavaScript API</strong> esté activada.</li>
+          <li>La facturación (Billing) esté habilitada.</li>
+          <li>Localhost (o tu dominio) esté autorizado en las restricciones.</li>
+        </ul>
+      </div>
+      <p style={{ fontSize: '0.9rem', marginTop: '20px' }}>
+        Verifica tu configuración en la <a href="https://console.cloud.google.com/google/maps-apis/api-list" target="_blank" rel="noopener noreferrer" style={{ color: '#856404', fontWeight: 'bold', textDecoration: 'underline' }}>Consola de Google Cloud</a>.
       </p>
       <button 
         onClick={() => window.location.reload()}
-        style={{ marginTop: '20px', padding: '10px 20px', background: '#856404', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+        style={{ marginTop: '25px', padding: '12px 24px', background: '#856404', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 600 }}
       >
         Reintentar carga
       </button>
@@ -76,7 +86,8 @@ export default function GoogleMapsWrapper({ children }: { children: React.ReactN
         onLoad={() => console.log('Google Maps API loaded successfully')}
         onError={(err) => {
           console.error('Google Maps API failed to load:', err);
-          setErrorStatus('RefererNotAllowedMapError');
+          // If billing or API is not enabled, we often get a descriptive error in console
+          setErrorStatus('AuthFailure');
         }}
       >
         {children}
