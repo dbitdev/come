@@ -14,12 +14,14 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGuiasOpen, setIsGuiasOpen] = useState(false);
   const [isMexicoOpen, setIsMexicoOpen] = useState(false);
+  const [isMasOpen, setIsMasOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileSearch, setMobileSearch] = useState("");
   const { user } = useAuth();
   const pathname = usePathname();
   const guiasRef = useRef<HTMLDivElement>(null);
   const mexicoRef = useRef<HTMLDivElement>(null);
+  const masRef = useRef<HTMLDivElement>(null);
 
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -54,6 +56,9 @@ export default function Navbar() {
       if (mexicoRef.current && !mexicoRef.current.contains(event.target as Node)) {
         setIsMexicoOpen(false);
       }
+      if (masRef.current && !masRef.current.contains(event.target as Node)) {
+        setIsMasOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
 
@@ -64,14 +69,14 @@ export default function Navbar() {
     };
   }, []);
 
-  // Prevent scroll when search overlay is open
+  // Prevent scroll when search overlay OR mobile menu is open
   useEffect(() => {
-    if (isSearchOpen) {
+    if (isSearchOpen || isMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [isSearchOpen]);
+  }, [isSearchOpen, isMenuOpen]);
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -86,6 +91,7 @@ export default function Navbar() {
     setIsMenuOpen(false);
     setIsGuiasOpen(false);
     setIsMexicoOpen(false);
+    setIsMasOpen(false);
   };
 
   return (
@@ -116,6 +122,7 @@ export default function Navbar() {
                 e.preventDefault();
                 setIsMexicoOpen(!isMexicoOpen);
                 setIsGuiasOpen(false);
+                setIsMasOpen(false);
               }}
             >
               Lugares
@@ -153,6 +160,7 @@ export default function Navbar() {
                 e.preventDefault();
                 setIsGuiasOpen(!isGuiasOpen);
                 setIsMexicoOpen(false);
+                setIsMasOpen(false);
               }}
             >
               Guías
@@ -168,14 +176,20 @@ export default function Navbar() {
           </div>
 
           <div 
-            className={`${styles.dropdown}`}
+            ref={masRef}
+            className={`${styles.dropdown} ${isMasOpen ? styles.dropdownActive : ""}`}
           >
             <button 
               className={`${styles.dropbtn}`} 
-              onClick={(e) => { e.preventDefault(); }}
+              onClick={(e) => { 
+                e.preventDefault(); 
+                setIsMasOpen(!isMasOpen);
+                setIsMexicoOpen(false);
+                setIsGuiasOpen(false);
+              }}
             >
               Más
-              <ChevronDown size={14} className={styles.chevron} />
+              <ChevronDown size={14} className={`${styles.chevron} ${isMasOpen ? styles.chevronRotated : ""}`} />
             </button>
             <div className={styles.dropdownContent}>
               <Link href="/guias/recetas" onClick={closeAllMenus}>Recetas</Link>

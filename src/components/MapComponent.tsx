@@ -113,9 +113,16 @@ function MapContent() {
         handleLocateUser();
     }, []); // Only run once on mount
 
+    const lastBoundsRef = useRef<string>("");
+
     useEffect(() => {
         if (!map || filteredRestaurants.length === 0) return;
         
+        // Create a string representation of the current set of restaurants to avoid redundant fitBounds
+        const boundsHash = filteredRestaurants.map(r => `${r.lat},${r.lng}`).join('|');
+        if (boundsHash === lastBoundsRef.current) return;
+        lastBoundsRef.current = boundsHash;
+
         const bounds = new google.maps.LatLngBounds();
         filteredRestaurants.forEach(r => bounds.extend({ lat: r.lat, lng: r.lng }));
         
@@ -125,11 +132,17 @@ function MapContent() {
             bottom: 50,
             left: 350 // Account for the sidebar width
         });
-    }, [map, filteredRestaurants, searchQuery]); // Also trigger on search query change for immediacy
+    }, [map, filteredRestaurants]); // Remove searchQuery from here, filteredRestaurants is enough
+
+    // Use a separate effect for geocoding that doesn't depend on the whole restaurants array directly if possible
+    // or at least only runs once we have the lib and initial data
+    const geocodingAttemptedRef = useRef<boolean>(false);
 
     useEffect(() => {
         const fetchMissingCoords = async () => {
-            if (!geocodingLib || restaurants.length === 0) return;
+            if (!geocodingLib || restaurants.length === 0 || geocodingAttemptedRef.current) return;
+            
+            geocodingAttemptedRef.current = true; // Prevent multiple simultaneous geocoding runs
             
             const geocoder = new geocodingLib.Geocoder();
             const updatedRestaurants = [...restaurants];
@@ -137,13 +150,21 @@ function MapContent() {
 
             for (let i = 0; i < updatedRestaurants.length; i++) {
                 const r = updatedRestaurants[i];
-                if ((!r.lat || !r.lng || r.lat === 19.4326 && r.lng === -99.1332) && r.address) {
+                // Only geocode if it has the default CDMX center AND has an address
+                const isDefault = r.lat === 19.4326 && r.lng === -99.1332;
+                if ((!r.lat || !r.lng || isDefault) && r.address) {
                     try {
                         const result = await geocoder.geocode({ address: r.address });
                         if (result.results && result.results[0]) {
                             const { lat, lng } = result.results[0].geometry.location;
-                            updatedRestaurants[i] = { ...r, lat: lat(), lng: lng() };
-                            changed = true;
+                            const newLat = lat();
+                            const newLng = lng();
+                            
+                            // Double check it's actually different from what we have
+                            if (Math.abs(newLat - r.lat) > 0.0001 || Math.abs(newLng - r.lng) > 0.0001) {
+                                updatedRestaurants[i] = { ...r, lat: newLat, lng: newLng };
+                                changed = true;
+                            }
                         }
                     } catch (e) {
                         console.error("Geocoding failed for", r.name, e);
@@ -155,8 +176,12 @@ function MapContent() {
                 setRestaurants(updatedRestaurants);
             }
         };
-        fetchMissingCoords();
-    }, [geocodingLib, restaurants, searchQuery]);
+
+        // We only want to run this when geocodingLib becomes available or first batch of restaurants come in
+        if (geocodingLib && restaurants.length > 0 && !geocodingAttemptedRef.current) {
+            fetchMissingCoords();
+        }
+    }, [geocodingLib, restaurants.length]); // Only depend on length to avoid reference loops
 
     const handleRestaurantSelect = useCallback((restaurant: any) => {
         const name = restaurant.restaurantName || restaurant.name;

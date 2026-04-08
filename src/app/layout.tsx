@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Come - La Guía Gastronómica de México",
     description: "La guía definitiva y curada de las mejores experiencias gastronómicas en México.",
-    url: "https://comeweb.mx",
+    url: "https://comeapp.com.mx",
     siteName: "Néctar",
     images: [
       {
