@@ -115,8 +115,8 @@ export default function GuideCreator() {
                 ...guide,
                 slug,
                 restaurantIds,
-                authorId: user?.uid,
-                authorName: user?.displayName || 'Admin',
+                authorId: user?.uid || 'guest',
+                authorName: user?.displayName || 'Comunidad Come',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
