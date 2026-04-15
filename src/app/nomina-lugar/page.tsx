@@ -46,7 +46,7 @@ export default function LugarNominationPage() {
                 type: 'restaurant'
             };
 
-            await addDoc(collection(db, "business_leads"), nominationData);
+            await addDoc(collection(db, "come"), nominationData);
             setSuccess(true);
             setTimeout(() => router.push('/'), 4000);
         } catch (error) {

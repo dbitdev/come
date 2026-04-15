@@ -44,7 +44,7 @@ export default function ManageBusinessPage() {
 
             try {
                 if (db) {
-                    const docRef = doc(db, "business_leads", id as string);
+                    const docRef = doc(db, "come", id as string);
                     const docSnap = await getDoc(docRef);
 
                     if (docSnap.exists()) {
@@ -117,7 +117,7 @@ export default function ManageBusinessPage() {
         if (!id || !db) return;
         setSaving(true);
         try {
-            const docRef = doc(db, "business_leads", id as string);
+            const docRef = doc(db, "come", id as string);
             await updateDoc(docRef, {
                 ...formData,
                 menu: menuItems,

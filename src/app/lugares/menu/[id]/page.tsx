@@ -18,7 +18,7 @@ export default function DigitalMenuPage() {
         const fetchMenu = async () => {
             if (!id || !db) return;
             try {
-                const docRef = doc(db, "business_leads", id);
+                const docRef = doc(db, "come", id);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setRestaurant({ id: docSnap.id, ...docSnap.data() });

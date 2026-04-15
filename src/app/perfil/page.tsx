@@ -34,7 +34,7 @@ export default function UserProfilePage() {
         const fetchBusinesses = async () => {
             if (user && db) {
                 try {
-                    const q = query(collection(db, "business_leads"), where("userId", "==", user.uid));
+                    const q = query(collection(db, "come"), where("userId", "==", user.uid));
                     const querySnapshot = await getDocs(q);
                     const businesses = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setUserBusinesses(businesses);

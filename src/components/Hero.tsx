@@ -34,7 +34,7 @@ export default function Hero() {
             if (!db) return;
             try {
                 // Restaurants
-                const restSnapshot = await getDocs(collection(db, "business_leads"));
+                const restSnapshot = await getDocs(collection(db, "come"));
                 const restData = restSnapshot.docs.map(doc => {
                     const data = doc.data();
                     const name = data.restaurantName || data.name;

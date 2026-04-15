@@ -56,7 +56,7 @@ export default function AdminDashboard() {
         setLoading(true);
         try {
             // Fetch Restaurants
-            const restSnapshot = await getDocs(collection(db, "business_leads"));
+            const restSnapshot = await getDocs(collection(db, "come"));
             const restData = restSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setRestaurants(restData);
             setLeads(restData.slice(0, 8));
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                     console.log(`Skipping existing restaurant to preserve manual edits: ${locale.name}`);
                     continue; // Skip if already exists
                 } else {
-                    await addDoc(collection(db, "business_leads"), data);
+                    await addDoc(collection(db, "come"), data);
                 }
             }
             alert("Sincronización Michelin completada con éxito");
@@ -260,12 +260,12 @@ export default function AdminDashboard() {
             data.subdomain = rName.toLowerCase().replace(/[^a-z0-9]/g, '-') + "." + APP_DOMAIN;
 
             if (id) {
-                await updateDoc(doc(db, "business_leads", id), {
+                await updateDoc(doc(db, "come", id), {
                     ...data,
                     lastUpdated: serverTimestamp()
                 });
             } else {
-                await addDoc(collection(db, "business_leads"), {
+                await addDoc(collection(db, "come"), {
                     ...data,
                     createdAt: serverTimestamp()
                 });
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
     const handleDeleteRestaurant = async (id: string) => {
         if (!db || !window.confirm("¿Estás seguro de eliminar este restaurante?")) return;
         try {
-            await deleteDoc(doc(db, "business_leads", id));
+            await deleteDoc(doc(db, "come", id));
             fetchData();
         } catch (err) {
             console.error(err);

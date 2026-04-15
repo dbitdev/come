@@ -14,7 +14,7 @@ export default function MichelinGuidePage() {
         const fetchMichelin = async () => {
             if (!db) return;
             try {
-                const snapshot = await getDocs(collection(db, "business_leads"));
+                const snapshot = await getDocs(collection(db, "come"));
                 const data = snapshot.docs
                     .map(doc => {
                         const d = doc.data();

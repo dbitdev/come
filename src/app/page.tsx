@@ -27,7 +27,7 @@ export default function Home() {
 
         if (db) {
           // Fetch places
-          const qPlaces = query(collection(db, "business_leads"), orderBy("createdAt", "desc"), limit(10));
+          const qPlaces = query(collection(db, "come"), orderBy("createdAt", "desc"), limit(10));
           const querySnapshot = await getDocs(qPlaces);
           firestorePlaces = querySnapshot.docs.map(doc => {
             const data = doc.data();

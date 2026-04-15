@@ -48,7 +48,7 @@ interface Restaurant {
 async function getRestaurant(slug: string): Promise<Restaurant | null> {
     try {
         if (!db) return null;
-        const qRest = collection(db, "business_leads");
+        const qRest = collection(db, "come");
         const querySnapshot = await getDocs(qRest);
         
         for (const docSnap of querySnapshot.docs) {
@@ -122,7 +122,7 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
 
             // Fetch similar places (same category, excluding current)
             const qSimilar = query(
-                collection(db, "business_leads"),
+                collection(db, "come"),
                 where("category", "==", restaurant.category),
                 limit(5)
             );

@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let restaurantRoutes: any[] = [];
   try {
     if (db) {
-      const querySnapshot = await getDocs(collection(db, "business_leads"));
+      const querySnapshot = await getDocs(collection(db, "come"));
       restaurantRoutes = querySnapshot.docs.map((doc) => {
         const data = doc.data();
         const name = data.restaurantName || data.name || 'sin-nombre';

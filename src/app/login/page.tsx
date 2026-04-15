@@ -21,13 +21,19 @@ export default function LoginPage() {
             await signInWithEmailAndPassword(auth, email, password);
             router.push('/admin'); // Redirect to admin after login
         } catch (err: any) {
-            console.error(err);
+            console.error("Login error:", err.code, err.message);
             if (err.code === 'auth/user-not-found') {
                 setError("El usuario no existe. Por favor regístrate.");
-            } else if (err.code === 'auth/wrong-password') {
-                setError("Contraseña incorrecta.");
+            } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                setError("Correo o contraseña incorrectos.");
+            } else if (err.code === 'auth/invalid-api-key') {
+                setError("Error de configuración: API key inválida.");
+            } else if (err.code === 'auth/network-request-failed') {
+                setError("Error de red. Verifica tu conexión a internet.");
+            } else if (err.code === 'auth/too-many-requests') {
+                setError("Demasiados intentos. Intenta más tarde.");
             } else {
-                setError("Error al iniciar sesión. Verifica tus credenciales.");
+                setError(`Error al iniciar sesión (${err.code || 'unknown'}). Verifica tus credenciales.`);
             }
         }
     };

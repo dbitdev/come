@@ -57,7 +57,7 @@ function MapContent() {
     const fetchRestaurants = useCallback(async () => {
         if (!db) return;
         try {
-            const querySnapshot = await getDocs(collection(db, "business_leads"));
+            const querySnapshot = await getDocs(collection(db, "come"));
             const data = querySnapshot.docs.map(doc => {
                 const d = doc.data();
                 return {

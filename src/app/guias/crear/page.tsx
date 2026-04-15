@@ -45,7 +45,7 @@ export default function GuideCreator() {
         if (!db) return;
         setIsSearching(true);
         try {
-            const q = query(collection(db, "business_leads"), limit(10));
+            const q = query(collection(db, "come"), limit(10));
             const snapshot = await getDocs(q);
             const results = snapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))

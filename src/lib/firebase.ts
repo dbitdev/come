@@ -24,17 +24,16 @@ if (isConfigValid) {
         
         // Use singleton pattern for Firestore to avoid multiple initialization errors
         if (typeof window !== "undefined") {
-            // Enable debug logging to help identify why it hangs
-            setLogLevel('debug');
+            // setLogLevel('debug'); // Uncomment for troubleshooting
             
             // Force long polling on client side for maximum compatibility
             // databaseId is the third parameter of initializeFirestore
             db = initializeFirestore(app, {
                 experimentalForceLongPolling: true,
-            }, "come");
-            console.log("Firebase & Firestore ('come' db) initialized successfully");
+            }, "hueyi");
+            console.log("Firebase & Firestore ('hueyi' db) initialized successfully");
         } else {
-            db = getFirestore(app, "come");
+            db = getFirestore(app, "hueyi");
         }
     } catch (error) {
         console.error("Error initializing Firebase:", error);

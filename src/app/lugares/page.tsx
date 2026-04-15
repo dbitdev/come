@@ -33,7 +33,7 @@ export default function LugaresPage({
         const fetchData = async () => {
             try {
                 if (db) {
-                    const querySnapshot = await getDocs(collection(db, "business_leads"));
+                    const querySnapshot = await getDocs(collection(db, "come"));
                     const firestoreRestaurants = querySnapshot.docs.map(doc => {
                         const data = doc.data();
                         return {

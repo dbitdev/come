@@ -43,7 +43,7 @@ export default function ChefProfilePage() {
                 // 1. Fetch Restaurants
                 // First search by direct chef name in the DB
                 const qRest = query(
-                    collection(db, "business_leads"), 
+                    collection(db, "come"), 
                     where("chef", "==", data.name),
                     limit(10)
                 );
@@ -53,7 +53,7 @@ export default function ChefProfilePage() {
                 // Fallback: Fetch by manual slugs if none found via name
                 if (foundRestaurants.length === 0 && data.featuredRestaurantSlugs?.length) {
                     const qSlugs = query(
-                        collection(db, "business_leads"), 
+                        collection(db, "come"), 
                         where("__name__", "in", data.featuredRestaurantSlugs),
                         limit(5)
                     );

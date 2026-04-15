@@ -116,7 +116,7 @@ export default function RegisterBusinessPage() {
                 console.log("Intentando guardar datos en Firestore:", docData);
 
                 // Timeout of 15 seconds to prevent permanent hang
-                const savePromise = addDoc(collection(db, "business_leads"), docData);
+                const savePromise = addDoc(collection(db, "come"), docData);
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error("La conexión con el servidor tardó demasiado. Por favor verifica tu internet o intenta más tarde.")), 15000)
                 );

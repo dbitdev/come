@@ -2,6 +2,6 @@
   "hosting": {},
   "firestore": {
     "rules": "firestore.rules",
-    "database": "come"
+    "database": "hueyi"
   }
 }
