@@ -58,22 +58,21 @@ export default function NewsSection() {
                 </div>
 
                 <div className={styles.layoutGrid}>
-                    {/* Left Small Card */}
+                    {/* Left Small Card - Green Block */}
                     <div className={styles.sideColumn}>
                         <article 
-                            className={`${styles.sideCard} liquid-glass`}
-                            style={{ backgroundImage: `url(${leftArticle.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
+                            className={`${styles.sideCard} ${styles.sideCardGreen}`}
                         >
                             <div className={styles.cardOverlay}>
                                 <div className={styles.sideContent}>
                                     <span className={styles.sideCategory}>
-                                        {leftArticle.categories?.nodes?.[0]?.name || 'Gourmet'}
+                                        Oportunidades
                                     </span>
-                                    <Link href={`/noticias/${leftArticle.slug}`}>
-                                        <h4 className={styles.sideTitle}>{leftArticle.title}</h4>
+                                    <Link href={`/noticias/chef-jobs`}>
+                                        <h4 className={styles.sideTitle}>Consigue tu primer trabajo como Chef</h4>
                                     </Link>
-                                    <Link href={`/noticias/${leftArticle.slug}`} className={styles.sideLink}>
-                                        Ver más
+                                    <Link href={`/noticias/chef-jobs`} className={styles.sideLink}>
+                                        Ver guías
                                     </Link>
                                 </div>
                             </div>
@@ -97,7 +96,11 @@ export default function NewsSection() {
                                         </span>
                                     </div>
                                     <Link href={`/noticias/${featured.slug}`}>
-                                        <h3 className={styles.mainTitle}>{featured.title}</h3>
+                                        <h3 className={styles.mainTitle}>
+                                            <span style={{ color: 'var(--primary)', fontStyle: 'italic' }}>&ldquo;</span>
+                                            {featured.title}
+                                            <span style={{ color: 'var(--primary)', fontStyle: 'italic' }}>&rdquo;</span>
+                                        </h3>
                                     </Link>
                                     <div className={styles.actions}>
                                         <Link 
@@ -121,22 +124,21 @@ export default function NewsSection() {
                         </article>
                     </div>
 
-                    {/* Right Small Card */}
+                    {/* Right Small Card - Yellow Block */}
                     <div className={styles.sideColumn}>
                         <article 
-                            className={`${styles.sideCard} liquid-glass`}
-                            style={{ backgroundImage: `url(${rightArticle.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"})` }}
+                            className={`${styles.sideCard} ${styles.sideCardYellow}`}
                         >
                             <div className={styles.cardOverlay}>
                                 <div className={styles.sideContent}>
                                     <span className={styles.sideCategory}>
-                                        {rightArticle.categories?.nodes?.[0]?.name || 'Gourmet'}
+                                        Recetas
                                     </span>
-                                    <Link href={`/noticias/${rightArticle.slug}`}>
-                                        <h4 className={styles.sideTitle}>{rightArticle.title}</h4>
+                                    <Link href={`/guias/recetas`}>
+                                        <h4 className={styles.sideTitle}>Prepara la pizza perfecta en casa</h4>
                                     </Link>
-                                    <Link href={`/noticias/${rightArticle.slug}`} className={styles.sideLink}>
-                                        Ver más
+                                    <Link href={`/guias/recetas`} className={styles.sideLink}>
+                                        Leer más
                                     </Link>
                                 </div>
                             </div>

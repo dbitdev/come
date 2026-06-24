@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import Hero from "@/components/Hero";
 import PlacesList from "@/components/PlacesList";
 import NewsSection from "@/components/NewsSection";
+import MagazineBar from "@/components/MagazineBar";
+import MenuSection from "@/components/MenuSection";
 import Banner from "@/components/Banner";
 import HomeMap from "@/components/HomeMap";
 import styles from "./page.module.css";
@@ -94,6 +96,8 @@ export default function Home() {
       <main className={styles.main}>
         <Hero />
 
+        <MagazineBar title="Fresh Recipes & News" variant="orange" rightText="Primavera 2026" />
+
         {newestPlaces.length > 0 && (
           <PlacesList
             title="Lo Nuevo"
@@ -102,6 +106,9 @@ export default function Home() {
             isCarousel={true}
           />
         )}
+
+        <MagazineBar title="Today's Menu / Platos Estrella" variant="black" rightText="Trending Now" />
+        <MenuSection />
 
         <PlacesList
           title="Dónde comer"
@@ -173,13 +180,7 @@ export default function Home() {
           </section>
         )}
 
-        <PlacesList
-          title="Restaurantes Exclusivos"
-          subtitle="Galardonados con estrella Michelin o reconocimientos"
-          places={michelinPlaces}
-          showMichelin={true}
-        />
-
+        <MagazineBar title="Editorial Stories" variant="green" rightText="Crónicas" />
         <NewsSection />
 
 

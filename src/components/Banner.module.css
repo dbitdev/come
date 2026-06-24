@@ -1,63 +1,126 @@
 .banner {
-    background-color: var(--primary);
+    background-color: var(--secondary);
+    background-image: var(--dot-pattern-green);
+    background-size: var(--dot-size);
     color: #fff;
-    padding: 6rem 4rem;
+    padding: 7rem 4rem;
     text-align: center;
     position: relative;
     overflow: hidden;
-    margin: 4rem 2rem;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-top: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
 }
 
-/* Subtle background pattern/gradient */
+/* Decorative large sparkle */
 .banner::before {
-    content: "";
+    content: '✦';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 60%);
-    z-index: 1;
+    top: -2rem;
+    left: 3rem;
+    font-size: 14rem;
+    color: #fff;
+    opacity: 0.04;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.banner::after {
+    content: '✦';
+    position: absolute;
+    bottom: -3rem;
+    right: 3rem;
+    font-size: 18rem;
+    color: #fff;
+    opacity: 0.04;
+    pointer-events: none;
+    line-height: 1;
+    transform: rotate(20deg);
 }
 
 .content {
     position: relative;
     z-index: 2;
-    max-width: 800px;
+    max-width: 700px;
     margin: 0 auto;
 }
 
-.banner h2 {
-    font-size: 3rem;
-    font-weight: 800;
+/* Eyebrow label */
+.content::before {
+    content: '— Forma parte —';
+    display: block;
+    font-family: var(--font-modern);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
     margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
+}
+
+.banner h2 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    font-family: var(--font-serif);
+    color: #fff;
+}
+
+.banner h2 em {
+    font-style: italic;
+    color: var(--accent);
 }
 
 .banner p {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     margin-bottom: 3rem;
-    line-height: 1.6;
-    opacity: 0.95;
-    font-weight: 500;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.75);
+    font-weight: 400;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: var(--font-modern);
 }
 
 .button {
-    display: inline-block;
-    background-color: var(--background);
-    color: var(--primary);
-    padding: 1.2rem 3rem;
-    font-size: 1.15rem;
-    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--accent);
+    color: var(--foreground);
+    padding: 1.1rem 3rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: var(--font-modern);
     text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border: 2px solid var(--foreground);
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-editorial-accent);
 }
 
 .button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-    background-color: #fafafa;
+    background-color: #fff;
+    color: var(--foreground);
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0px var(--foreground);
+}
+
+@media (max-width: 768px) {
+    .banner {
+        padding: 5rem 1.5rem;
+    }
+    .banner::before,
+    .banner::after {
+        display: none;
+    }
+    .button {
+        padding: 1rem 2rem;
+        width: 100%;
+        justify-content: center;
+        box-shadow: var(--shadow-editorial-sm);
+    }
 }

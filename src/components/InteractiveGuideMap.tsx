@@ -73,7 +73,7 @@ function MapContent({ stops, activeStopIndex }: InteractiveGuideMapProps) {
     return (
         <div className={styles.mapContainer}>
             <Map
-                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
+                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID"}
                 defaultCenter={center}
                 defaultZoom={zoom}
                 center={center}

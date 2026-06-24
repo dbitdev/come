@@ -16,7 +16,7 @@ export default function SinglePlaceMap({ lat, lng, name }: SingleMapProps) {
     return (
         <GoogleMapsWrapper>
             <Map
-                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
+                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID"}
                 defaultCenter={position}
                 defaultZoom={15}
                 gestureHandling={'none'}

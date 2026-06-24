@@ -45,6 +45,7 @@ export const metadata: Metadata = {
   }
 };
 
+import TopTicker from "@/components/TopTicker";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/context/AuthContext";
@@ -58,6 +59,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
+          <TopTicker />
           <Navbar />
           {children}
           <Footer />

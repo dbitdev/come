@@ -8,23 +8,21 @@ export default function Nosotros() {
         <div className={styles.container}>
             {/* Hero Section */}
             <section className={styles.hero}>
-                <img 
-                    src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80" 
-                    alt="Gastronomía Mexicana" 
-                    className={styles.heroImage} 
-                />
-                <div className={styles.heroOverlay} />
                 <div className={styles.heroContent}>
-                    <h1>Nuestra Pasión por el Sabor</h1>
+                    <span className="mag-label">Nuestra Esencia</span>
+                    <h1 className="mixed-heading">Pasión por el <span>Sabor</span></h1>
                     <p>Elevando la gastronomía mexicana a un nivel global, conectando corazones a través de la mesa.</p>
                 </div>
             </section>
 
             {/* Story Section */}
             <section className={styles.section}>
+                <div className="section-bar">
+                    <span>Nuestra Trayectoria</span>
+                </div>
                 <div className={styles.storyGrid}>
                     <div className={styles.storyText}>
-                        <h2>Nuestra Historia</h2>
+                        <h2 className={styles.title}>Nuestra Historia</h2>
                         <p>
                             Come nació de un deseo profundo de celebrar y preservar la riqueza culinaria de México. En un país donde cada platillo cuenta una historia, sentimos la necesidad de crear un puente digital que conectara a los amantes de la buena mesa con los tesoros escondidos de nuestras ciudades.
                         </p>

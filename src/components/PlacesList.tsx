@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import styles from "./PlacesList.module.css";
@@ -27,14 +26,21 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
         <section className={`${styles.section} ${isCarousel ? styles.carouselSection : ""}`}>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h2>{title}</h2>
-                    <p className={styles.subtitle}>{subtitle}</p>
+                    <div>
+                        <h2>{title}</h2>
+                        <p className={styles.subtitle}>{subtitle}</p>
+                    </div>
                 </div>
 
                 <div className={isCarousel ? styles.carouselContainer : styles.grid}>
-                    {places.map((place) => (
-                        <Link key={place.id} href={`/lugares/${slugify(place.name)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {places.map((place, idx) => (
+                        <Link
+                            key={place.id}
+                            href={`/lugares/${slugify(place.name)}`}
+                            style={{ textDecoration: 'none', color: 'inherit', display: 'contents' }}
+                        >
                             <article className={styles.card}>
+                                <span className={styles.ghostNum}>{String(idx + 1).padStart(2, '0')}</span>
                                 <div className={styles.imageWrapper}>
                                     <img
                                         src={place.image}
@@ -50,7 +56,10 @@ export default function PlacesList({ title, subtitle, places, showMichelin = fal
                                         <div className={styles.category}>{place.category}</div>
                                         <h3 className={styles.name}>{place.name}</h3>
                                         <div className={styles.rating}>
-                                            <Star size={12} fill="currentColor" /> {typeof place.rating === 'number' ? place.rating.toFixed(1) : (Number(place.rating) ? Number(place.rating).toFixed(1) : place.rating)}
+                                            <Star size={12} fill="currentColor" />
+                                            {typeof place.rating === 'number'
+                                                ? place.rating.toFixed(1)
+                                                : (Number(place.rating) ? Number(place.rating).toFixed(1) : place.rating)}
                                         </div>
                                     </div>
                                 </div>

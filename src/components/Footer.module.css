@@ -1,174 +1,335 @@
 .footer {
-    background-color: #0f172a;
-    color: #ffffff;
-    padding: 8rem 0 4rem;
+    background-color: var(--background);
+    padding: 0;
+    border-top: 2px solid var(--border-color);
+}
+
+/* ── Instagram / Social Section ──────────────────── */
+.instaPromo {
+    padding: 6rem 2rem;
+    text-align: center;
+    border-bottom: 2px solid var(--border-color);
+    background: var(--background-alt);
     position: relative;
     overflow: hidden;
 }
 
-.footer::before {
-    content: '';
+.instaPromo::before {
+    content: '@';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--glass-border-dark), transparent);
+    top: -3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-serif);
+    font-size: 22rem;
+    font-weight: 900;
+    color: var(--foreground);
+    opacity: 0.025;
+    pointer-events: none;
+    line-height: 1;
 }
 
-.container {
-    max-width: 1400px;
+.instaTitle {
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 3rem;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    color: var(--foreground);
+}
+
+.instaTitle span {
+    font-style: italic;
+    color: var(--primary);
+}
+
+.instaGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 0 2rem;
     position: relative;
     z-index: 2;
+    border: 2px solid var(--border-color);
+}
+
+.instaImg {
+    aspect-ratio: 1;
+    background-size: cover;
+    background-position: center;
+    transition: var(--transition-smooth);
+    background-color: #e8e4dc;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    overflow: hidden;
+    border-right: 2px solid var(--border-color);
+}
+
+.instaImg:last-child {
+    border-right: none;
+}
+
+.instaImg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10,6,2,0.55) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.instaImg:hover::before {
+    opacity: 1;
+}
+
+.instaImg:hover {
+    transform: scale(1.03);
+    z-index: 2;
+}
+
+.instaTag {
+    background: #fff;
+    color: var(--foreground);
+    padding: 0.25rem 0.6rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: 1.5px solid var(--border-color);
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-modern);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 0.3s ease;
+}
+
+.instaImg:hover .instaTag {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ── Subscribe Banner ─────────────────────────────── */
+.subscribeBanner {
+    background-color: var(--foreground);
+    background-image: var(--dot-pattern-light);
+    background-size: var(--dot-size);
+    color: #fff;
+    padding: 4rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.subTitle {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    max-width: 320px;
+}
+
+.subForm {
+    display: flex;
+    gap: 0;
+    box-shadow: var(--shadow-editorial-accent);
+}
+
+.subInput {
+    padding: 1rem 1.5rem;
+    border: 2px solid var(--accent);
+    background: transparent;
+    color: #fff;
+    min-width: 280px;
+    font-family: var(--font-modern);
+    font-size: 0.88rem;
+}
+
+.subInput::placeholder {
+    color: rgba(255,255,255,0.4);
+}
+
+.subInput:focus {
+    outline: none;
+    border-color: #fff;
+    background: transparent;
+}
+
+.subBtn {
+    background: var(--accent);
+    color: var(--foreground);
+    border: 2px solid var(--accent);
+    border-left: none;
+    padding: 0 2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    font-family: var(--font-modern);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+
+.subBtn:hover {
+    background: #fff;
+    border-color: #fff;
+    color: var(--foreground);
+    box-shadow: none;
+    transform: none;
+}
+
+/* ── Footer Links ─────────────────────────────────── */
+.container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
 }
 
 .megaGrid {
     display: grid;
-    grid-template-columns: 1.5fr repeat(3, 1fr);
-    gap: 4rem;
-    margin-bottom: 6rem;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2rem;
+    margin-bottom: 4rem;
+    padding-bottom: 4rem;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .column {
     display: flex;
     flex-direction: column;
+    gap: 0;
 }
 
 .column h3 {
-    font-size: 0.9rem;
+    font-family: var(--font-modern);
+    font-size: 0.65rem;
     font-weight: 700;
-    margin-bottom: 2rem;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--primary-light);
+    letter-spacing: 0.2em;
+    margin-bottom: 1.5rem;
+    color: var(--foreground);
+    padding-bottom: 0.75rem;
+    border-bottom: 1.5px solid var(--border-color);
 }
 
 .column a {
-    color: #94a3b8;
+    display: block;
+    font-family: var(--font-modern);
+    font-size: 0.85rem;
+    color: var(--foreground-muted);
     text-decoration: none;
-    margin-bottom: 1.2rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: var(--transition-smooth);
+    margin-bottom: 0.65rem;
+    transition: var(--transition-fast);
+    font-weight: 400;
 }
 
 .column a:hover {
-    color: #fff;
-    transform: translateX(5px);
+    color: var(--primary);
+    padding-left: 4px;
 }
 
-.separator {
-    height: 1px;
-    background: rgba(255,255,255,0.05);
-    margin-bottom: 4rem;
+.brandLogo {
+    margin-top: auto;
+    padding-top: 1.5rem;
 }
 
-.socialBar {
+.brandText {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--foreground);
+    letter-spacing: -0.04em;
+}
+
+/* ── Bottom Strip ─────────────────────────────────── */
+.bottomSection {
     display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 4rem;
-}
-
-.socialBar a {
-    width: 45px;
-    height: 45px;
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    color: #fff;
-    font-size: 1.1rem;
-    transition: var(--transition-smooth);
+    gap: 1rem;
 }
 
-.socialBar a:hover {
-    background: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(158, 20, 20, 0.3);
-}
-
-.legalLinks {
-    display: flex;
-    justify-content: center;
-    gap: 3rem;
-    margin-bottom: 3rem;
-    flex-wrap: wrap;
-}
-
-.legalLinks a {
-    color: #64748b;
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: color 0.2s;
-}
-
-.legalLinks a:hover {
-    color: #fff;
-}
-
-.bottomBar {
-    text-align: center;
-}
-
-.bottomBar p {
-    margin: 0.2rem 0;
-    color: #475569;
-    font-size: 0.85rem;
-    font-weight: 500;
+.bottomSection p {
+    font-size: 0.75rem;
+    color: var(--foreground-muted);
+    font-family: var(--font-modern);
+    margin: 0;
+    line-height: 1.5;
 }
 
 .poweredBy {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.4);
-    margin-top: 0.25rem !important;
+    font-style: italic;
+    font-family: var(--font-serif) !important;
+    font-size: 0.88rem !important;
+    color: var(--foreground-muted) !important;
+    opacity: 0.65;
 }
 
-.poweredBy a {
-    color: rgba(255, 255, 255, 0.6);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-
-.poweredBy a:hover {
-    color: var(--primary);
-}
-
+/* ── Responsive ─────────────────────────────────── */
 @media (max-width: 1024px) {
     .megaGrid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2.5rem;
+    }
+    .instaGrid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 4rem;
+    }
+    .instaImg:nth-child(2) {
+        border-right: none;
+    }
+    .instaImg:nth-child(3) {
+        border-top: 2px solid var(--border-color);
+    }
+    .instaImg:nth-child(4) {
+        border-top: 2px solid var(--border-color);
+        border-right: none;
     }
 }
 
 @media (max-width: 768px) {
-    .footer {
-        padding: 5rem 0 3rem;
-    }
-
     .megaGrid {
-        grid-template-columns: 1fr;
-        gap: 3rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+    .subscribeBanner {
+        flex-direction: column;
+        gap: 2rem;
         text-align: center;
     }
-
-    .column a:hover {
-        transform: none;
+    .subTitle {
+        max-width: 100%;
+        justify-content: center;
+        font-size: 1.3rem;
     }
-
-    .socialBar {
-        gap: 1rem;
+    .subInput {
+        min-width: 0;
+        flex: 1;
     }
-
-    .legalLinks {
-        gap: 1.5rem;
+    .subForm {
+        width: 100%;
+        max-width: 420px;
+        box-shadow: none;
+    }
+    .bottomSection {
         flex-direction: column;
-        align-items: center;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    .instaPromo {
+        padding: 4rem 1.2rem;
     }
 }

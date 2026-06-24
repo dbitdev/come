@@ -103,24 +103,29 @@ export default function LugaresPage({
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h1 className={styles.title}>
-                    {query ? `Resultados para "${query}"` : "Explora Lugares"}
+                <span className="mag-label">Guía de Destinos</span>
+                <h1 className="mixed-heading">
+                    {query ? (
+                        <>Resultados: <span>{query}</span></>
+                    ) : (
+                        <>Explora <span>Lugares</span></>
+                    )}
                 </h1>
                 <p className={styles.subtitle}>
                     {query 
-                        ? `Hemos encontrado ${filteredRestaurants.length} lugares para ti.` 
-                        : "Descubre lo mejor de la gastronomía organizado para ti"}
+                        ? `Hemos seleccionado ${filteredRestaurants.length} establecimientos que coinciden con tu búsqueda editorial.` 
+                        : "Una curaduría exhaustiva de los mejores rincones gastronómicos de México."}
                 </p>
             </header>
 
             {categories.length > 0 ? (
                 categories.map(category => (
                     <section key={category} className={styles.section}>
-                        <div className={styles.sectionHeader}>
-                            <h2 className={styles.categoryTitle}>{category}</h2>
+                        <div className="section-bar">
+                            <span>{category}</span>
                             {!query && (
                                 <Link href={`/lugares/categoria/${category.toLowerCase()}`} className={styles.viewMore}>
-                                    Ver todos
+                                    Colección Completa
                                 </Link>
                             )}
                         </div>
@@ -137,6 +142,10 @@ export default function LugaresPage({
                                             )}
                                         </div>
                                         <div className={styles.cardContent}>
+                                            <div className={styles.cardTop}>
+                                                <span className={styles.categoryTag}>{restaurant.category}</span>
+                                                {restaurant.isMichelin && <span className="mag-tag">Editorial Pick</span>}
+                                            </div>
                                             <h3 className={styles.restaurantName}>{restaurant.name}</h3>
                                             <p className={styles.address}>{restaurant.address}</p>
                                             <div className={styles.cardFooter}>

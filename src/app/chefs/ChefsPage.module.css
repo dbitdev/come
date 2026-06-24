@@ -1,111 +1,148 @@
 .container {
-    padding-top: 40px;
-    background-color: #fdfaf5;
+    background-color: var(--background);
     min-height: 100vh;
 }
 
+/* ── Hero ────────────────────────────────────────── */
 .hero {
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1600&q=80');
-    background-size: cover;
-    background-position: center;
-    color: #fff;
-    padding: 6rem 2rem;
-    text-align: center;
+    background-color: var(--background);
+    padding: 7rem 2rem 5rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: 'CHEFS';
+    position: absolute;
+    right: -1rem;
+    bottom: -2rem;
+    font-family: var(--font-serif);
+    font-size: 15rem;
+    font-weight: 900;
+    color: var(--foreground);
+    opacity: 0.03;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.heroContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .heroContent h1 {
-    font-size: 3.5rem;
-    font-weight: 900;
-    margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
+    font-size: clamp(3rem, 6vw, 5rem);
+    font-family: var(--font-serif);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--foreground);
+    letter-spacing: -0.04em;
+    line-height: 1;
 }
 
 .heroContent p {
-    font-size: 1.25rem;
-    opacity: 0.9;
-    max-width: 700px;
-    margin: 0 auto;
+    font-size: 1rem;
+    color: var(--foreground-muted);
+    max-width: 500px;
+    font-family: var(--font-modern);
+    line-height: 1.65;
+    margin: 0;
 }
 
+/* ── Main ────────────────────────────────────────── */
 .main {
     max-width: 1200px;
-    margin: -3rem auto 5rem;
+    margin: 4rem auto 6rem;
     padding: 0 2rem;
-    position: relative;
-    z-index: 10;
 }
 
 .searchBar {
     background: #fff;
-    padding: 1rem 2rem;
-    border-radius: 50px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 0;
     display: flex;
     align-items: center;
     gap: 1rem;
     margin-bottom: 4rem;
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow-editorial-sm);
+    padding: 0 1.5rem;
+    height: 54px;
 }
 
 .searchBar input {
     flex: 1;
     border: none;
     outline: none;
-    font-size: 1.1rem;
-    font-family: inherit;
+    font-size: 0.9rem;
+    font-family: var(--font-modern);
+    background: transparent;
+    color: var(--foreground);
 }
 
+.searchBar input::placeholder {
+    color: var(--foreground-muted);
+}
+
+/* ── Grid ────────────────────────────────────────── */
 .chefsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 2.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0;
+    border: 2px solid var(--border-color);
 }
 
 .chefCard {
     background: #fff;
-    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border-right: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
+    transition: var(--transition-smooth);
+    position: relative;
 }
 
 .chefCard:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    background: var(--pale-yellow);
 }
 
 .imageWrapper {
-    height: 200px;
+    height: 240px;
     position: relative;
     overflow: hidden;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .imageWrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s;
+    transition: transform 0.6s ease;
+    filter: saturate(1.1);
 }
 
 .chefCard:hover img {
-    transform: scale(1.1);
+    transform: scale(1.06);
 }
 
 .starsBadge {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    background: #000;
-    color: #f5c518;
-    padding: 0.4rem 0.8rem;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 800;
+    background: var(--foreground);
+    color: var(--accent);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: var(--font-modern);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     display: flex;
     align-items: center;
     gap: 4px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border: 1.5px solid var(--foreground);
 }
 
 .info {
@@ -113,50 +150,87 @@
 }
 
 .specialty {
-    font-size: 0.75rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
-    font-weight: 800;
-    letter-spacing: 0.1em;
+    font-weight: 700;
+    letter-spacing: 0.2em;
     color: var(--primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-family: var(--font-modern);
+    display: block;
 }
 
 .name {
     font-size: 1.4rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    color: #000;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--foreground);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
 }
 
 .restaurant {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-    color: #64748b;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--foreground-muted);
+    margin-bottom: 1.25rem;
+    font-family: var(--font-modern);
 }
 
 .viewBtn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: #000;
-    transition: color 0.2s;
+    gap: 5px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-family: var(--font-modern);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--foreground);
+    border-bottom: 1.5px solid var(--foreground);
+    padding-bottom: 1px;
+    transition: var(--transition-fast);
 }
 
 .chefCard:hover .viewBtn {
     color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Accent bottom bar on hover */
+.chefCard::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: var(--primary);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chefCard:hover::after {
+    width: 100%;
+}
+
+@media (max-width: 1024px) {
+    .chefsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2.5rem;
+    .hero {
+        padding: 5rem 1.5rem 3rem;
     }
     .chefsGrid {
         grid-template-columns: 1fr;
+    }
+    .main {
+        padding: 0 1.2rem;
+        margin: 2rem auto 4rem;
     }
 }

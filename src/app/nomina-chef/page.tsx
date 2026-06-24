@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
@@ -26,26 +26,22 @@ export default function ChefNominationPage() {
         photoUrl: "",
     });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: { target: { name: string; value: string } }) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
         setLoading(true);
-
         try {
             if (!db) throw new Error("Firebase not initialized");
-
-            const nominationData = {
+            await addDoc(collection(db, "chef_nominations"), {
                 ...formData,
                 isMichelin,
                 createdAt: serverTimestamp(),
                 status: 'pending'
-            };
-
-            await addDoc(collection(db, "chef_nominations"), nominationData);
+            });
             setSuccess(true);
             setTimeout(() => router.push('/'), 4000);
         } catch (error) {
@@ -59,13 +55,15 @@ export default function ChefNominationPage() {
     if (success) {
         return (
             <div className={styles.wrapper}>
-                <div className={styles.container} style={{ textAlign: 'center' }}>
-                    <div className={styles.formCard}>
-                        <div style={{ fontSize: '5rem', color: '#48bb78', marginBottom: '2rem' }}>✨</div>
-                        <h2 className={styles.title}>¡Nominación Enviada!</h2>
-                        <p className={styles.subtitle}>Gracias por ayudarnos a reconocer el talento culinario. Revisaremos la información y nos pondremos en contacto.</p>
-                        <button onClick={() => router.push('/')} className={styles.submitBtn} style={{ marginTop: '3rem' }}>Volver al Inicio</button>
-                    </div>
+                <div className={styles.successWrapper}>
+                    <span className={styles.successIcon}>✦</span>
+                    <h2 className={styles.successTitle}>¡Nominación Enviada!</h2>
+                    <p className={styles.successText}>
+                        Gracias por ayudarnos a reconocer el talento culinario. Revisaremos la información y nos pondremos en contacto.
+                    </p>
+                    <button onClick={() => router.push('/')} className={styles.submitBtn} style={{ maxWidth: '280px' }}>
+                        Volver al Inicio
+                    </button>
                 </div>
             </div>
         );
@@ -73,27 +71,33 @@ export default function ChefNominationPage() {
 
     return (
         <div className={styles.wrapper}>
-            <div className={styles.container}>
-                <header className={styles.header}>
-                    <h1 className={styles.title}>Nomina a un Chef</h1>
-                    <p className={styles.subtitle}>Reconocemos el talento, la pasión y la trayectoria de los grandes maestros de la cocina en México.</p>
-                </header>
+            {/* Hero */}
+            <div className={styles.heroBanner}>
+                <span className={styles.heroLabel}>Talento Culinario</span>
+                <h1 className={styles.heroTitle}>Nomina a un Chef</h1>
+                <p className={styles.heroSubtitle}>
+                    Reconocemos el talento, la pasión y la trayectoria de los grandes maestros de la cocina en México.
+                </p>
+            </div>
 
+            {/* Form */}
+            <div className={styles.container}>
                 <form onSubmit={handleSubmit} className={styles.formCard}>
+
                     {/* Perfil Básico */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}><FaUserAlt /> Perfil del Chef</h2>
                         <div className={styles.grid}>
                             <div className={styles.field}>
-                                <label className={styles.label}>Nombre Completo</label>
+                                <label className={styles.label}>Nombre Completo *</label>
                                 <input required type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Ej. Enrique Olvera" className={styles.input} />
                             </div>
                             <div className={styles.field}>
-                                <label className={styles.label}>Especialidad</label>
+                                <label className={styles.label}>Especialidad *</label>
                                 <input required type="text" name="specialty" value={formData.specialty} onChange={handleInputChange} placeholder="Ej. Cocina de Autor / Mexicana" className={styles.input} />
                             </div>
                             <div className={styles.field} style={{ gridColumn: 'span 2' }}>
-                                <label className={styles.label}>Reseña Biográfica</label>
+                                <label className={styles.label}>Reseña Biográfica *</label>
                                 <textarea required name="bio" value={formData.bio} onChange={handleInputChange} placeholder="Una breve descripción que destaque su esencia..." className={styles.textarea} />
                             </div>
                             <div className={styles.field} style={{ gridColumn: 'span 2' }}>
@@ -107,7 +111,7 @@ export default function ChefNominationPage() {
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}><FaBriefcase /> Trayectoria Profesional</h2>
                         <div className={styles.field}>
-                            <label className={styles.label}>Experiencia y Logros</label>
+                            <label className={styles.label}>Experiencia y Logros *</label>
                             <textarea required name="trajectory" value={formData.trajectory} onChange={handleInputChange} placeholder="Cuéntanos los hitos más importantes de su carrera, restaurantes donde ha trabajado, etc." className={styles.textarea} style={{ minHeight: '180px' }} />
                         </div>
                     </section>
@@ -124,8 +128,9 @@ export default function ChefNominationPage() {
                                 <label className={styles.label}>Reconocimiento Especial</label>
                                 <div className={styles.michelinToggle} onClick={() => setIsMichelin(!isMichelin)}>
                                     <input type="checkbox" checked={isMichelin} readOnly />
-                                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        ¿Tiene Estrella Michelin? <FaStar style={{ color: isMichelin ? '#e53e3e' : '#ccc' }} />
+                                    <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-modern)' }}>
+                                        ¿Tiene Estrella Michelin?
+                                        <FaStar style={{ color: isMichelin ? 'var(--primary)' : 'var(--border-light)' }} />
                                     </span>
                                 </div>
                             </div>
@@ -138,26 +143,30 @@ export default function ChefNominationPage() {
                         <div className={styles.socialGrid}>
                             <div className={styles.socialInputWrapper}>
                                 <FaInstagram className={styles.socialIcon} />
-                                <input type="text" name="instagram" value={formData.instagram} onChange={handleInputChange} placeholder="Instagram" className={`${styles.input} ${styles.socialInput}`} />
+                                <input type="text" name="instagram" value={formData.instagram} onChange={handleInputChange} placeholder="@instagram" className={`${styles.input} ${styles.socialInput}`} />
                             </div>
                             <div className={styles.socialInputWrapper}>
                                 <FaTiktok className={styles.socialIcon} />
-                                <input type="text" name="tiktok" value={formData.tiktok} onChange={handleInputChange} placeholder="TikTok" className={`${styles.input} ${styles.socialInput}`} />
+                                <input type="text" name="tiktok" value={formData.tiktok} onChange={handleInputChange} placeholder="@tiktok" className={`${styles.input} ${styles.socialInput}`} />
                             </div>
                             <div className={styles.socialInputWrapper}>
                                 <FaTwitter className={styles.socialIcon} />
-                                <input type="text" name="twitter" value={formData.twitter} onChange={handleInputChange} placeholder="Twitter" className={`${styles.input} ${styles.socialInput}`} />
+                                <input type="text" name="twitter" value={formData.twitter} onChange={handleInputChange} placeholder="@twitter" className={`${styles.input} ${styles.socialInput}`} />
                             </div>
                             <div className={styles.socialInputWrapper}>
                                 <FaLink className={styles.socialIcon} />
-                                <input type="url" name="portfolio" value={formData.portfolio} onChange={handleInputChange} placeholder="Portafolio o Web" className={`${styles.input} ${styles.socialInput}`} />
+                                <input type="url" name="portfolio" value={formData.portfolio} onChange={handleInputChange} placeholder="portafolio o sitio web" className={`${styles.input} ${styles.socialInput}`} />
                             </div>
                         </div>
                     </section>
 
-                    <button type="submit" disabled={loading} className={styles.submitBtn}>
-                        {loading ? "Enviando Nominación..." : "Enviar Nominación de Chef"}
-                    </button>
+                    {/* Submit */}
+                    <div className={styles.submitSection}>
+                        <button type="submit" disabled={loading} className={styles.submitBtn}>
+                            {loading ? "Enviando..." : "✦ Enviar Nominación"}
+                        </button>
+                        <p className={styles.submitNote}>Tu nominación será revisada por nuestro equipo editorial</p>
+                    </div>
                 </form>
             </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, User, Menu, X, LogOut, ChevronDown } from "lucide-react";
@@ -10,7 +10,6 @@ import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGuiasOpen, setIsGuiasOpen] = useState(false);
   const [isMexicoOpen, setIsMexicoOpen] = useState(false);
@@ -37,7 +36,6 @@ export default function Navbar() {
         setIsVisible(true); // Scrolling up - Show
       }
       
-      setScrolled(currentScrollY > 50);
       lastScrollY.current = currentScrollY;
     };
     window.addEventListener("scroll", handleScroll);
@@ -84,8 +82,7 @@ export default function Navbar() {
   };
 
   const isActive = (path: string) => pathname === path;
-  const isMexicoActive = pathname.startsWith('/mexico');
-  const isGuiasActive = pathname.startsWith('/guias') || pathname === '/nomina-chef';
+const isGuiasActive = pathname.startsWith('/guias') || pathname === '/nomina-chef';
 
   const closeAllMenus = () => {
     setIsMenuOpen(false);
@@ -203,6 +200,7 @@ export default function Navbar() {
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FaTwitter /></a>
           </div>
+          
         </nav>
 
         <div className={styles.actions}>

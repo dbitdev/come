@@ -38,8 +38,8 @@
 .mainHeader {
     background-color: #fff;
     padding: 4rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
-    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 8px 8px 0 var(--foreground);
+    border: 2px solid var(--border-color);
     margin-bottom: 4rem;
     display: flex;
     flex-direction: column;
@@ -191,8 +191,8 @@
 .mapCard {
     background: #fff;
     padding: 2rem;
-    border: 1px solid #eee;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow-editorial-sm);
 }
 
 .mapWrapper {
@@ -225,21 +225,23 @@
 
 .actionBtn {
     width: 100%;
-    padding: 1.5rem;
-    background: #000;
-    color: #fff;
-    border: none;
-    font-size: 1.1rem;
+    padding: 1.25rem;
+    background: var(--accent);
+    color: var(--foreground);
+    border: 2px solid var(--foreground);
+    font-family: var(--font-modern);
+    font-size: 0.78rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     cursor: pointer;
-    transition: all 0.3s;
+    box-shadow: 5px 5px 0 var(--foreground);
+    transition: var(--transition-smooth);
 }
 
 .actionBtn:hover {
-    background: var(--primary);
-    transform: translateY(-3px);
+    transform: translate(5px, 5px);
+    box-shadow: none;
 }
 
 .extraSection {
@@ -263,14 +265,14 @@
     text-decoration: none;
     color: inherit;
     background: #fff;
-    border: 1px solid #eee;
-    transition: all 0.3s;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-smooth);
     overflow: hidden;
+    position: relative;
 }
 
 .articleCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.06);
+    background: var(--pale-yellow);
     border-color: var(--primary);
 }
 
@@ -356,25 +358,23 @@
     gap: 1rem;
     background: #fff;
     padding: 0.8rem;
-    border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: all 0.2s;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-smooth);
     text-decoration: none;
     color: inherit;
 }
 
 .guideMiniCard:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    background: var(--pale-yellow);
     border-color: var(--primary);
 }
 
 .guideMiniThumb {
     width: 60px;
     height: 60px;
-    border-radius: 8px;
     overflow: hidden;
     flex-shrink: 0;
+    border: 1.5px solid var(--border-color);
 }
 
 .guideMiniThumb img {

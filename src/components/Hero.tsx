@@ -141,8 +141,10 @@ export default function Hero() {
 
                     <div className={styles.heroContent}>
                         <div className={styles.textContent}>
-                            <span className={styles.eyebrow}>Guia Gastronómica</span>
-                            <h1 className={styles.title}>Eres donde Comes</h1>
+                            <span className="mag-label">Mexica Gourmet</span>
+                            <h1 className="mixed-heading">
+                                Explora <span>la nueva era</span> gastronómica
+                            </h1>
                         </div>
 
                         <form className={styles.searchForm} onSubmit={handleSearch}>
@@ -171,7 +173,7 @@ export default function Hero() {
                         </form>
 
                         <div className={styles.textContent}>
-                            <p className={styles.subtitle}>La guía definitiva y curada de las mejores experiencias gastronómicas en México.</p>
+                            <p className={styles.subtitle}>Crónicas, lugares y los chefs que están redefiniendo el panorama culinario de México.</p>
                         </div>
                     </div>
 

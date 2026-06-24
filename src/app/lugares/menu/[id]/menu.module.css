@@ -1,31 +1,38 @@
 .menuWrapper {
     min-height: 100vh;
-    background-color: #fff;
-    color: #000;
+    background-color: var(--background);
+    color: var(--foreground);
 }
 
+/* ── Header ───────────────────────────────────────── */
 .header {
     padding: 2rem 5%;
-    background: #000;
+    background: var(--foreground);
+    background-image: var(--dot-pattern-light);
+    background-size: var(--dot-size);
     color: #fff;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .backBtn {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1.5px solid rgba(255,255,255,0.3);
     color: #fff;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: 0.5rem 1.2rem;
     cursor: pointer;
     width: fit-content;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.9rem;
-    transition: all 0.2s;
+    font-family: var(--font-modern);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    transition: var(--transition-fast);
 }
 
 .backBtn:hover {
@@ -34,78 +41,133 @@
 }
 
 .restaurantInfo h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
+    font-family: var(--font-serif);
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 700;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: #fff;
 }
 
 .meta {
     display: flex;
     gap: 1.5rem;
-    font-size: 1rem;
-    color: #ccc;
+    font-family: var(--font-modern);
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
 }
 
 .rating {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #f5c518;
+    color: var(--accent);
     font-weight: 700;
 }
 
+/* ── Category tag ─────────────────────────────────── */
+.category {
+    font-family: var(--font-modern);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.5);
+}
+
+/* ── Main content area ────────────────────────────── */
+.content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Hero Image ───────────────────────────────────── */
 .hero {
     position: relative;
-    height: 300px;
+    height: 320px;
     width: 100%;
+    overflow: hidden;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .heroImage {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    filter: saturate(1.1);
 }
 
 .heroOverlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8));
+    background: linear-gradient(to bottom, transparent 30%, rgba(26,17,8,0.8));
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 2rem 5%;
+    padding: 2.5rem 5%;
     color: #fff;
 }
 
 .heroOverlay h2 {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
 }
 
+/* ── Menu Grid ────────────────────────────────────── */
 .menuGrid {
     padding: 4rem 5%;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
+    gap: 0;
+    border-top: 2px solid var(--border-color);
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
+/* ── Dish Card ────────────────────────────────────── */
 .dishCard {
-    border: 1px solid #eee;
-    border-radius: 12px;
+    border-right: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     overflow: hidden;
-    transition: transform 0.3s;
+    transition: var(--transition-smooth);
     background: #fff;
+    position: relative;
 }
 
 .dishCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    background: var(--pale-yellow);
+}
+
+.dishCard::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: var(--accent);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dishCard:hover::after {
+    width: 100%;
 }
 
 .dishImage {
     width: 100%;
     height: 200px;
     object-fit: cover;
+    border-bottom: 2px solid var(--border-color);
+    filter: saturate(1.1);
+    transition: transform 0.5s ease;
+}
+
+.dishCard:hover .dishImage {
+    transform: scale(1.04);
 }
 
 .dishInfo {
@@ -116,68 +178,133 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
 }
 
 .dishHeader h3 {
-    font-size: 1.25rem;
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
     font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--foreground);
 }
 
 .price {
+    font-family: var(--font-modern);
     font-weight: 800;
     color: var(--primary);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .dishDesc {
-    color: #666;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
+    font-family: var(--font-modern);
+    color: var(--foreground-muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin-bottom: 0.75rem;
 }
 
 .ingredients {
-    font-size: 0.85rem;
-    color: #888;
+    font-family: var(--font-modern);
+    font-size: 0.78rem;
+    color: var(--foreground-muted);
+    font-style: italic;
 }
 
+/* ── No Menu ──────────────────────────────────────── */
 .noMenu {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 4rem;
-    background: #fcfcfc;
-    border-radius: 20px;
-    border: 2px dashed #eee;
+    padding: 6rem 2rem;
+    border: 2px dashed var(--border-light);
+    color: var(--foreground-muted);
+    font-family: var(--font-modern);
 }
 
+/* ── Footer ───────────────────────────────────────── */
 .footer {
     padding: 4rem 5%;
-    background: #f9f9f9;
+    background: var(--foreground);
     text-align: center;
-    border-top: 1px solid #eee;
-    color: #888;
-    font-size: 0.9rem;
+    border-top: 2px solid var(--border-color);
+    color: rgba(255,255,255,0.5);
+    font-family: var(--font-modern);
+    font-size: 0.8rem;
 }
 
 .footerBrand {
     margin-top: 1rem;
     font-weight: 800;
-    color: #000;
-    letter-spacing: 1px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
 }
 
+/* ── States ───────────────────────────────────────── */
 .loading, .error {
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: var(--font-modern);
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--foreground-muted);
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 1024px) {
+    .menuGrid {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 2rem 1.5rem;
+    }
 }
 
 @media (max-width: 768px) {
+    .header {
+        padding: 1.5rem 1.2rem;
+        gap: 1rem;
+    }
     .restaurantInfo h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+    }
+    .meta {
+        gap: 1rem;
+        font-size: 0.78rem;
+    }
+    .hero {
+        height: 220px;
+    }
+    .heroOverlay h2 {
+        font-size: 1.4rem;
+    }
+    .menuGrid {
+        grid-template-columns: 1fr;
+        padding: 1.5rem 1.2rem;
+    }
+    .dishCard {
+        border-right: none;
+    }
+    .dishImage {
+        height: 160px;
+    }
+    .dishInfo {
+        padding: 1.2rem;
+    }
+    .dishHeader h3 {
+        font-size: 1rem;
+    }
+    .price {
+        font-size: 0.9rem;
+    }
+    .footer {
+        padding: 2.5rem 1.2rem;
     }
 }

@@ -1,0 +1,93 @@
+.bar {
+    width: 100%;
+    padding: 0.85rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-family: var(--font-modern);
+    border-top: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Dot pattern overlay on all bars */
+.bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--dot-pattern-light);
+    background-size: var(--dot-size);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bar > * {
+    position: relative;
+    z-index: 1;
+}
+
+.title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.title::before {
+    content: '✦';
+    font-size: 0.7em;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.right {
+    opacity: 0.65;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.right::before {
+    content: '—';
+    opacity: 0.4;
+}
+
+/* Variants */
+.orange {
+    background-color: var(--primary);
+    color: #fff;
+    border-color: var(--primary-dark);
+}
+
+.black {
+    background-color: var(--foreground);
+    color: var(--background);
+    border-color: var(--foreground);
+}
+
+.green {
+    background-color: var(--secondary);
+    color: #fff;
+    border-color: var(--secondary);
+}
+
+.yellow {
+    background-color: var(--accent);
+    color: var(--foreground);
+    border-color: var(--foreground);
+}
+
+@media (max-width: 768px) {
+    .bar {
+        padding: 0.75rem 1.2rem;
+        font-size: 0.65rem;
+        letter-spacing: 0.15em;
+    }
+}

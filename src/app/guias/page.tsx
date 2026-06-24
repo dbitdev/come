@@ -33,19 +33,21 @@ export default function GuiasPage() {
         <div className={styles.container}>
             <header className={styles.hero}>
                 <div className={styles.heroContent}>
-                    <div className={styles.badge}>Experiencias</div>
-                    <h1>Guías y Rutas Gastronómicas</h1>
-                    <p>Descubre los secretos culinarios de México a través de nuestras rutas interactivas diseñadas por expertos.</p>
-                    <Link href="/guias/crear" className={styles.createBtn}>
-                        <Plus size={20} /> Crear mi propia ruta
-                    </Link>
+                    <span className="mag-label">Rutas & Experiencias</span>
+                    <h1 className="mixed-heading">Guías <span>Gastronómicas</span></h1>
+                    <p>Una colección curada de rutas interactivas diseñadas por expertos para descubrir los secretos culinarios de México.</p>
+                    <div className={styles.heroActions}>
+                        <Link href="/guias/crear" className={styles.createBtn}>
+                            <Plus size={20} /> Crear mi propia ruta
+                        </Link>
+                    </div>
                 </div>
             </header>
 
             <main className={styles.main}>
-                <div className={styles.sectionHeader}>
-                    <h2>Rutas Recientes</h2>
-                    <p>Explora las últimas guías publicadas por nuestra comunidad.</p>
+                <div className="section-bar">
+                    <span>Exploraciones Recientes</span>
+                    <p className={styles.sectionHeaderHint}>Actualizado hoy</p>
                 </div>
 
                 {loading ? (

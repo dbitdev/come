@@ -13,171 +13,222 @@
   padding: 0 2rem;
 }
 
+/* ── Map Section ─────────────────────────────────── */
 .mapHighlightSection {
-  padding: 3rem 0;
-  background-color: #1a0f0c;
+  padding: 0;
+  background-color: var(--foreground);
   color: #fff;
+  border-top: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dot pattern overlay */
+.mapHighlightSection::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--dot-pattern-light);
+  background-size: var(--dot-size);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .mapGrid {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 3rem;
-  height: 600px;
+  grid-template-columns: 1fr 2.2fr;
+  height: 620px;
   align-items: stretch;
+  position: relative;
+  z-index: 1;
 }
 
 .mapInfo {
-  background-color: transparent;
-  padding: 2rem 0;
+  padding: 4rem 3rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  border-right: 2px solid rgba(255,255,255,0.08);
 }
 
 .tag {
-  color: #d4af37;
+  color: var(--accent);
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.25em;
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
   margin-bottom: 1.5rem;
+  font-family: var(--font-modern);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tag::before {
+  content: '◆';
+  font-size: 0.5em;
 }
 
 .mapTitle {
-  font-size: 3.5rem;
-  font-weight: 600;
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  font-weight: 700;
   margin-bottom: 1.5rem;
-  line-height: 1.1;
+  line-height: 1.05;
   font-family: var(--font-serif);
   color: #fff;
+  letter-spacing: -0.03em;
 }
 
 .mapText {
-  color: #dcdcdc;
-  line-height: 1.8;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
   margin-bottom: 3rem;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  font-family: var(--font-modern);
+  font-weight: 400;
 }
 
 .mapStats {
   display: flex;
-  gap: 2rem;
+  gap: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 .stat {
   display: flex;
   flex-direction: column;
+  gap: 0.3rem;
 }
 
 .stat strong {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.2rem;
+  font-weight: 700;
   color: #fff;
   font-family: var(--font-serif);
+  line-height: 1;
 }
 
 .stat span {
-  font-size: 0.85rem;
-  color: #bbb;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.45);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-top: 0.3rem;
+  letter-spacing: 0.2em;
+  font-family: var(--font-modern);
+  font-weight: 700;
 }
 
 .mapWrapper {
-  border-radius: var(--border-radius-md);
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
   height: 100%;
 }
 
-@media (max-width: 1024px) {
-  .mapGrid {
-    grid-template-columns: 1fr;
-    height: auto;
-  }
-  
-  .mapInfo {
-    padding: 2rem;
-  }
-
-  .mapWrapper {
-    height: 450px;
-  }
-}
-
+/* ── Guides Section ─────────────────────────────── */
 .guidesSection {
-  padding: 3rem 0;
-  background: #fff;
+  padding: 5rem 0;
+  background: var(--background-alt);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 3.5rem;
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.titleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .sectionTitle {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--foreground);
 }
 
 .sectionSubtitle {
-  color: #64748b;
-  font-size: 1.1rem;
+  color: var(--foreground-muted);
+  font-size: 0.88rem;
+  font-family: var(--font-modern);
+  font-weight: 400;
+  margin: 0;
 }
 
 .viewAllLink {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: var(--primary);
+  gap: 0.4rem;
+  color: var(--foreground);
   font-weight: 700;
+  font-size: 0.72rem;
+  font-family: var(--font-modern);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
   text-decoration: none;
-  font-size: 1rem;
-  transition: all 0.2s;
+  border-bottom: 1.5px solid var(--foreground);
+  padding-bottom: 2px;
+  transition: var(--transition-fast);
+  white-space: nowrap;
 }
 
 .viewAllLink:hover {
-  gap: 12px;
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
+/* Guide cards grid */
 .guidesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2.5rem;
+  gap: 0;
+  border: 2px solid var(--border-color);
 }
 
 .guideCard {
-  background: #fff;
-  border-radius: 20px;
+  background: var(--background-alt);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(0,0,0,0.02);
+  transition: var(--transition-smooth);
+  border-right: 2px solid var(--border-color);
   text-decoration: none;
   color: inherit;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.guideCard:last-child {
+  border-right: none;
 }
 
 .guideCard:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-  border-color: rgba(158, 20, 20, 0.1);
+  background: var(--pale-yellow);
 }
 
 .guideImage {
   position: relative;
-  height: 200px;
+  height: 220px;
   overflow: hidden;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .guideImage img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.7s ease;
+  filter: saturate(1.1);
+}
+
+.guideCard:hover .guideImage img {
+  transform: scale(1.06);
 }
 
 .guideOverlay {
@@ -186,84 +237,108 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  background: linear-gradient(to top, rgba(10,6,2,0.7), transparent 60%);
   display: flex;
   align-items: flex-end;
-  padding: 1.5rem;
+  padding: 1.25rem;
 }
 
 .guideStats {
   color: #fff;
-  font-size: 0.8rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.4rem;
+  font-family: var(--font-modern);
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.4);
+  padding: 0.3rem 0.6rem;
 }
 
 .guideContent {
   padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .guideContent h3 {
   font-size: 1.15rem;
-  font-weight: 800;
-  line-height: 1.35;
-  margin-bottom: 0.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--foreground);
+  letter-spacing: -0.01em;
 }
 
 .guideAuthor {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--foreground-muted);
+  font-weight: 500;
+  font-family: var(--font-modern);
+  margin-top: auto;
 }
 
-.simpleGuidesSection {
-  padding: 3rem 0;
-  background: #f8fafc;
+/* Accent bar on hover */
+.guideCard::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: var(--primary);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.simpleGuidesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+.guideCard:hover::after {
+  width: 100%;
 }
 
-.simpleGuideItem {
-  background: #fff;
-  padding: 2.5rem;
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.3s;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-  border: 1px solid rgba(0,0,0,0.05);
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 1024px) {
+  .mapGrid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .mapInfo {
+    padding: 3rem 2rem;
+    border-right: none;
+    border-bottom: 2px solid rgba(255,255,255,0.08);
+  }
+  .mapWrapper {
+    height: 450px;
+  }
 }
 
-.simpleGuideItem:hover {
-  transform: translateX(10px);
-  border-color: var(--primary);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-}
-
-.guideIcon {
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.simpleGuideInfo h3 {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin-bottom: 0.4rem;
-}
-
-.simpleGuideInfo p {
-  font-size: 0.95rem;
-  color: #64748b;
-  line-height: 1.5;
-  margin: 0;
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1.2rem;
+  }
+  .guidesSection {
+    padding: 3rem 0;
+  }
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .guidesGrid {
+    grid-template-columns: 1fr;
+  }
+  .guideCard {
+    border-right: none;
+    border-bottom: 2px solid var(--border-color);
+  }
+  .guideCard:last-child {
+    border-bottom: none;
+  }
+  .mapWrapper {
+    height: 380px;
+  }
+  .mapStats {
+    gap: 1.5rem;
+  }
 }
