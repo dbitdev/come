@@ -1,7 +1,3 @@
 {
-  "hosting": {},
-  "firestore": {
-    "rules": "firestore.rules",
-    "database": "hueyi"
-  }
+  "hosting": {}
 }
