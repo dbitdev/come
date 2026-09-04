@@ -3,6 +3,9 @@
     min-height: 100vh;
 }
 
+/* Wonder-inspired rebuild */
+.container{background:#fffdf7}.hero{height:calc(100vh - 78px);min-height:650px;background:linear-gradient(90deg,rgba(0,31,20,.9),rgba(0,31,20,.18)),url('https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=2000&q=88') center/cover!important;border:0!important;display:flex;align-items:flex-end;text-align:left!important;padding:6rem max(5vw,1.25rem)!important}.heroContent{max-width:900px!important;margin:0!important}.heroContent h1{font-size:clamp(4rem,8vw,8.5rem)!important;line-height:.86!important;color:#fff!important}.heroContent h1 span{color:#78dc78!important;font-style:italic}.heroContent p{color:#e4f2e7!important;font-size:1.2rem!important;max-width:680px}.section{padding:7rem max(5vw,1.25rem)!important;border:0!important}.storyGrid{max-width:1350px;margin:auto;gap:6vw!important}.storyImage{border-radius:0!important}.missionVision{background:#f3c5ce!important;color:#10261c!important}.mvCard{background:transparent!important;border-color:#10261c22!important;box-shadow:none!important}.mvCard p{color:#35483d!important}.valuesSection h2,.ctaContent h2{font-size:clamp(3.5rem,6vw,6.5rem)!important}.valueCard{border:0!important;background:#e8f7df!important;border-radius:0!important;box-shadow:none!important}.ctaSection{background:#075438!important;border:0!important}.primaryBtn{background:#71dc77!important;color:#073d29!important;border:0!important;box-shadow:none!important;border-radius:3px}.secondaryBtn{border:1px solid #fff!important;border-radius:3px}
+
 /* ── Hero ─────────────────────────────────────────── */
 .hero {
     position: relative;

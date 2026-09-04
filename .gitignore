@@ -39,3 +39,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# === Hueyi security baseline (auditoría 2026-08) ===
+.env
+.env.*
+!.env.example
+*service-account*.json
+*play-store-key*.json
+*-key.json
+*.pem
+*.p12
+*.jks
+*.keystore
+.secret.local
+
+
+# El ecosistema usa pnpm exclusivamente (auditoría 2026-08)
+package-lock.json
+yarn.lock
+npm-shrinkwrap.json
+bun.lockb

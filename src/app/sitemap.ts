@@ -2,21 +2,31 @@ import { MetadataRoute } from 'next';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getLatestNews } from '@/lib/wordpress';
-import { slugify } from '@/lib/utils';
+import { slugify, isPublished } from "@/lib/utils";
 
-const BASE_URL = 'https://comeweb.mx';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Static Routes
+  // Sólo rutas que existen: /guias/con-estrellas y /guias/chefs caían en el
+  // [slug] de guías y devolvían "Guía no encontrada" (soft 404 en el sitemap).
   const staticRoutes = [
     '',
+    '/restaurantes',
     '/lugares',
     '/mapa',
-    '/guias/con-estrellas',
-    '/guias/chefs',
+    '/chefs',
+    '/guias',
+    '/guias/recetas',
+    '/noticias',
+    '/ordenar',
     '/nosotros',
     '/nomina-lugar',
+    '/nomina-chef',
+    '/registra-negocio',
+    '/empleos',
     '/mexica-gourmet',
+    '/terminos',
   ].map((route) => ({
     url: `${BASE_URL}${route}`,
     lastModified: new Date(),
@@ -29,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     if (db) {
       const querySnapshot = await getDocs(collection(db, "come"));
-      restaurantRoutes = querySnapshot.docs.map((doc) => {
+      restaurantRoutes = querySnapshot.docs.filter((doc) => isPublished(doc.data())).map((doc) => {
         const data = doc.data();
         const name = data.restaurantName || data.name || 'sin-nombre';
         return {

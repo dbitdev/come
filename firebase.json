@@ -1,3 +1,25 @@
 {
-  "hosting": {}
+  "hosting": {
+    "headers": [
+      {
+        "source": "/_next/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css|svg|woff2|webp|avif|png|jpg)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ]
+  },
+  "_comentario": "Las cabeceras de seguridad se emiten desde next.config.ts porque el despliegue es Firebase App Hosting (Cloud Run), donde esta sección de hosting no aplica."
 }

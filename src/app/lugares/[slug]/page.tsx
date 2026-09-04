@@ -43,6 +43,7 @@ interface Restaurant {
     };
     lat?: number | string;
     lng?: number | string;
+    menu?: Array<{name?:string;description?:string;ingredients?:string;image?:string;price?:number}>;
 }
 
 async function getRestaurant(slug: string): Promise<Restaurant | null> {
@@ -176,7 +177,7 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
             longitude: lngNum,
         } : undefined,
         telephone: restaurant.phone,
-        url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://comeweb.mx'}/lugares/${slug}`,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/lugares/${slug}`,
         servesCuisine: restaurant.category,
         starRating: {
             '@type': 'Rating',
@@ -220,7 +221,10 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                             {restaurant.address}
                         </div>
                     </div>
+                    {restaurant.menu && restaurant.menu.length > 0 && <Link href={`/lugares/menu/${restaurant.id}`} className={styles.menuCta}>Ver menú</Link>}
                 </header>
+
+                {restaurant.menu && restaurant.menu.length > 0 && <section className={styles.menuHighlights}><div className={styles.highlightHead}><span>DESTACADOS DEL MENÚ</span><h2>{restaurant.description || `Lo mejor de ${restaurant.name}`}</h2><Link href={`/lugares/menu/${restaurant.id}`}>Ver el menú completo <ChevronRight size={18}/></Link></div><div className={styles.highlightGrid}>{restaurant.menu.slice(0,4).map((item,index)=><Link href={`/lugares/menu/${restaurant.id}`} key={`${item.name}-${index}`}><img src={item.image || restaurant.image} alt={item.name || "Platillo"}/><h3>{item.name || "Platillo destacado"}</h3><p>{item.description || item.ingredients || "Preparado por el restaurante."}</p><b>Ordenar ahora</b></Link>)}</div></section>}
 
                 <div className={styles.grid}>
                     {/* Main Content Column */}

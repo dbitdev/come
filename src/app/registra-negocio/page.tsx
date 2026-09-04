@@ -90,9 +90,11 @@ export default function RegisterBusinessPage() {
             setLoading(true);
             setError(null);
             try {
-                console.log("Iniciando registro de negocio...");
-                console.log("DB instance:", !!db);
-                console.log("User authenticated:", !!user, user?.uid);
+                // Sin sesión el registro se rechaza en las reglas, así que se
+                // corta antes en vez de fallar al final de los tres pasos.
+                if (!user) {
+                    throw new Error("Inicia sesión para registrar tu negocio: así puedes editarlo después desde tu perfil.");
+                }
 
                 if (!db) {
                     throw new Error("Firebase no está inicializado correctamente. Verifica tu conexión o configuración.");
@@ -108,12 +110,10 @@ export default function RegisterBusinessPage() {
                     awards,
                     schedule,
                     menu: menuItems,
-                    userId: user?.uid || 'guest',
+                    userId: user.uid,
                     createdAt: serverTimestamp(),
                     status: 'pending'
                 };
-
-                console.log("Intentando guardar datos en Firestore:", docData);
 
                 // Timeout of 15 seconds to prevent permanent hang
                 const savePromise = addDoc(collection(db, "come"), docData);
@@ -123,7 +123,6 @@ export default function RegisterBusinessPage() {
 
                 await Promise.race([savePromise, timeoutPromise]);
 
-                console.log("Registro guardado con éxito.");
                 setSuccess(true);
                 setTimeout(() => router.push('/perfil'), 4000);
             } catch (err: any) {
@@ -151,6 +150,15 @@ export default function RegisterBusinessPage() {
                     <>
                         <h1 className={styles.title}>Únete a Come</h1>
                         <p className={styles.subtitle}>Registra tu negocio y obtén tu menú digital gratis al instante.</p>
+
+                        {!user && (
+                            <div className={styles.authNotice}>
+                                Para registrar tu negocio necesitas una cuenta: es lo que te deja
+                                editar tu ficha y tu menú después.{" "}
+                                <Link href="/login?next=/registra-negocio">Inicia sesión</Link> o{" "}
+                                <Link href="/register?next=/registra-negocio">crea una cuenta</Link>.
+                            </div>
+                        )}
 
                         {error && (
                             <div style={{ background: '#fff5f5', color: '#e53e3e', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #fed7d7', fontSize: '0.9rem' }}>

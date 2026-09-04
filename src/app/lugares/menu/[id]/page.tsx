@@ -1,94 +1,18 @@
 "use client";
+import { useEffect,useMemo,useState } from "react";
+import { useParams,useRouter } from "next/navigation";
+import { doc,getDoc } from "firebase/firestore";
+import { ArrowLeft,Minus,Plus,ShoppingBag,Star } from "lucide-react";
+import { db } from "@/lib/firebase";
+import styles from "./menu.module.css";
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { FaChevronLeft, FaUtensils, FaStar, FaMapMarkerAlt } from 'react-icons/fa';
-import styles from './menu.module.css';
-
-export default function DigitalMenuPage() {
-    const params = useParams();
-    const id = params?.id as string;
-    const router = useRouter();
-    const [restaurant, setRestaurant] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchMenu = async () => {
-            if (!id || !db) return;
-            try {
-                const docRef = doc(db, "come", id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setRestaurant({ id: docSnap.id, ...docSnap.data() });
-                }
-            } catch (err) {
-                console.error("Error fetching menu:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchMenu();
-    }, [id]);
-
-    if (loading) return <div className={styles.loading}>Cargando menú digital...</div>;
-    if (!restaurant) return <div className={styles.error}>Restaurante no encontrado.</div>;
-
-    const menu = restaurant.menu || [];
-
-    return (
-        <div className={styles.menuWrapper}>
-            <header className={styles.header}>
-                <button onClick={() => router.back()} className={styles.backBtn}>
-                    <FaChevronLeft /> Volver
-                </button>
-                <div className={styles.restaurantInfo}>
-                    <h1>{restaurant.restaurantName || restaurant.name}</h1>
-                    <div className={styles.meta}>
-                        <span className={styles.category}>{restaurant.category}</span>
-                        <span className={styles.rating}><FaStar /> {restaurant.rating}</span>
-                    </div>
-                </div>
-            </header>
-
-            <main className={styles.content}>
-                <section className={styles.hero}>
-                    <img src={restaurant.image} alt={restaurant.name} className={styles.heroImage} />
-                    <div className={styles.heroOverlay}>
-                        <h2>Nuestra Carta</h2>
-                        <p>Descubre los sabores que nos definen</p>
-                    </div>
-                </section>
-
-                <div className={styles.menuGrid}>
-                    {menu.length > 0 ? (
-                        menu.map((item: any, idx: number) => (
-                            <div key={idx} className={styles.dishCard}>
-                                {item.image && <img src={item.image} alt={item.name} className={styles.dishImage} />}
-                                <div className={styles.dishInfo}>
-                                    <div className={styles.dishHeader}>
-                                        <h3>{item.name}</h3>
-                                        <span className={styles.price}>${item.price}</span>
-                                    </div>
-                                    <p className={styles.dishDesc}>{item.description}</p>
-                                    {item.ingredients && <p className={styles.ingredients}><b>Ingredientes:</b> {item.ingredients}</p>}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className={styles.noMenu}>
-                            <FaUtensils size={48} color="#eee" />
-                            <p>El menú digital para este establecimiento aún no ha sido cargado.</p>
-                        </div>
-                    )}
-                </div>
-            </main>
-
-            <footer className={styles.footer}>
-                <p>{restaurant.address}</p>
-                <div className={styles.footerBrand}>Powered by ComeApp</div>
-            </footer>
-        </div>
-    );
+type Item={name:string;description?:string;ingredients?:string;image?:string;price:number};
+type Restaurant={name:string;category?:string;rating?:number;image?:string;address?:string;menu:Item[]};
+export default function MenuPage(){
+ const {id}=useParams<{id:string}>(); const router=useRouter(); const [restaurant,setRestaurant]=useState<Restaurant|null>(null); const [loading,setLoading]=useState(true); const [cart,setCart]=useState<Record<number,number>>({});
+ useEffect(()=>{(async()=>{if(!db||!id)return;const snap=await getDoc(doc(db,"come",id));if(snap.exists()){const d=snap.data();setRestaurant({name:d.restaurantName||d.name||"Restaurante",category:d.category,rating:Number(d.rating)||4.8,image:d.image||d.menu?.[0]?.image,address:d.address,menu:(Array.isArray(d.menu)?d.menu:[]).map((x)=>({name:x.name||"Platillo",description:x.description,ingredients:x.ingredients,image:x.image,price:Number(x.price)||0}))})}})().catch(()=>setRestaurant(null)).finally(()=>setLoading(false))},[id]);
+ const total=useMemo(()=>restaurant?.menu.reduce((sum,item,index)=>sum+item.price*(cart[index]||0),0)||0,[cart,restaurant]); const count=Object.values(cart).reduce((a,b)=>a+b,0);
+ const change=(index:number,delta:number)=>setCart(old=>({...old,[index]:Math.max(0,(old[index]||0)+delta)}));
+ if(loading)return <div className={styles.state}>Cargando menú…</div>; if(!restaurant)return <div className={styles.state}>Restaurante no encontrado.</div>;
+ return <main className={styles.page}><header className={styles.cover}><img src={restaurant.image||"/hero_food_top.png"} alt={restaurant.name}/><div className={styles.shade}/><button onClick={()=>router.back()}><ArrowLeft/> Volver</button><div><span>{restaurant.category} · <Star size={14} fill="currentColor"/> {restaurant.rating}</span><h1>{restaurant.name}</h1><p>{restaurant.address}</p></div></header><div className={styles.body}><section><span className={styles.eyebrow}>MENÚ</span><h2>Elige tus platillos</h2><div className={styles.menu}>{restaurant.menu.map((item,index)=><article key={`${item.name}-${index}`}><div className={styles.itemCopy}><h3>{item.name}</h3><p>{item.description||item.ingredients||"Preparado por el restaurante."}</p><strong>${item.price.toLocaleString("es-MX")}</strong><div className={styles.quantity}>{cart[index]?<><button onClick={()=>change(index,-1)} aria-label="Quitar"><Minus/></button><b>{cart[index]}</b></>:null}<button onClick={()=>change(index,1)} aria-label="Agregar"><Plus/></button></div></div>{item.image&&<img src={item.image} alt={item.name}/>}</article>)}</div>{restaurant.menu.length===0&&<div className={styles.empty}>Este establecimiento todavía no ha publicado artículos para ordenar.</div>}</section><aside><div className={styles.cartTitle}><ShoppingBag/><h2>Tu pedido</h2></div>{count===0?<p>Agrega algo del menú para comenzar.</p>:<div className={styles.lines}>{restaurant.menu.map((item,index)=>cart[index]?<div key={index}><span>{cart[index]} × {item.name}</span><b>${(item.price*cart[index]).toLocaleString("es-MX")}</b></div>:null)}</div>}<div className={styles.total}><span>Total estimado</span><strong>${total.toLocaleString("es-MX")}</strong></div><button className={styles.checkout} disabled={!count}>Continuar pedido</button><small>Los precios y la disponibilidad se confirmarán antes del pago. El cobro todavía no está habilitado.</small></aside></div></main>
 }

@@ -3,23 +3,31 @@ const API_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL;
 
 async function fetchAPI(query: string, { variables }: { variables?: Record<string, unknown> } = {}) {
   const headers: { [key: string]: string } = { 'Content-Type': 'application/json' };
+  const isBrowser = typeof window !== 'undefined';
+  const endpoint = isBrowser ? '/api/wordpress' : API_URL;
 
-  if (process.env.WORDPRESS_AUTH_REFRESH_TOKEN) {
+  if (!endpoint) return null;
+
+  if (!isBrowser && process.env.WORDPRESS_AUTH_REFRESH_TOKEN) {
     headers['Authorization'] = `Bearer ${process.env.WORDPRESS_AUTH_REFRESH_TOKEN}`;
   }
 
-  const res = await fetch(API_URL!, {
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers,
+    signal: AbortSignal.timeout(8000),
     body: JSON.stringify({
       query,
       variables,
     }),
   });
 
+  if (!res.ok) {
+    throw new Error(`WordPress respondió con estado ${res.status}`);
+  }
+
   const json = await res.json();
   if (json.errors) {
-    console.error(json.errors);
     throw new Error('Failed to fetch API');
   }
   return json.data;
@@ -66,7 +74,7 @@ export async function getLatestNews(perPage = 10, categoryId?: number | string, 
 
     return data?.posts?.nodes || [];
   } catch (error) {
-    console.error("Error fetching news from WordPress GraphQL:", error);
+    if (typeof window === 'undefined') console.error("Error fetching news from WordPress GraphQL:", error);
     return [];
   }
 }
@@ -113,7 +121,7 @@ export async function getPostBySlug(slug: string) {
       author: post.author?.node?.name || 'Staff'
     };
   } catch (error) {
-    console.error("Error fetching post by slug:", error);
+    if (typeof window === 'undefined') console.error("Error fetching post by slug:", error);
     return null;
   }
 }
@@ -148,8 +156,7 @@ export async function searchArticles(query: string, first = 3) {
     );
 
     return data?.posts?.nodes || [];
-  } catch (error) {
-    console.error("Error searching articles from WordPress:", error);
+  } catch {
     return [];
   }
 }

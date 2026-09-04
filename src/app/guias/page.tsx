@@ -6,7 +6,7 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Guide } from '@/types/guide';
 import Link from 'next/link';
 import styles from './GuiasPage.module.css';
-import { Plus, MapPin, Calendar, User, ChevronRight } from 'lucide-react';
+import { Plus, MapPin, User } from 'lucide-react';
 
 export default function GuiasPage() {
     const [guides, setGuides] = useState<Guide[]>([]);
@@ -33,9 +33,11 @@ export default function GuiasPage() {
         <div className={styles.container}>
             <header className={styles.hero}>
                 <div className={styles.heroContent}>
-                    <span className="mag-label">Rutas & Experiencias</span>
-                    <h1 className="mixed-heading">Guías <span>Gastronómicas</span></h1>
-                    <p>Una colección curada de rutas interactivas diseñadas por expertos para descubrir los secretos culinarios de México.</p>
+                    <div className={styles.heroText}>
+                        <span className="mag-label">Rutas & Experiencias</span>
+                        <h1 className="mixed-heading">Guías <span>Gastronómicas</span></h1>
+                        <p>Una colección curada de rutas interactivas diseñadas por expertos para descubrir los secretos culinarios de México.</p>
+                    </div>
                     <div className={styles.heroActions}>
                         <Link href="/guias/crear" className={styles.createBtn}>
                             <Plus size={20} /> Crear mi propia ruta
@@ -54,7 +56,7 @@ export default function GuiasPage() {
                     <div className={styles.loader}>Cargando guías...</div>
                 ) : (
                     <div className={styles.guidesGrid}>
-                        {/* Always show the mock one first for demo if no DB results */}
+                        {/* Featured guide, always shown first */}
                         <Link href="/guias/mejores-hamburguesas-cdmx" className={styles.guideCard}>
                             <div className={styles.cardImage}>
                                 <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80" alt="Hamburguesas" />
@@ -78,7 +80,7 @@ export default function GuiasPage() {
                                 </div>
                                 <div className={styles.cardBody}>
                                     <h3>{guide.title}</h3>
-                                    <p>{guide.description.substring(0, 100)}...</p>
+                                    <p>{guide.description ? `${guide.description.substring(0, 100)}...` : ''}</p>
                                     <div className={styles.cardMeta}>
                                         <span><MapPin size={14} /> {guide.stops?.length || 0} Paradas</span>
                                         <span><User size={14} /> {guide.authorName}</span>
@@ -91,7 +93,7 @@ export default function GuiasPage() {
 
                 {!loading && guides.length === 0 && (
                     <div className={styles.emptyState}>
-                        <p>Aún no hay rutas públicas. ¡Sé el primero en crear una!</p>
+                        <p>Aún no hay rutas de la comunidad. ¡Sé el primero en crear una!</p>
                         <Link href="/guias/crear" className={styles.secondaryBtn}>
                             Crear una Guía
                         </Link>

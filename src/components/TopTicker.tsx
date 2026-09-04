@@ -12,7 +12,7 @@ const TICKER_ITEMS = [
 export default function TopTicker() {
     return (
         <div className={styles.tickerContainer}>
-            <div className={styles.tickerLabel}>Breaking</div>
+            <div className={styles.tickerLabel}>Ahora</div>
             <div className={styles.tickerWrapper}>
                 <div className="animate-marquee">
                     {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, idx) => (
@@ -25,7 +25,7 @@ export default function TopTicker() {
                 </div>
             </div>
             <div className={styles.tickerMeta}>
-                <span>Primavera 2026</span>
+                <span>Septiembre 2026</span>
                 <span className={styles.sep}>|</span>
                 <span>Come MX</span>
             </div>

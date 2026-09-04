@@ -29,11 +29,14 @@ import { storage } from "@/lib/firebase";
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus' | 'guias' | 'config'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus' | 'guias' | 'nominaciones'>('dashboard');
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [chefs, setChefs] = useState<any[]>([]);
     const [guides, setGuides] = useState<any[]>([]);
     const [leads, setLeads] = useState<any[]>([]);
+    const [chefNominations, setChefNominations] = useState<any[]>([]);
+    const [placeNominations, setPlaceNominations] = useState<any[]>([]);
+    const [workingId, setWorkingId] = useState<string | null>(null);
     const [editingRestaurant, setEditingRestaurant] = useState<any>(null);
     const [editingChef, setEditingChef] = useState<any>(null);
     const [editingGuide, setEditingGuide] = useState<any>(null);
@@ -59,7 +62,16 @@ export default function AdminDashboard() {
             const restSnapshot = await getDocs(collection(db, "come"));
             const restData = restSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setRestaurants(restData);
-            setLeads(restData.slice(0, 8));
+            // Antes esto eran los 8 primeros registros, no solicitudes: el panel
+            // decía "actividad reciente" mostrando negocios ya publicados.
+            setLeads(restData.filter((r: any) => r.status === 'pending'));
+
+            const [chefNomSnap, placeNomSnap] = await Promise.all([
+                getDocs(collection(db, "chef_nominations")),
+                getDocs(collection(db, "place_nominations")),
+            ]);
+            setChefNominations(chefNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setPlaceNominations(placeNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
             // Fetch Chefs
             const chefsSnapshot = await getDocs(collection(db, "chefs"));
@@ -74,6 +86,57 @@ export default function AdminDashboard() {
             console.error("Error fetching data:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Publicar una nominación la copia a su colección definitiva y la retira de
+    // la bandeja; rechazar sólo la borra.
+    const publicarNominacion = async (nominacion: any, destino: 'chefs' | 'come', origen: string) => {
+        if (!db) return;
+        setWorkingId(nominacion.id);
+        try {
+            const { id, status, ...datos } = nominacion;
+            void status;
+            await addDoc(collection(db, destino), {
+                ...datos,
+                slug: slugify(datos.name || datos.restaurantName || id),
+                status: 'published',
+                publishedAt: serverTimestamp(),
+            });
+            await deleteDoc(doc(db, origen, id));
+            await fetchData();
+        } catch (err) {
+            console.error("No se pudo publicar la nominación:", err);
+            alert("No se pudo publicar. Revisa la consola para el detalle.");
+        } finally {
+            setWorkingId(null);
+        }
+    };
+
+    const rechazarNominacion = async (nominacionId: string, origen: string) => {
+        if (!db || !confirm("¿Descartar esta nominación? No se puede deshacer.")) return;
+        setWorkingId(nominacionId);
+        try {
+            await deleteDoc(doc(db, origen, nominacionId));
+            await fetchData();
+        } catch (err) {
+            console.error("No se pudo descartar la nominación:", err);
+        } finally {
+            setWorkingId(null);
+        }
+    };
+
+    // Aprobar un negocio registrado lo hace visible en el directorio público.
+    const publicarNegocio = async (negocioId: string) => {
+        if (!db) return;
+        setWorkingId(negocioId);
+        try {
+            await updateDoc(doc(db, "come", negocioId), { status: 'published', publishedAt: serverTimestamp() });
+            await fetchData();
+        } catch (err) {
+            console.error("No se pudo publicar el negocio:", err);
+        } finally {
+            setWorkingId(null);
         }
     };
 
@@ -378,6 +441,10 @@ export default function AdminDashboard() {
                         <button onClick={() => setActiveSection('chefs')} className={activeSection === 'chefs' ? styles.navItemActive : styles.navItem}><FaUsers /> Directorio de Chefs</button>
                         <button onClick={() => setActiveSection('guias')} className={activeSection === 'guias' ? styles.navItemActive : styles.navItem}><FaMapMarkerAlt /> Guías Interactivas</button>
                         <button onClick={() => setActiveSection('menus')} className={activeSection === 'menus' ? styles.navItemActive : styles.navItem}><FaBookOpen /> Menús Digitales</button>
+                        <button onClick={() => setActiveSection('nominaciones')} className={activeSection === 'nominaciones' ? styles.navItemActive : styles.navItem}>
+                            <FaConciergeBell /> Nominaciones
+                            {(chefNominations.length + placeNominations.length + leads.length) > 0 && <span className={styles.badge}>{chefNominations.length + placeNominations.length + leads.length}</span>}
+                        </button>
                     </nav>
                     
                     <button 
@@ -415,10 +482,14 @@ export default function AdminDashboard() {
                                             <h3>Catálogo Digital</h3>
                                             <p>{restaurants.filter(r => r.menu?.length > 0).length}</p>
                                         </div>
+                                        <div className={styles.statCard}>
+                                            <h3>Por revisar</h3>
+                                            <p>{chefNominations.length + placeNominations.length + leads.length}</p>
+                                        </div>
                                     </div>
                                     
                                     <section className={styles.tableSection}>
-                                        <h2>Actividad Reciente</h2>
+                                        <h2>Negocios en espera de aprobación</h2>
                                         <table className={styles.adminTable}>
                                             <thead>
                                                 <tr>
@@ -434,9 +505,67 @@ export default function AdminDashboard() {
                                                         <td><span className={styles.subdomainTag}>{lead.category}</span></td>
                                                         <td className={styles.actions}>
                                                             <button className={styles.editBtn} onClick={() => { setEditingRestaurant(lead); setActiveSection('restaurantes'); }}><FaEdit /></button>
+                                                            <button className={styles.publishBtn} disabled={workingId === lead.id} onClick={() => publicarNegocio(lead.id)}>Publicar</button>
                                                         </td>
                                                     </tr>
                                                 ))}
+                                                {leads.length === 0 && (
+                                                    <tr><td colSpan={3} className={styles.emptyRow}>No hay negocios pendientes de revisión.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </section>
+                                </>
+                            )}
+
+                            {activeSection === 'nominaciones' && (
+                                <>
+                                    <section className={styles.tableSection}>
+                                        <h2>Lugares nominados ({placeNominations.length})</h2>
+                                        <table className={styles.adminTable}>
+                                            <thead>
+                                                <tr><th>Lugar</th><th>Categoría</th><th>Dirección</th><th>Acciones</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                {placeNominations.map(nom => (
+                                                    <tr key={nom.id}>
+                                                        <td>{nom.restaurantName}</td>
+                                                        <td><span className={styles.subdomainTag}>{nom.category}</span></td>
+                                                        <td>{nom.address}</td>
+                                                        <td className={styles.actions}>
+                                                            <button className={styles.publishBtn} disabled={workingId === nom.id} onClick={() => publicarNominacion(nom, 'come', 'place_nominations')}>Publicar</button>
+                                                            <button className={styles.deleteBtn} disabled={workingId === nom.id} onClick={() => rechazarNominacion(nom.id, 'place_nominations')}><FaTrash /></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {placeNominations.length === 0 && (
+                                                    <tr><td colSpan={4} className={styles.emptyRow}>Sin nominaciones de lugares.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </section>
+
+                                    <section className={styles.tableSection}>
+                                        <h2>Chefs nominados ({chefNominations.length})</h2>
+                                        <table className={styles.adminTable}>
+                                            <thead>
+                                                <tr><th>Chef</th><th>Especialidad</th><th>Trayectoria</th><th>Acciones</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                {chefNominations.map(nom => (
+                                                    <tr key={nom.id}>
+                                                        <td>{nom.name}</td>
+                                                        <td><span className={styles.subdomainTag}>{nom.specialty}</span></td>
+                                                        <td className={styles.clampCell}>{nom.trajectory || nom.bio}</td>
+                                                        <td className={styles.actions}>
+                                                            <button className={styles.publishBtn} disabled={workingId === nom.id} onClick={() => publicarNominacion(nom, 'chefs', 'chef_nominations')}>Publicar</button>
+                                                            <button className={styles.deleteBtn} disabled={workingId === nom.id} onClick={() => rechazarNominacion(nom.id, 'chef_nominations')}><FaTrash /></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {chefNominations.length === 0 && (
+                                                    <tr><td colSpan={4} className={styles.emptyRow}>Sin nominaciones de chefs.</td></tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </section>

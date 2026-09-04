@@ -1,5 +1,5 @@
 .section {
-    padding: 4rem 2rem;
+    padding: 5.5rem 2rem;
     background: var(--background);
 }
 
@@ -16,7 +16,7 @@
 .header {
     margin-bottom: 3rem;
     padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 0;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -24,7 +24,7 @@
 
 .header h2 {
     font-size: clamp(2.2rem, 5vw, 3.5rem);
-    font-weight: 800;
+    font-weight: 540;
     color: var(--foreground);
     line-height: 1;
     margin: 0;
@@ -41,21 +41,21 @@
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2px;
-    border: 2px solid var(--border-color);
+    gap: 1.25rem;
+    border: 0;
 }
 
 .carouselContainer {
     display: flex;
     align-items: stretch;
-    gap: 0;
+    gap: 1.2rem;
     overflow-x: auto;
     padding: 0;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
     width: 100%;
-    border: 2px solid var(--border-color);
+    border: 0;
 }
 
 .carouselContainer::-webkit-scrollbar {
@@ -63,14 +63,16 @@
 }
 
 .card {
-    background-color: transparent;
+    background-color: var(--background-alt);
     transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: pointer;
     overflow: hidden;
     aspect-ratio: 3 / 4;
     position: relative;
     transform: translateZ(0);
-    border-right: 2px solid var(--border-color);
+    border: 0;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-editorial-sm);
     flex: 0 0 360px;
     scroll-snap-align: start;
 }
@@ -80,7 +82,8 @@
 }
 
 .card:hover {
-    flex: 0 0 420px;
+    transform: translateY(-7px);
+    box-shadow: var(--shadow-editorial);
 }
 
 .imageWrapper {
@@ -94,7 +97,7 @@
     height: 100%;
     object-fit: cover;
     transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    opacity: 0.92;
+    opacity: 1;
 }
 
 .card:hover .image {
@@ -151,7 +154,7 @@
     left: 0;
     width: 100%;
     padding: 5rem 1.75rem 1.75rem;
-    background: linear-gradient(to top, rgba(10,6,2,0.92) 0%, rgba(10,6,2,0.5) 50%, transparent 100%);
+    background: linear-gradient(to top, rgba(0,35,21,.94) 0%, rgba(0,35,21,.36) 62%, transparent 100%);
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -170,7 +173,7 @@
     font-weight: 700;
     letter-spacing: 0.22em;
     margin-bottom: 0.5rem;
-    color: var(--accent);
+    color: var(--green-300);
     font-family: var(--font-modern);
 }
 
@@ -203,7 +206,7 @@
     left: 0;
     width: 0;
     height: 3px;
-    background: var(--primary);
+    background: var(--green-300);
     transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 20;
 }

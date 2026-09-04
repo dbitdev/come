@@ -36,12 +36,13 @@ export default function LugarNominationPage() {
         setLoading(true);
         try {
             if (!db) throw new Error("Firebase not initialized");
-            await addDoc(collection(db, "come"), {
+            // Las nominaciones van a su propia colección: no deben aparecer en
+            // el directorio hasta que la redacción las publique en `come`.
+            await addDoc(collection(db, "place_nominations"), {
                 ...formData,
                 isMichelin,
                 createdAt: serverTimestamp(),
-                status: 'pending',
-                type: 'restaurant'
+                status: 'pending'
             });
             setSuccess(true);
             setTimeout(() => router.push('/'), 4000);

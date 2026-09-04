@@ -15,3 +15,12 @@ export function slugify(text: string): string {
         .replace(/^-+/, '') // Trim - from start
         .replace(/-+$/, ''); // Trim - from end
 }
+
+/**
+ * Un negocio registrado o nominado queda en `status: 'pending'` hasta que la
+ * redacción lo publica desde el panel. Los listados públicos lo filtran con
+ * esto; los documentos antiguos sin campo `status` se consideran publicados.
+ */
+export function isPublished(data: { status?: string } | undefined | null): boolean {
+  return (data?.status ?? "published") !== "pending";
+}
