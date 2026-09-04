@@ -1,0 +1,8 @@
+.grupo{display:flex;flex-direction:column;gap:.7rem}
+.boton{display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:1rem 1.2rem;border:1px solid #cad3ca;border-radius:6px;background:#fff;color:#183229;font-family:var(--font-modern);font-size:1rem;font-weight:600;letter-spacing:0;text-transform:none;box-shadow:none;cursor:pointer;transition:var(--transition-fast)}
+.boton:hover:not(:disabled){background:#f4f7f3;transform:none;box-shadow:none}
+.boton:disabled{opacity:.6;cursor:not-allowed}
+.apple{background:#000;border-color:#000;color:#fff}
+.apple:hover:not(:disabled){background:#181818}
+.iconoGoogle{color:#ea4335;font-size:1.05rem}
+.iconoApple{font-size:1.25rem;margin-top:-2px}

@@ -36,7 +36,7 @@ export default function Navbar(){
  const transparent = overHero && !scrolled && !open;
 
  return <><header className={`${styles.header} ${transparent?styles.transparent:styles.solid}`}><Link href="/" className={styles.brand}>come</Link><nav className={open?styles.open:""}>
-  <Link href="/restaurantes" onClick={()=>setOpen(false)}>Restaurantes</Link><Link href="/guias" onClick={()=>setOpen(false)}>Guías</Link><Link href="/chefs" onClick={()=>setOpen(false)}>Chefs</Link><Link href="/mapa" onClick={()=>setOpen(false)}>Mapa</Link>
+  <Link href="/" onClick={()=>setOpen(false)}>Inicio</Link><Link href="/restaurantes" onClick={()=>setOpen(false)}>Restaurantes</Link><Link href="/guias" onClick={()=>setOpen(false)}>Guías</Link><Link href="/chefs" onClick={()=>setOpen(false)}>Chefs</Link><Link href="/mapa" onClick={()=>setOpen(false)}>Mapa</Link>
  </nav><div className={styles.actions}><button type="button" className={styles.iconBtn} onClick={()=>setBuscando(true)} aria-label="Buscar"><Search size={20}/></button><Link href={user?"/perfil":"/login"} aria-label="Cuenta"><User size={20}/></Link><Link href="/ordenar" className={styles.order}><ShoppingBag size={17}/> Ordenar</Link><button onClick={()=>setOpen(!open)} aria-label="Menú" className={styles.burger}>{open?<X/>:<Menu/>}</button></div></header>
  {buscando&&<SearchOverlay onClose={()=>setBuscando(false)}/>}</>
 }
