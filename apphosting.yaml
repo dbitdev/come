@@ -36,6 +36,12 @@ environmentVariables:
     availability:
       - BUILD
       - RUNTIME
+  # Vacía en producción: mxicapp usa la base (default).
+  - variable: NEXT_PUBLIC_FIRESTORE_DB_ID
+    value: ""
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: NEXT_PUBLIC_SITE_ID
     secret: NEXT_PUBLIC_SITE_ID
     availability:

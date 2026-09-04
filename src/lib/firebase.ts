@@ -15,6 +15,11 @@ const firebaseConfig = {
 // Validation
 const isConfigValid = !!firebaseConfig.apiKey;
 
+// Producción (proyecto mxicapp) usa la base (default). Sólo si se define
+// NEXT_PUBLIC_FIRESTORE_DB_ID se apunta a una base con nombre, como la `hueyi`
+// que se usó durante el desarrollo.
+const DB_ID = process.env.NEXT_PUBLIC_FIRESTORE_DB_ID?.trim();
+
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 
@@ -28,12 +33,10 @@ if (isConfigValid) {
             
             // Force long polling on client side for maximum compatibility
             // databaseId is the third parameter of initializeFirestore
-            db = initializeFirestore(app, {
-                experimentalForceLongPolling: true,
-            }, "hueyi");
-            console.log("Firebase & Firestore ('hueyi' db) initialized successfully");
+            const opciones = { experimentalForceLongPolling: true };
+            db = DB_ID ? initializeFirestore(app, opciones, DB_ID) : initializeFirestore(app, opciones);
         } else {
-            db = getFirestore(app, "hueyi");
+            db = DB_ID ? getFirestore(app, DB_ID) : getFirestore(app);
         }
     } catch (error) {
         console.error("Error initializing Firebase:", error);
