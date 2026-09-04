@@ -9,25 +9,12 @@ import { auth, db } from '@/lib/firebase';
 import Link from 'next/link';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+type UserBusiness = { id:string; restaurantName?:string; name?:string; category?:string };
 
 export default function UserProfilePage() {
     const { user, loading } = useAuth();
     const router = useRouter();
-
-    if (loading) {
-        return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.spinner}></div>
-            </div>
-        );
-    }
-
-    if (!user) {
-        router.push('/login');
-        return null;
-    }
-
-    const [userBusinesses, setUserBusinesses] = useState<any[]>([]);
+    const [userBusinesses, setUserBusinesses] = useState<UserBusiness[]>([]);
     const [fetchingBusinesses, setFetchingBusinesses] = useState(true);
 
     useEffect(() => {
@@ -51,6 +38,14 @@ export default function UserProfilePage() {
         }
     }, [user, loading]);
 
+    useEffect(() => {
+        if (!loading && !user) router.replace('/login');
+    }, [loading, user, router]);
+
+    if (loading || !user) {
+        return <div className={styles.loadingContainer}><div className={styles.spinner}></div></div>;
+    }
+
     const handleLogout = async () => {
         await auth.signOut();
         router.push('/');
@@ -67,13 +62,13 @@ export default function UserProfilePage() {
                             <FaUserCircle className={styles.avatarPlaceholder} />
                         )}
                         <h2 className={styles.name}>{user.displayName || "Gourmet"}</h2>
-                        <span className={styles.badge}>Miembro Gold</span>
+                        <span className={styles.badge}>Miembro Come</span>
                     </div>
 
                     <nav className={styles.sideNav}>
                         <button className={styles.navItemActive}><FaUserCircle /> Mi Cuenta</button>
                         <button className={styles.navItem}><FaStar /> Favoritos</button>
-                        <Link href="/nomina-chef" className={styles.navItem} style={{ textDecoration: 'none' }}>
+                        <Link href="/nomina-lugar" className={styles.navItem} style={{ textDecoration: 'none' }}>
                             <FaPlusCircle /> Nominar un Lugar
                         </Link>
                         <button onClick={handleLogout} className={styles.logoutBtn}><FaSignOutAlt /> Cerrar Sesión</button>
@@ -102,8 +97,12 @@ export default function UserProfilePage() {
                         <div className={styles.emptyState}>
                             <FaStar className={styles.emptyIcon} />
                             <p>Aún no has guardado ningún restaurante.</p>
-                            <Link href="/lugares" className={styles.exploreBtn}>Explorar Lugares</Link>
+                            <Link href="/restaurantes" className={styles.exploreBtn}>Explorar restaurantes</Link>
                         </div>
+                    </section>
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Tus negocios</h2>
+                        {fetchingBusinesses ? <p>Cargando negocios…</p> : userBusinesses.length ? <div className={styles.businessGrid}>{userBusinesses.map((business)=><article className={styles.businessCard} key={business.id}><h3>{business.restaurantName || business.name}</h3><p className={styles.bizCategory}>{business.category || "Restaurante"}</p><div className={styles.bizActions}><Link className={styles.editBtn} href={`/gestiona-negocio/${business.id}`}>Gestionar</Link></div></article>)}</div> : <div className={styles.emptyState}><p>Aún no administras ningún establecimiento.</p><Link href="/registra-negocio" className={styles.exploreBtn}>Registrar negocio</Link></div>}
                     </section>
                 </main>
             </div>

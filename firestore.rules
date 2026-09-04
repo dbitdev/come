@@ -1,34 +1,127 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Come collection — restaurants/places
-    match /come/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    function isSignedIn() {
+      return request.auth != null;
     }
-    // Chefs directory
+
+    function isPlatformAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'dbitdev@gmail.com',
+          'admin@come.mx',
+          'parradabito@gmail.com'
+        ];
+    }
+
+    function ownsExistingVenue() {
+      return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function keepsVenueOwnership() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    // Campos que sólo la redacción puede fijar: si un negocio pudiera marcarse
+    // solo, cualquiera se pondría estrella Michelin o calificación 5.
+    function noSetsEditorialFields() {
+      return !request.resource.data.diff(resource.data)
+        .affectedKeys().hasAny(['isMichelin', 'rating', 'featured', 'status', 'awards']);
+    }
+
+    function isShortText(value, max) {
+      return value is string && value.size() <= max;
+    }
+
+    // ── Restaurantes y lugares ──────────────────────────────────
+    match /come/{venueId} {
+      // Directorio público: la lectura queda abierta a propósito. Restringirla
+      // por `status` rompería todos los listados, porque una consulta de
+      // colección falla entera si un solo documento no pasa la regla; para eso
+      // habría que filtrar con where('status','==','published') en el cliente y
+      // rellenar el campo en los documentos antiguos. Mientras tanto, lo
+      // pendiente se oculta en el cliente y las reglas de create/update impiden
+      // que alguien se ponga solo estrella, rating o destacado.
+      allow read: if true;
+      allow create: if isPlatformAdmin()
+                    || (isSignedIn()
+                        && request.resource.data.userId == request.auth.uid
+                        && request.resource.data.get('status', '') == 'pending'
+                        && request.resource.data.get('isMichelin', false) == false);
+      allow update: if isPlatformAdmin()
+                    || (ownsExistingVenue() && keepsVenueOwnership() && noSetsEditorialFields());
+      allow delete: if isPlatformAdmin() || ownsExistingVenue();
+    }
+
+    // ── Directorio de chefs ─────────────────────────────────────
     match /chefs/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isPlatformAdmin();
     }
-    // Chef nominations from users
-    match /chef_nominations/{document=**} {
-      allow read, write: if true;
+
+    // ── Nominaciones de chefs (formulario público) ──────────────
+    // Se validan tamaños para que el formulario anónimo no sirva de vertedero.
+    // Los campos deben coincidir con /nomina-chef.
+    match /chef_nominations/{nominationId} {
+      allow read: if isPlatformAdmin();
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['name', 'specialty', 'bio', 'trajectory', 'awards',
+                          'instagram', 'tiktok', 'twitter', 'portfolio', 'photoUrl',
+                          'isMichelin', 'status', 'createdAt'])
+                    && isShortText(request.resource.data.get('name', ''), 120)
+                    && request.resource.data.name.size() > 0
+                    && isShortText(request.resource.data.get('specialty', ''), 160)
+                    && isShortText(request.resource.data.get('bio', ''), 2000)
+                    && isShortText(request.resource.data.get('trajectory', ''), 2000)
+                    && isShortText(request.resource.data.get('awards', ''), 1000)
+                    && request.resource.data.get('status', '') == 'pending';
+      allow update, delete: if isPlatformAdmin();
     }
-    // News articles
+
+    // ── Nominaciones de lugares (formulario público) ────────────
+    // Van a su propia colección: una nominación anónima no debe aparecer en el
+    // sitio hasta que la redacción la publique en /come.
+    match /place_nominations/{nominationId} {
+      allow read: if isPlatformAdmin();
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['restaurantName', 'category', 'description', 'address',
+                          'awards', 'instagram', 'tiktok', 'twitter', 'website',
+                          'photoUrl', 'isMichelin', 'status', 'createdAt'])
+                    && isShortText(request.resource.data.get('restaurantName', ''), 160)
+                    && request.resource.data.restaurantName.size() > 0
+                    && isShortText(request.resource.data.get('category', ''), 120)
+                    && isShortText(request.resource.data.get('description', ''), 2000)
+                    && isShortText(request.resource.data.get('address', ''), 300)
+                    && isShortText(request.resource.data.get('awards', ''), 1000)
+                    && request.resource.data.get('status', '') == 'pending';
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    // ── Contenido editorial ─────────────────────────────────────
     match /news/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isPlatformAdmin();
     }
-    // Culinary guides
     match /guides/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isPlatformAdmin();
     }
-    // Special awards
     match /premios_especiales/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isPlatformAdmin();
+    }
+
+    // ── Datos de cada persona (direcciones, favoritos) ──────────
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      match /{document=**} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

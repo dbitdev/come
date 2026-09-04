@@ -1,105 +1,16 @@
 "use client";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
+import { ArrowRight, Check, UserRound } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import styles from "../login/auth.module.css";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FaGoogle, FaEnvelope, FaUserPlus } from 'react-icons/fa';
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth } from '@/lib/firebase';
-
-export default function RegisterPage() {
-    const router = useRouter();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
-    const [error, setError] = useState<string | null>(null);
-
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-        try {
-            const { createUserWithEmailAndPassword, updateProfile } = await import("firebase/auth");
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(userCredential.user, { displayName: name });
-            router.push('/admin'); // Redirect to admin after registration
-        } catch (err: any) {
-            console.error(err);
-            if (err.code === 'auth/email-already-in-use') {
-                setError("El correo ya está registrado.");
-            } else if (err.code === 'auth/weak-password') {
-                setError("La contraseña es muy débil (mínimo 6 caracteres).");
-            } else {
-                setError("Error al crear la cuenta. Inténtalo de nuevo.");
-            }
-        }
-    };
-
-    const handleGoogleRegister = async () => {
-        const provider = new GoogleAuthProvider();
-        try {
-            await signInWithPopup(auth, provider);
-            router.push('/admin');
-        } catch (err: any) {
-            console.error(err);
-            setError("Error al registrarse con Google.");
-        }
-    };
-
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', padding: '2rem', paddingTop: '100px' }}>
-            <div style={{ background: '#ffffff', padding: '3.5rem', width: '100%', maxWidth: '450px', border: '1px solid #eaeaea', boxShadow: '0 10px 40px rgba(0,0,0,0.03)' }}>
-                <h1 style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '2.2rem', fontWeight: 800, color: 'var(--foreground)' }}>Crear Cuenta</h1>
-                
-                {error && (
-                    <div style={{ padding: '0.8rem', backgroundColor: '#fff5f5', color: '#e53e3e', marginBottom: '1.5rem', borderRadius: '4px', textAlign: 'center' }}>
-                        {error}
-                    </div>
-                )}
-
-                <button
-                    onClick={handleGoogleRegister}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', width: '100%', background: '#fff', color: '#444', border: '1px solid #ddd', padding: '0.8rem', fontWeight: 600, marginBottom: '2rem' }}
-                >
-                    <FaGoogle color="#DB4437" /> Registrarse con Google
-                </button>
-
-                <div style={{ margin: '2rem 0', textAlign: 'center', position: 'relative' }}>
-                    <hr style={{ border: 'none', borderTop: '1px solid #eee' }} />
-                    <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#fff', padding: '0 10px', color: '#888', fontSize: '0.9rem' }}>o con email</span>
-                </div>
-
-                <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Nombre completo" 
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        style={{ padding: '0.8rem', border: '1px solid #ddd' }} 
-                    />
-                    <input 
-                        type="email" 
-                        placeholder="Correo electrónico" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        style={{ padding: '0.8rem', border: '1px solid #ddd' }} 
-                    />
-                    <input 
-                        type="password" 
-                        placeholder="Contraseña" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        style={{ padding: '0.8rem', border: '1px solid #ddd' }} 
-                    />
-                    <button type="submit" style={{ padding: '0.8rem', background: 'var(--primary)', color: '#fff', fontWeight: 'bold', marginTop: '1rem' }}>Crear Cuenta</button>
-                </form>
-
-                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem', color: '#666' }}>
-                    ¿Ya tienes cuenta? <Link href="/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Inicia Sesión</Link>
-                </div>
-            </div>
-        </div>
-    );
+export default function RegisterPage(){
+ const router=useRouter(); const [name,setName]=useState(""); const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [error,setError]=useState(""); const [busy,setBusy]=useState(false);
+ const finish=()=>router.replace("/");
+ const register=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{const result=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(result.user,{displayName:name});finish()}catch(err:any){setError(err?.code==="auth/email-already-in-use"?"Ese correo ya está registrado.":err?.code==="auth/weak-password"?"Usa una contraseña de al menos seis caracteres.":"No pudimos crear tu cuenta.")}finally{setBusy(false)}};
+ const google=async()=>{setBusy(true);setError("");try{await signInWithPopup(auth,new GoogleAuthProvider());finish()}catch{setError("No pudimos completar el registro con Google.")}finally{setBusy(false)}};
+ return <main className={styles.page}><section className={styles.visual}><div className={styles.overlay}/><div className={styles.visualCopy}><span>ÚNETE A LA MESA</span><h1>Come mejor. Descubre más.</h1><ul><li><Check/>Guarda tus favoritos</li><li><Check/>Recibe recomendaciones</li><li><Check/>Planea tu próxima salida</li></ul></div></section><section className={styles.panel}><div className={styles.formWrap}><span className={styles.eyebrow}>CREA TU PERFIL</span><h2>Empieza a explorar</h2><p>Tu cuenta convierte Come en una guía personal.</p>{error&&<div className={styles.error}>{error}</div>}<button className={styles.google} onClick={google} disabled={busy}>G&nbsp;&nbsp; Registrarme con Google</button><div className={styles.divider}><span>o usa tu correo</span></div><form onSubmit={register}><label>Nombre<div><UserRound size={18}/><input value={name} onChange={e=>setName(e.target.value)} required placeholder="¿Cómo te llamas?"/></div></label><label>Correo electrónico<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="tu@correo.com"/></label><label>Contraseña<input type="password" minLength={6} value={password} onChange={e=>setPassword(e.target.value)} required placeholder="Mínimo 6 caracteres"/></label><button className={styles.submit} disabled={busy}>{busy?"Creando cuenta…":"Crear mi cuenta"}<ArrowRight size={18}/></button></form><p className={styles.switch}>¿Ya tienes cuenta? <Link href="/login">Inicia sesión</Link></p></div></section></main>
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./wonder-system.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,6 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // AUDITORÍA: sin metadataBase, la imagen /come.jpg de Open Graph se resuelve
+  // como ruta relativa y las previsualizaciones sociales salen rotas.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://comeapp.com.mx"),
+  alternates: { canonical: "/" },
   title: "Come - La Guía Gastronómica de México",
   description: "Descubre los mejores restaurantes, chefs y tendencias gourmet en México. La guía definitiva para los amantes del buen comer.",
   keywords: ["gastronomía", "México", "restaurantes", "chefs", "guía gourmet", "estrellas michelin"],
@@ -40,12 +45,11 @@ export const metadata: Metadata = {
     images: ["/come.jpg"],
   },
   icons: {
-    icon: "/logo-c.png",
-    apple: "/logo-c.png",
+    icon: "/c.png",
+    apple: "/c.png",
   }
 };
 
-import TopTicker from "@/components/TopTicker";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/context/AuthContext";
@@ -59,7 +63,6 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
-          <TopTicker />
           <Navbar />
           {children}
           <Footer />

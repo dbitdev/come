@@ -48,23 +48,12 @@ export default function GuideViewer() {
         fetchGuide();
     }, [params.slug]);
 
-    const [headerVisible, setHeaderVisible] = useState(true);
-    const lastScrollY = useRef(0);
-
+    // El Navbar principal es sticky y nunca se oculta, así que esta barra vive
+    // siempre pegada justo debajo de él; sólo cambia de fondo al hacer scroll.
     useEffect(() => {
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            
-            if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-                setHeaderVisible(false);
-            } else if (currentScrollY < lastScrollY.current) {
-                setHeaderVisible(true);
-            }
-            
-            setScrolled(currentScrollY > 100);
-            lastScrollY.current = currentScrollY;
-        };
-        window.addEventListener('scroll', handleScroll);
+        const handleScroll = () => setScrolled(window.scrollY > 100);
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -110,7 +99,7 @@ export default function GuideViewer() {
     return (
         <div className={styles.publicationWrapper}>
             {/* Minimal Sticky Nav */}
-            <nav className={`${styles.stickyNav} ${scrolled ? styles.navActive : ""} ${!headerVisible ? styles.navMainHidden : ""}`}>
+            <nav className={`${styles.stickyNav} ${scrolled ? styles.navActive : ""}`}>
                 <div className={styles.navContainer}>
                     <Link href="/guias" className={styles.backLink}>
                         <ChevronLeft size={18} /> <span>Guías</span>

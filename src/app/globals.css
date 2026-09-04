@@ -1,32 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,SOFT,WONK,wght@0,9..144,0..100,0..1,300..700;1,9..144,0..100,0..1,300..700&display=swap');
 
 :root {
-  --primary: #e63426;         /* Vibrant Gastronomic Red-Orange */
-  --primary-dark: #c4281b;
-  --secondary: #0f5933;       /* Deep Magazine Green */
-  --secondary-light: #186b41;
-  --accent: #f7c325;          /* Mustard Yellow */
-  --accent-warm: #ff6b35;     /* Warm Orange */
-  --pale-peach: #fde8df;
-  --pale-yellow: #fdf8e1;
-  --pale-green: #e8f5ee;
+  --green-950: #003d26;
+  --green-900: #064d31;
+  --green-800: #0a603c;
+  --green-700: #087443;
+  --green-600: #14924f;
+  --green-500: #36bd65;
+  --green-300: #78dc78;
+  --green-100: #dff4d7;
+  --cream: #fffdf0;
+  --primary: #14924f;
+  --primary-dark: #064d31;
+  --secondary: #003d26;
+  --secondary-light: #087443;
+  --accent: #78dc78;
+  --accent-warm: #ffcf45;
+  --pale-peach: #f7eadf;
+  --pale-yellow: #fff8d8;
+  --pale-green: #e8f7df;
 
-  --background: #faf7f0;      /* Warm Cream/Ivory */
+  --background: #f8f6e9;
   --background-alt: #ffffff;
-  --foreground: #1a1108;      /* Deep Warm Charcoal */
-  --foreground-muted: #5c5146;
+  --foreground: #10261c;
+  --foreground-muted: #5d6c64;
 
-  --border-color: #1a1108;
-  --border-light: rgba(26,17,8,0.12);
+  --border-color: #153b29;
+  --border-light: rgba(0,61,38,0.13);
   --border-width: 1px;
 
-  --border-radius-xl: 0px;
-  --border-radius-lg: 0px;
-  --border-radius-md: 0px;
-  --border-radius-sm: 0px;
+  --border-radius-xl: 34px;
+  --border-radius-lg: 24px;
+  --border-radius-md: 16px;
+  --border-radius-sm: 10px;
 
-  --font-serif: 'Fraunces', 'Playfair Display', serif;
-  --font-modern: 'Space Grotesk', 'Outfit', 'Inter', -apple-system, sans-serif;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-modern: 'Outfit', 'Avenir Next', -apple-system, BlinkMacSystemFont, sans-serif;
   --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -37,11 +46,14 @@
   --dot-size: 22px 22px;
 
   /* Shadows */
-  --shadow-editorial: 6px 6px 0px var(--foreground);
-  --shadow-editorial-sm: 3px 3px 0px var(--foreground);
-  --shadow-editorial-primary: 6px 6px 0px var(--primary);
-  --shadow-editorial-accent: 6px 6px 0px var(--accent);
-  --shadow-soft: 0 20px 60px rgba(26,17,8,0.08);
+  --shadow-editorial: 0 18px 60px rgba(0,61,38,.14);
+  --shadow-editorial-sm: 0 10px 30px rgba(0,61,38,.12);
+  --shadow-editorial-primary: 0 18px 60px rgba(20,146,79,.22);
+  --shadow-editorial-accent: 0 18px 60px rgba(120,220,120,.2);
+  --shadow-soft: 0 20px 60px rgba(0,61,38,0.1);
+
+  /* Altura de la barra de navegación: la usan los sub-navs fijos (guías) */
+  --nav-h: 78px;
 }
 
 .liquid-glass {
@@ -63,18 +75,25 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  /* `clip` en vez de `hidden`: `hidden` convierte a html/body en contenedor de
+     scroll y rompe el position:sticky del Navbar en todas las páginas. */
+  overflow-x: clip;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+  font-weight: 500;
+  font-optical-sizing: auto;
+  font-variation-settings: 'SOFT' 75, 'WONK' 1;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
   margin: 0;
 }
 
 p {
-  line-height: 1.7;
+  line-height: 1.6;
   color: var(--foreground-muted);
 }
 
@@ -98,7 +117,7 @@ button {
   font-size: 0.78rem;
   font-weight: 700;
   font-family: var(--font-modern);
-  border-radius: 0;
+  border-radius: 999px;
   transition: var(--transition-smooth);
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -106,17 +125,30 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 5px 5px 0 var(--foreground);
+  box-shadow: none;
 }
 
 button:hover {
-  transform: translate(5px, 5px);
-  box-shadow: none;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-editorial-sm);
 }
 
 button:active {
   transform: translate(5px, 5px);
   box-shadow: none;
+}
+
+input,
+select,
+textarea,
+button,
+a {
+  font-family: var(--font-modern);
+}
+
+strong,
+b {
+  font-weight: 700;
 }
 
 /* Dark CTA variant */
@@ -163,7 +195,7 @@ button.danger:hover {
 input,
 select,
 textarea {
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
   padding: 0.8rem 1rem;
   font-family: var(--font-modern);
@@ -178,8 +210,11 @@ textarea:focus {
   outline: none;
   border-color: var(--primary);
   background-color: #fff;
-  box-shadow: none;
+  box-shadow: 0 0 0 4px rgba(20,146,79,.12);
 }
+
+::selection { background: var(--green-300); color: var(--green-950); }
+:focus-visible { outline: 3px solid var(--green-500); outline-offset: 3px; }
 
 /* Magazine Utilities */
 .mag-border { border: 2px solid var(--border-color); }

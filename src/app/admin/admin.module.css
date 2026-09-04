@@ -352,3 +352,47 @@
         padding: 1.5rem;
     }
 }
+
+/* ── Bandeja de nominaciones y moderación ───────────── */
+.badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    margin-left: auto;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #e0483a;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.publishBtn {
+    padding: 0.45rem 0.9rem;
+    border: 0;
+    border-radius: 4px;
+    background: #0a603c;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.publishBtn:disabled {
+    opacity: 0.55;
+    cursor: progress;
+}
+
+.emptyRow {
+    padding: 2rem;
+    text-align: center;
+    color: #7b857e;
+}
+
+.clampCell {
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

@@ -66,7 +66,7 @@ export default async function Page({ params }: Props) {
       name: 'Néctar Editorial',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://comeweb.mx/logo-c.png',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/c.png`,
       },
     },
   };

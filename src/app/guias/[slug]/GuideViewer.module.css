@@ -8,7 +8,9 @@
 /* Sticky Nav */
 .stickyNav {
     position: fixed;
-    top: 80px;
+    /* debe coincidir con la altura real del Navbar, si no queda una franja
+       de contenido visible entre ambas barras */
+    top: var(--nav-h);
     left: 0;
     right: 0;
     height: 70px;
@@ -19,10 +21,6 @@
     display: flex;
     align-items: center;
     border-bottom: 1px solid transparent;
-}
-
-.navMainHidden {
-    top: 0 !important;
 }
 
 .navActive {
@@ -560,12 +558,8 @@
     }
 
     .stickyNav {
-        top: 65px;
+        top: var(--nav-h);
         transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .navMainHidden {
-        top: 0 !important;
     }
 
     .mainTitle {

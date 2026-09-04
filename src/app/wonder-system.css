@@ -1,0 +1,34 @@
+/* Shared visual language for every legacy and new route. */
+body{background:#fffdf7}
+main,body>div{scroll-margin-top:78px}
+.section-bar{display:flex;align-items:end;justify-content:space-between;gap:1rem;border:0!important;border-bottom:1px solid #163d2a2b!important;padding:0 0 1rem!important;margin:0 0 2.5rem!important;background:transparent!important;color:#075438!important;font-size:.76rem!important;font-weight:800!important;letter-spacing:.14em!important;text-transform:uppercase}
+.mixed-heading{font-size:clamp(3.8rem,7vw,7.8rem)!important;font-weight:500!important;line-height:.88!important}.mixed-heading span{color:#60d56a!important}.mag-label,.mag-tag{font-family:var(--font-modern)!important;font-size:.72rem!important;letter-spacing:.14em!important;font-weight:800!important;text-transform:uppercase!important}
+
+/* Remove the former magazine/brutalist visual treatment everywhere. */
+[class*="_container__"]{border-color:#153b291c}
+[class*="_hero__"]{border-radius:0!important;box-shadow:none!important}
+[class*="_card__"],[class*="_Card__"],[class*="_formCard__"],[class*="_contentCard__"],[class*="_infoCard__"]{border-radius:2px!important;box-shadow:none!important;border-color:#153b291c!important}
+[class*="_primaryBtn__"],[class*="_submitBtn__"],[class*="_saveBtn__"],[class*="_actionBtn__"],[class*="_exploreBtn__"]{background:#075438!important;color:#fff!important;border:0!important;border-radius:3px!important;box-shadow:none!important;text-transform:none!important;letter-spacing:0!important}
+[class*="_secondaryBtn__"],[class*="_createBtn__"],[class*="_viewBtn__"]{border-radius:3px!important;box-shadow:none!important}
+[class*="_input__"],[class*="_select__"],[class*="_textarea__"],input,select,textarea{border-radius:3px!important}
+
+/* Listing pages */
+[class*="ChefsPage_hero__"],[class*="GuiasPage_hero__"],[class*="lugares_header__"],[class*="NoticiasPage_hero__"]{padding:7rem max(5vw,1.25rem)!important;min-height:430px!important;display:flex!important;align-items:flex-end!important;background:#075438!important;color:#fff!important}
+[class*="ChefsPage_hero__"]{background:linear-gradient(90deg,#003d29 0 48%,transparent 78%),url('https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=2000&q=88') center/cover!important}
+[class*="GuiasPage_hero__"]{background:#f3c5ce!important;color:#10261c!important}
+[class*="NoticiasPage_hero__"]{background:#e4d13f!important;color:#10261c!important}
+[class*="ChefsPage_heroContent__"] h1,[class*="GuiasPage_heroContent__"] h1,[class*="lugares_header__"] h1,[class*="NoticiasPage_hero__"] h1{font-size:clamp(4rem,8vw,8rem)!important;line-height:.86!important}
+[class*="ChefsPage_main__"],[class*="GuiasPage_main__"],[class*="lugares_section__"],[class*="NoticiasPage_main__"]{padding:6rem max(5vw,1.25rem)!important;max-width:1500px!important;margin:auto!important}
+[class*="ChefsPage_chefsGrid__"],[class*="GuiasPage_guidesGrid__"],[class*="lugares_grid__"],[class*="NoticiasPage_articlesGrid__"],[class*="NoticiasPage_newsGrid__"]{gap:1.25rem!important}
+[class*="ChefsPage_imageWrapper__"] img,[class*="GuiasPage_cardImage__"] img,[class*="lugares_image__"],[class*="NoticiasPage_articleThumb__"]{border-radius:0!important}
+
+/* Detail pages */
+[class*="ChefProfile_hero__"],[class*="profile_hero__"],[class*="GuideViewer_hero__"],[class*="ArticlePage_hero__"]{min-height:520px!important;border-radius:0!important;background-color:#075438!important}
+[class*="ChefProfile_content__"],[class*="profile_content__"],[class*="GuideViewer_content__"],[class*="ArticlePage_content__"],[class*="ArticlePage_articleBody__"]{max-width:1320px!important;margin-left:auto!important;margin-right:auto!important}
+[class*="ChefProfile_name__"],[class*="profile_title__"],[class*="GuideViewer_title__"],[class*="ArticlePage_title__"]{font-size:clamp(3.5rem,7vw,7rem)!important;line-height:.9!important}
+
+/* Forms, account, admin and creation tools */
+[class*="GuideCreator_container__"],[class*="RegisterBusiness_container__"],[class*="gestiona_container__"],[class*="admin_container__"],[class*="profile_container__"],[class*="chef_container__"],[class*="lugar_container__"]{background:#eef6e7!important;min-height:100vh!important;padding-top:4rem!important}
+[class*="GuideCreator_form__"],[class*="RegisterBusiness_form__"],[class*="gestiona_form__"],[class*="admin_content__"],[class*="profile_content__"],[class*="chef_form__"],[class*="lugar_form__"]{background:#fffdf7!important;border:0!important;box-shadow:0 22px 70px rgba(0,61,38,.1)!important;border-radius:4px!important}
+
+@media(max-width:800px){[class*="ChefsPage_hero__"],[class*="GuiasPage_hero__"],[class*="lugares_header__"],[class*="NoticiasPage_hero__"]{padding:5rem 1.25rem!important;min-height:360px!important}[class*="ChefsPage_main__"],[class*="GuiasPage_main__"],[class*="lugares_section__"],[class*="NoticiasPage_main__"]{padding:4rem 1.25rem!important}.section-bar{align-items:flex-start;flex-direction:column}}

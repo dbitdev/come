@@ -1,191 +1,196 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Hero from "@/components/Hero";
-import PlacesList from "@/components/PlacesList";
-import NewsSection from "@/components/NewsSection";
-import MagazineBar from "@/components/MagazineBar";
-import MenuSection from "@/components/MenuSection";
-import Banner from "@/components/Banner";
-import HomeMap from "@/components/HomeMap";
-import styles from "./page.module.css";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
-import { Map, BookOpen, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { collection, getDocs, limit, query } from "firebase/firestore";
+import { ArrowRight, CalendarDays, ChefHat, ChevronLeft, ChevronRight, Compass, Map, MapPin, Search, ShoppingBag, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import styles from "./page.module.css";
+import { isPublished } from "@/lib/utils";
 
-export default function Home() {
-  const [popularPlaces, setPopularPlaces] = useState<any[]>([]);
-  const [michelinPlaces, setMichelinPlaces] = useState<any[]>([]);
-  const [newestPlaces, setNewestPlaces] = useState<any[]>([]);
-  const [featuredGuides, setFeaturedGuides] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const img = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=85`;
 
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        let firestorePlaces: any[] = [];
-        let firestoreGuides: any[] = [];
+// Tipos de cocina del carrusel. Abre el nombre en el buscador de restaurantes.
+const cuisines: [string, string][] = [
+  ["Mexicana", "1613514785940-daed07799d9b"],
+  ["Tacos", "1552332386-f8dd00dc2f85"],
+  ["Antojitos", "1618040996337-56904b7850b9"],
+  ["Birria y barbacoa", "1615870216519-2f9fa575fa5c"],
+  ["Carne asada", "1599974579688-8dbdd335c77f"],
+  ["Mariscos", "1517244683847-7456b63c5969"],
+  ["Botanas y salsas", "1584208632869-05fa2b2a5934"],
+  ["Burritos", "1626700051175-6818013e1d4f"],
+  ["Hamburguesas", "1565299507177-b0ac66763828"],
+  ["Pizza", "1513104890138-7c749659a591"],
+  ["Sushi", "1579871494447-9811cf80d66c"],
+  ["Ramen", "1569718212165-3a8278d5f624"],
+  ["China", "1585032226651-759b368d7246"],
+  ["Italiana", "1551183053-bf91a1d81141"],
+  ["Pollo", "1626645738196-c2a7c87a8f58"],
+  ["Alitas", "1608039755401-742074f0548d"],
+  ["Cortes y parrilla", "1544025162-d76694265947"],
+  ["Desayunos", "1533089860892-a7c6f0a88666"],
+  ["Panadería y café", "1509440159596-0249088772ff"],
+  ["Postres", "1565958011703-44f9829ba187"],
+  ["Saludable", "1512621776951-a57141f2eefd"],
+  ["Bar y coctelería", "1544145945-f90425340c7e"],
+];
 
-        if (db) {
-          // Fetch places
-          const qPlaces = query(collection(db, "come"), orderBy("createdAt", "desc"), limit(10));
-          const querySnapshot = await getDocs(qPlaces);
-          firestorePlaces = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              name: data.restaurantName || data.name,
-              category: data.category,
-              rating: data.rating || 5.0,
-              image: (data.menu && data.menu[0]?.image) || data.image || "/placeholder-restaurant.jpg",
-              subdomain: data.subdomain,
-              isFirebase: true,
-              isMichelin: !!data.awards || !!data.isMichelin,
-              awards: data.awards,
-              address: data.address,
-              phone: data.phone,
-              schedule: data.schedule
-            };
-          });
+const colecciones: [string, string, string][] = [
+  ["Taquerías de barrio", "1512838243191-e81e8f66f1fd", "Tacos"],
+  ["Mercados y fondas", "1584208632869-05fa2b2a5934", "Fonda"],
+  ["Marisquerías", "1517244683847-7456b63c5969", "Mariscos"],
+  ["Cocina de autor", "1551504734-5ee1c4a1479b", "Cocina de autor"],
+];
 
-          // Fetch guides
-          const qGuides = query(collection(db, "guides"), orderBy("createdAt", "desc"), limit(4));
-          const guidesSnapshot = await getDocs(qGuides);
-          firestoreGuides = guidesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-        }
+const fallbackPlaces = [
+  { id:"pujol", name:"Pujol", category:"Mexicana contemporánea", address:"Polanco, CDMX", image:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=85" },
+  { id:"contramar", name:"Contramar", category:"Mariscos", address:"Roma Norte, CDMX", image:"https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1000&q=85" },
+  { id:"rosetta", name:"Rosetta", category:"Italiana mexicana", address:"Roma Norte, CDMX", image:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=85" },
+];
 
-        const allPopular = [...firestorePlaces].slice(0, 6);
-        const allMichelin = [...firestorePlaces.filter(p => p.isMichelin)].slice(0, 3);
-        const allNewest = [...firestorePlaces];
+const featuredChefs = [
+  { id:"elena-reygadas", name:"Elena Reygadas", place:"Rosetta", image:"https://images.unsplash.com/photo-1583394838336-acd977730f8a?auto=format&fit=crop&w=700&q=85" },
+  { id:"enrique-olvera", name:"Enrique Olvera", place:"Pujol", image:"https://images.unsplash.com/photo-1595273670150-db0a3d39074f?auto=format&fit=crop&w=700&q=85" },
+  { id:"gabriela-camara", name:"Gabriela Cámara", place:"Contramar", image:"https://images.unsplash.com/photo-1560697529-7236591c0066?auto=format&fit=crop&w=700&q=85" },
+];
 
-        // Add fallback guide if none exist in DB for demo/visibility
-        if (firestoreGuides.length === 0) {
-          firestoreGuides = [
-            {
-              id: 'hamburguesas-cdmx',
-              slug: 'mejores-hamburguesas-cdmx',
-              title: 'Explora Monterrey: Las Joyas Ocultas',
-              description: 'Una selección exclusiva de los lugares más auténticos de la ciudad.',
-              heroImage: 'https://images.unsplash.com/photo-1512813195386-6cf811ad3542?auto=format&fit=crop&w=800&q=80',
-              authorName: 'Redacción Come',
-              stops: [{}, {}, {}]
-            }
-          ];
-        }
+type Place = { id:string; name:string; category:string; address:string; image:string; rating?:string|number };
+type GuideCard = { id:string; slug:string; title:string; description:string; heroImage:string };
 
-        setPopularPlaces(allPopular);
-        setMichelinPlaces(allMichelin);
-        setNewestPlaces(allNewest);
-        setFeaturedGuides(firestoreGuides);
-      } catch (error) {
-        console.error("Error fetching homepage data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHomeData();
-  }, []);
-
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Hero />
-
-        <MagazineBar title="Fresh Recipes & News" variant="orange" rightText="Primavera 2026" />
-
-        {newestPlaces.length > 0 && (
-          <PlacesList
-            title="Lo Nuevo"
-            subtitle="Las últimas incorporaciones a nuestra guía"
-            places={newestPlaces}
-            isCarousel={true}
-          />
-        )}
-
-        <MagazineBar title="Today's Menu / Platos Estrella" variant="black" rightText="Trending Now" />
-        <MenuSection />
-
-        <PlacesList
-          title="Dónde comer"
-          subtitle="Los lugares más populares y cercanos a ti"
-          places={popularPlaces}
-          isCarousel={true}
-        />
-
-        <section className={styles.mapHighlightSection}>
-          <div className={styles.container}>
-            <div className={styles.mapGrid}>
-              <div className={styles.mapInfo}>
-                <div className={styles.tag}>Interactivo</div>
-                <h2 className={styles.mapTitle}>Explora la Ciudad</h2>
-                <p className={styles.mapText}>
-                  Encuentra los mejores restaurantes cerca de ti en nuestro mapa interactivo.
-                  Filtra por categorías y descubre joyas ocultas.
-                </p>
-                <div className={styles.mapStats}>
-                  <div className={styles.stat}>
-                    <strong>+50</strong>
-                    <span>Lugares</span>
-                  </div>
-                  <div className={styles.stat}>
-                    <strong>10</strong>
-                    <span>Zonas</span>
-                  </div>
-                </div>
-              </div>
-              <div className={styles.mapWrapper}>
-                <HomeMap />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Come Mapas (Guides) Section */}
-        {featuredGuides.length > 0 && (
-          <section className={styles.guidesSection}>
-            <div className={styles.container}>
-              <div className={styles.sectionHeader}>
-                <div className={styles.titleInfo}>
-                  <h2 className={styles.sectionTitle}>Come Mapas</h2>
-                  <p className={styles.sectionSubtitle}>Rutas culinarias con mapas interactivos</p>
-                </div>
-                <Link href="/guias" className={styles.viewAllLink}>
-                  Ver todas <ChevronRight size={16} />
-                </Link>
-              </div>
-              <div className={styles.guidesGrid}>
-                {featuredGuides.map((guide) => (
-                  <Link key={guide.id} href={`/guias/${guide.slug}`} className={styles.guideCard}>
-                    <div className={styles.guideImage}>
-                      <img src={guide.heroImage || "/news-placeholder.jpg"} alt={guide.title} />
-                      <div className={styles.guideOverlay}>
-                        <div className={styles.guideStats}>
-                          <span><Map size={14} /> {guide.stops?.length || 0} Paradas</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.guideContent}>
-                      <h3>{guide.title}</h3>
-                      <div className={styles.guideAuthor}>Por {guide.authorName}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        <MagazineBar title="Editorial Stories" variant="green" rightText="Crónicas" />
-        <NewsSection />
-
-
-        <Banner />
-      </main>
+// Carrusel horizontal de tipos de cocina.
+function CuisineRail(){
+  const rail = useRef<HTMLDivElement>(null);
+  const scrollBy = (dir: number) => {
+    const el = rail.current;
+    if(!el) return;
+    el.scrollBy({ left: dir * Math.max(el.clientWidth * 0.8, 280), behavior: "smooth" });
+  };
+  return <section className={styles.cuisines}>
+    <div className={styles.railHead}>
+      <div><span>EXPLORA POR COCINA</span><h2>De la taquería de la esquina al sushi de la noche</h2></div>
+      <div className={styles.railNav}>
+        <button type="button" onClick={()=>scrollBy(-1)} aria-label="Ver cocinas anteriores"><ChevronLeft size={20}/></button>
+        <button type="button" onClick={()=>scrollBy(1)} aria-label="Ver más cocinas"><ChevronRight size={20}/></button>
+        <Link href="/restaurantes">Ver todas <ArrowRight size={18}/></Link>
+      </div>
     </div>
-  );
+    <div className={styles.rail} ref={rail}>
+      {cuisines.map(([name,id])=>
+        <Link key={name} href={`/restaurantes?search=${encodeURIComponent(name)}`} className={styles.cuisineCard}>
+          <img src={img(id,700)} alt={name} loading="lazy"/><h3>{name}</h3>
+        </Link>
+      )}
+    </div>
+  </section>;
+}
+
+// Banda de descarga de la app.
+function AppBand(){
+  return <section className={styles.appBand}>
+    <div className={styles.appArt}>
+      <div className={styles.phone}>
+        <span aria-hidden="true"/>
+        <div className={styles.phoneScreen}>
+          <div className={styles.island} aria-hidden="true"/>
+          <div className={styles.phoneBar}><b>come</b><Search size={14}/></div>
+          <p className={styles.phoneTitle}>¿Qué se te antoja hoy?</p>
+          <div className={styles.phoneChips}><span>Tacos</span><span>Birria</span><span>Mariscos</span></div>
+          <div className={styles.phoneGrid}>
+            {cuisines.slice(0,4).map(([name,id])=><figure key={name}><img src={img(id,240)} alt="" aria-hidden="true"/><figcaption>{name}</figcaption></figure>)}
+          </div>
+          <div className={styles.phoneTabs}><span>Inicio</span><span>Pedidos</span><span>Cuenta</span></div>
+          <div className={styles.homeBar} aria-hidden="true"/>
+        </div>
+      </div>
+    </div>
+    <div className={styles.appCopy}>
+      <span>¿SE TE ANTOJA ALGO NUEVO?</span>
+      <h2>Llévate Come en la bolsa</h2>
+      <p>Guarda tus taquerías de cabecera, sigue a los chefs que te gustan, arma rutas para el fin de semana y pide sin dar tantas vueltas. Toda la mesa mexicana, en tu teléfono.</p>
+      {/* Badges oficiales de Apple y Google, sin modificar. TODO: sustituir el href
+          por las URLs reales de la ficha en App Store y Google Play al publicar. */}
+      <div className={styles.storeButtons}>
+        <a href="#" aria-label="Descargar Come en el App Store"><img src="/badges/app-store-es.svg" alt="Descárgala en el App Store"/></a>
+        <a href="#" aria-label="Descargar Come en Google Play"><img src="/badges/google-play-es.png" alt="Disponible en Google Play"/></a>
+      </div>
+    </div>
+  </section>;
+}
+
+function PublicLanding(){
+  return <main className={styles.page}>
+    <section className={styles.hero}>
+      <img src={img("1552332386-f8dd00dc2f85", 2200)} alt="Tacos de la calle recién servidos" /><div className={styles.shade}/>
+      <div className={styles.heroCopy}>
+        <span>DE LA FONDA DE BARRIO A LA MESA DE AUTOR</span>
+        <h1>Se te antoja.<br/>Nosotros te decimos<br/>dónde.</h1>
+        <div className={styles.heroActions}><Link href="/ordenar">Ordenar ahora <ShoppingBag size={19}/></Link><Link href="/restaurantes" className={styles.secondary}>Ver restaurantes</Link></div>
+      </div>
+    </section>
+
+    <CuisineRail/>
+
+    <section className={styles.intro}><span>EL DESTINO PARA COMER MEJOR</span><h2>Todo México en tu mesa</h2><p>Del puesto de la esquina al menú de degustación: un solo lugar para descubrir dónde se come rico, conocer a quienes cocinan y pasar del antojo a la reservación o al pedido.</p></section>
+
+    <section className={styles.featureRow}><div className={styles.featureImage}><img src={img("1504544750208-dc0358e63f7f",1400)} alt="Tacos recién hechos con limón y salsa"/></div><div className={styles.featureCopy}><span>DESCUBRE</span><h2>Un país que se come de mil maneras</h2><p>Mercados, fondas, marisquerías, panaderías y mesas de autor. Busca por cocina, chef, colonia, ocasión o platillo, desde los clásicos de siempre hasta los secretos mejor guardados de cada ciudad.</p><Link href="/restaurantes">Explorar restaurantes <ArrowRight size={18}/></Link></div></section>
+
+    <section className={`${styles.featureRow} ${styles.reverse}`}><div className={styles.featureImage}><img src={img("1414235077428-338989a2e8c0",1400)} alt="Restaurante preparado para recibir comensales"/></div><div className={styles.featureCopy}><span>RESERVA</span><h2>Aparta tu mesa sin batallar</h2><p>Encuentra lugar para hoy, experiencias de temporada y rutas gastronómicas para el fin de semana. La disponibilidad en tiempo real irá llegando conforme cada negocio active sus reservaciones.</p><Link href="/restaurantes">Encontrar una mesa <CalendarDays size={18}/></Link></div></section>
+
+    <section className={styles.browse}><div className={styles.browseHead}><div><span>COLECCIONES</span><h2>Para cuando ya sabes qué se te antoja</h2></div><Link href="/guias">Ver guías <ArrowRight size={18}/></Link></div><div className={styles.restaurantStrip}>{colecciones.map(([name,id,q])=><Link href={`/restaurantes?search=${encodeURIComponent(q)}`} key={name}><img src={img(id,1000)} alt={name}/><h3>{name}</h3></Link>)}</div></section>
+
+    <AppBand/>
+
+    <section className={styles.mapCta}><MapPin size={30}/><span>COME CERCA DE TI</span><h2>Lo bueno casi siempre está a la vuelta de la esquina.</h2><Link href="/mapa">Abrir mapa</Link></section>
+  </main>;
+}
+
+function MemberHome(){
+  const { user } = useAuth();
+  const [places,setPlaces]=useState<Place[]>(fallbackPlaces);
+  const [guides,setGuides]=useState<GuideCard[]>([]);
+  const firstName=(user?.displayName || user?.email?.split("@")[0] || "foodie").split(" ")[0];
+
+  useEffect(()=>{(async()=>{
+    if(!db) return;
+    try{
+      const [placeSnap,guideSnap]=await Promise.all([
+        getDocs(query(collection(db,"come"),limit(8))),
+        getDocs(query(collection(db,"guides"),limit(4)))
+      ]);
+      const nextPlaces=placeSnap.docs.filter(doc=>isPublished(doc.data())).map(doc=>{const d=doc.data(); return {id:doc.id,name:d.restaurantName||d.name||"Restaurante",category:d.category||"Cocina local",address:d.address||"México",image:d.image||d.menu?.[0]?.image||fallbackPlaces[0].image,rating:d.rating};});
+      const nextGuides=guideSnap.docs.map(doc=>{const d=doc.data();return{id:doc.id,slug:d.slug||doc.id,title:d.title||"Guía gastronómica",description:d.description||"Una ruta seleccionada para ti.",heroImage:d.heroImage||fallbackPlaces[1].image};});
+      if(nextPlaces.length) setPlaces(nextPlaces);
+      setGuides(nextGuides);
+    }catch{/* La experiencia conserva recomendaciones editoriales si la red no está disponible. */}
+  })()},[]);
+
+  const guideCards=useMemo(()=>guides.length?guides:[
+    {id:"centro",slug:"mexico/cocina-tradicional",title:"Sabores esenciales de México",description:"Mercados, fondas y mesas que cuentan nuestra historia.",heroImage:"https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1000&q=85"},
+    {id:"fin",slug:"mejores-hamburguesas-cdmx",title:"Una ruta para el fin de semana",description:"Paradas memorables para recorrer la ciudad con hambre.",heroImage:"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1000&q=85"}
+  ],[guides]);
+
+  return <main className={styles.memberPage}>
+    <section className={styles.memberHero}>
+      <div><span><Sparkles size={16}/> SELECCIONADO PARA TI</span><h1>Hola, {firstName}.<br/>¿Qué se te antoja hoy?</h1><p>Restaurantes, historias y rutas elegidas a partir de lo que exploras.</p></div>
+      <form action="/restaurantes" className={styles.memberSearch}><Compass size={21}/><input name="search" aria-label="Buscar restaurantes, chefs o platillos" placeholder="Busca un restaurante, chef o platillo"/><button>Buscar</button></form>
+    </section>
+    <nav className={styles.quickActions} aria-label="Accesos rápidos">
+      <Link href="/restaurantes"><span><Compass/></span><b>Descubrir</b><small>Lugares para ti</small></Link>
+      <Link href="/mapa"><span><Map/></span><b>Cerca de mí</b><small>Explorar el mapa</small></Link>
+      <Link href="/ordenar"><span><ShoppingBag/></span><b>Ordenar</b><small>Entrega o pickup</small></Link>
+      <Link href="/guias"><span><CalendarDays/></span><b>Planear</b><small>Guías y rutas</small></Link>
+    </nav>
+    <section className={styles.feedSection}><div className={styles.feedHeading}><div><span>RECOMENDADOS PARA TI</span><h2>Lugares que vale la pena conocer</h2></div><Link href="/restaurantes">Ver todos <ArrowRight size={18}/></Link></div><div className={styles.placeRail}>{places.slice(0,6).map(place=><Link href={`/lugares/${place.id}`} key={place.id} className={styles.placeCard}><img src={place.image} alt={place.name}/><div><span>{place.category}</span><h3>{place.name}</h3><p><MapPin size={14}/>{place.address}</p></div></Link>)}</div></section>
+    <section className={styles.guideBand}><div className={styles.feedHeading}><div><span>PLANES PARA GUARDAR</span><h2>Guías hechas para salir a comer</h2></div><Link href="/guias">Todas las guías <ArrowRight size={18}/></Link></div><div className={styles.guideGrid}>{guideCards.slice(0,3).map(guide=><Link href={`/guias/${guide.slug}`} key={guide.id}><img src={guide.heroImage} alt={guide.title}/><div><h3>{guide.title}</h3><p>{guide.description}</p><b>Explorar ruta <ArrowRight size={15}/></b></div></Link>)}</div></section>
+    <section className={styles.chefSection}><div className={styles.feedHeading}><div><span>CONOCE A QUIENES COCINAN</span><h2>Chefs para seguir</h2></div><Link href="/chefs">Ver chefs <ArrowRight size={18}/></Link></div><div className={styles.chefRail}>{featuredChefs.map(chef=><Link href={`/chefs/${chef.id}`} key={chef.id}><img src={chef.image} alt={chef.name}/><span><ChefHat size={15}/>{chef.place}</span><h3>{chef.name}</h3></Link>)}</div></section>
+    <section className={styles.memberMap}><div><span>EXPLORA TU CIUDAD</span><h2>Todo lo bueno,<br/>cerca de ti.</h2><p>Abre el mapa para encontrar restaurantes y experiencias alrededor de tu ubicación.</p><Link href="/mapa">Explorar el mapa <MapPin size={18}/></Link></div></section>
+  </main>
+}
+
+export default function Home(){
+  const {user,loading}=useAuth();
+  if(loading) return <main className={styles.homeLoading}><span>come</span></main>;
+  return user ? <MemberHome/> : <PublicLanding/>;
 }

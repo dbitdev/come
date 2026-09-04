@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/perfil/', '/login/', '/register/'],
     },
-    sitemap: 'https://comeweb.mx/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/sitemap.xml`,
   };
 }

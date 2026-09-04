@@ -185,3 +185,22 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Aviso cuando alguien llega al formulario sin sesión: sin cuenta las reglas
+   de Firestore rechazan el registro, así que conviene decirlo al principio. */
+.authNotice {
+    background: #fff8d8;
+    border: 1px solid rgba(0, 61, 38, 0.15);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: #10261c;
+}
+
+.authNotice a {
+    font-weight: 700;
+    color: #075438;
+    text-decoration: underline;
+}

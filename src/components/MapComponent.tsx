@@ -11,7 +11,7 @@ import {
   Pin
 } from '@vis.gl/react-google-maps';
 import styles from './MapComponent.module.css';
-import { slugify } from '@/lib/utils';
+import { slugify, isPublished } from "@/lib/utils";
 
 import { 
     Globe, 
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
 import Link from 'next/link';
+import FoodPin from './FoodPin';
 import GoogleMapsWrapper from './GoogleMapsWrapper';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -47,6 +48,7 @@ function MapContent() {
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [locating, setLocating] = useState(false);
     const router = useRouter();
@@ -58,7 +60,7 @@ function MapContent() {
         if (!db) return;
         try {
             const querySnapshot = await getDocs(collection(db, "come"));
-            const data = querySnapshot.docs.map(doc => {
+            const data = querySnapshot.docs.filter(doc => isPublished(doc.data())).map(doc => {
                 const d = doc.data();
                 return {
                     id: doc.id,
@@ -183,9 +185,18 @@ function MapContent() {
         }
     }, [geocodingLib, restaurants.length]); // Only depend on length to avoid reference loops
 
+    // Seleccionar abre la ficha sobre el mapa y centra ahí; para ir al detalle
+    // está el botón "Ver lugar" dentro de la ficha.
     const handleRestaurantSelect = useCallback((restaurant: any) => {
-        const name = restaurant.restaurantName || restaurant.name;
-        router.push(`/lugares/${slugify(name)}`);
+        setSelectedRestaurant(restaurant);
+        if (map && restaurant.lat && restaurant.lng) {
+            map.panTo({ lat: restaurant.lat, lng: restaurant.lng });
+            if ((map.getZoom() ?? 0) < 15) map.setZoom(15);
+        }
+    }, [map]);
+
+    const irAlLugar = useCallback((restaurant: any) => {
+        router.push(`/lugares/${slugify(restaurant.restaurantName || restaurant.name)}`);
     }, [router]);
 
     if (loading) return <div style={{ height: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
@@ -216,11 +227,16 @@ function MapContent() {
                     {filteredRestaurants.slice(0, 50).map(place => (
                         <li 
                             key={place.id} 
-                            className={styles.placeItem} 
+                            className={`${styles.placeItem} ${selectedRestaurant?.id === place.id ? styles.active : ""}`}
                             onClick={() => handleRestaurantSelect(place)}
+                            onMouseEnter={() => setHoveredId(place.id)}
+                            onMouseLeave={() => setHoveredId(null)}
                         >
-                            <div className={styles.placeName}>{place.name}</div>
-                            <div className={styles.placeCategory}>{place.category}</div>
+                            <span className={styles.placeIcon}><FoodPin category={place.category} size={16} /></span>
+                            <div>
+                                <div className={styles.placeName}>{place.name}</div>
+                                <div className={styles.placeCategory}>{place.category}</div>
+                            </div>
                         </li>
                     ))}
                     {filteredRestaurants.length === 0 && (
@@ -257,13 +273,43 @@ function MapContent() {
                         <AdvancedMarker 
                             key={place.id} 
                             position={{ lat: place.lat, lng: place.lng }} 
+                            title={place.name}
+                            zIndex={selectedRestaurant?.id === place.id ? 10 : hoveredId === place.id ? 5 : 1}
                             onClick={() => handleRestaurantSelect(place)}
                         >
-                            <div className={`${styles.customMarker} ${place.isMichelin ? styles.michelinMarker : ""}`}>
-                                {place.isMichelin ? <Star size={14} fill="currentColor" /> : <MapPin size={16} fill="white" />}
+                            <div
+                                className={`${styles.customMarker} ${place.isMichelin ? styles.michelinMarker : ""} ${selectedRestaurant?.id === place.id || hoveredId === place.id ? styles.markerActive : ""}`}
+                                onMouseEnter={() => setHoveredId(place.id)}
+                                onMouseLeave={() => setHoveredId(null)}
+                            >
+                                <FoodPin category={place.category} />
                             </div>
                         </AdvancedMarker>
                     ))}
+
+                    {selectedRestaurant && (
+                        <InfoWindow
+                            position={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }}
+                            onCloseClick={() => setSelectedRestaurant(null)}
+                            pixelOffset={[0, -38]}
+                            headerDisabled
+                        >
+                            <div className={styles.infoCard}>
+                                <button className={styles.infoClose} onClick={() => setSelectedRestaurant(null)} aria-label="Cerrar"><X size={16} /></button>
+                                {selectedRestaurant.image && <img src={selectedRestaurant.image} alt={selectedRestaurant.name} />}
+                                <div className={styles.infoBody}>
+                                    <small><UtensilsCrossed size={13} /> {selectedRestaurant.category || "Cocina mexicana"}</small>
+                                    <h3>{selectedRestaurant.name}</h3>
+                                    {selectedRestaurant.address && <p><MapPin size={13} /> {selectedRestaurant.address}</p>}
+                                    {selectedRestaurant.rating && <p><Star size={13} fill="currentColor" /> {Number(selectedRestaurant.rating).toFixed(1)}</p>}
+                                    <div className={styles.infoActions}>
+                                        <button onClick={() => irAlLugar(selectedRestaurant)}>Ver lugar</button>
+                                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedRestaurant.lat},${selectedRestaurant.lng}`} target="_blank" rel="noopener noreferrer"><Navigation size={14} /> Cómo llegar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </InfoWindow>
+                    )}
                 </Map>
                 
                 <button 
