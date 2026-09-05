@@ -69,3 +69,26 @@
   .navItem,.navItemActive{white-space:nowrap;padding:.7rem .9rem}
   .mainContent{padding:1.6rem 1.2rem 3rem}
 }
+
+/* ── Estructura de secciones ─────────────────────── */
+.eyebrow{display:block;font-size:.68rem;font-weight:800;letter-spacing:.16em;color:var(--primary);margin-bottom:.35rem}
+.sectionHead{display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.6rem}
+.sectionHead h2{font-family:var(--font-serif);font-size:clamp(1.6rem,2.6vw,2.1rem);letter-spacing:-.02em;margin:0;color:var(--foreground)}
+
+/* Dos columnas: la lista a la izquierda, el formulario a la derecha, pegado. */
+.splitLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.6rem;align-items:start}
+.formOuter{position:sticky;top:1.5rem;background:#fff;border:1px solid var(--border-light);border-radius:10px;padding:1.6rem}
+.formOuter h3{font-family:var(--font-serif);font-size:1.35rem;margin:0;letter-spacing:-.02em}
+
+.rowActive{background:var(--pale-green)}
+.rowActive td{background:var(--pale-green)}
+.rowMain{font-weight:700;font-size:.98rem;color:var(--foreground)}
+.rowSub{font-size:.8rem;color:var(--foreground-muted);margin-top:.15rem}
+
+.spin{animation:girar 1s linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+@media(max-width:1000px){
+  .splitLayout{grid-template-columns:1fr}
+  .formOuter{position:static}
+}

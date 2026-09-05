@@ -27,6 +27,15 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
+const TITULOS: Record<string, string> = {
+    dashboard: "Resumen",
+    restaurantes: "Negocios y lugares",
+    chefs: "Directorio de chefs",
+    guias: "Guías interactivas",
+    menus: "Menús digitales",
+    nominaciones: "Nominaciones por revisar",
+};
+
 export default function AdminDashboard() {
     const { user } = useAuth();
     const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus' | 'guias' | 'nominaciones'>('dashboard');
@@ -459,7 +468,10 @@ export default function AdminDashboard() {
 
                 <main className={styles.mainContent}>
                     <header className={styles.header}>
-                        <h1>{activeSection === 'restaurantes' ? "Gestión de Negocios" : activeSection.toUpperCase()}</h1>
+                        <div>
+                            <span className={styles.eyebrow}>PANEL DE REDACCIÓN</span>
+                            <h1>{TITULOS[activeSection]}</h1>
+                        </div>
                         <div className={styles.userTag}>{user?.email}</div>
                     </header>
 
@@ -717,12 +729,12 @@ export default function AdminDashboard() {
 
                             {activeSection === 'chefs' && (
                                 <section>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
-                                        <h2>Directorio de Chefs</h2>
-                                        <button className={styles.primaryBtn} onClick={() => setEditingChef({})}><FaPlus /> Nuevo Chef</button>
+                                    <div className={styles.sectionHead}>
+                                        <h2>Directorio de chefs</h2>
+                                        <button className={styles.primaryBtn} onClick={() => setEditingChef({})}><FaPlus /> Nuevo chef</button>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                    <div className={styles.splitLayout}>
                                         <div className={styles.tableSection}>
                                             <table className={styles.adminTable}>
                                                 <thead>
@@ -733,10 +745,12 @@ export default function AdminDashboard() {
                                                 </thead>
                                                 <tbody>
                                                     {chefs.map(chef => (
-                                                        <tr key={chef.id} style={{ background: editingChef?.id === chef.id ? '#f0f7ff' : 'transparent' }}>
+                                                        <tr key={chef.id} className={editingChef?.id === chef.id ? styles.rowActive : undefined}>
                                                             <td>
-                                                                <div style={{ fontWeight: 700 }}>{chef.nombre}</div>
-                                                                <div style={{ fontSize: '0.8rem', color: '#888' }}>{chef.restaurante_principal}</div>
+                                                                <div className={styles.rowMain}>{chef.name || "Sin nombre"}</div>
+                                                                <div className={styles.rowSub}>
+                                                                    {[chef.specialty, chef.restaurant, chef.ubicacion].filter(Boolean).join(" · ") || "Sin datos"}
+                                                                </div>
                                                             </td>
                                                             <td className={styles.actions}>
                                                                 <button className={styles.editBtn} onClick={() => setEditingChef(chef)}><FaEdit /></button>
@@ -758,14 +772,21 @@ export default function AdminDashboard() {
                                                     
                                                     <label>Nombre Completo</label>
                                                     <input 
-                                                        value={editingChef.nombre || ''} 
-                                                        onChange={e => setEditingChef({...editingChef, nombre: e.target.value})}
+                                                        value={editingChef.name || ''} 
+                                                        onChange={e => setEditingChef({...editingChef, name: e.target.value})}
                                                     />
 
-                                                    <label>Restaurante Principal</label>
+                                                    <label>Especialidad</label>
+                                                    <input
+                                                        placeholder="Ej. Oaxaqueña tradicional"
+                                                        value={editingChef.specialty || ''}
+                                                        onChange={e => setEditingChef({...editingChef, specialty: e.target.value})}
+                                                    />
+
+                                                    <label>Restaurante principal</label>
                                                     <input 
-                                                        value={editingChef.restaurante_principal || ''} 
-                                                        onChange={e => setEditingChef({...editingChef, restaurante_principal: e.target.value})}
+                                                        value={editingChef.restaurant || ''} 
+                                                        onChange={e => setEditingChef({...editingChef, restaurant: e.target.value})}
                                                     />
 
                                                     <div style={{ display: 'flex', gap: '1rem' }}>
@@ -773,7 +794,7 @@ export default function AdminDashboard() {
                                                             <label>Ubicación</label>
                                                             <input 
                                                                 value={editingChef.ubicacion || ''} 
-                                                                onChange={e => setEditingChef({...editingChef, nombre: e.target.value})}
+                                                                onChange={e => setEditingChef({...editingChef, name: e.target.value})}
                                                             />
                                                         </div>
                                                         <div style={{ width: '100px' }}>
@@ -788,8 +809,8 @@ export default function AdminDashboard() {
 
                                                     <label>Biografía Corta</label>
                                                     <textarea 
-                                                        value={editingChef.biografia_corta || ''} 
-                                                        onChange={e => setEditingChef({...editingChef, biografia_corta: e.target.value})}
+                                                        value={editingChef.bio || ''} 
+                                                        onChange={e => setEditingChef({...editingChef, bio: e.target.value})}
                                                         rows={3}
                                                     />
 
