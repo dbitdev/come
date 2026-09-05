@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getChefBySlug, Chef } from '@/lib/chefs';
+import { getChefBySlug, type Chef } from '@/lib/chefs';
+import RetratoChef from '@/components/RetratoChef';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { searchArticles } from '@/lib/wordpress';
@@ -30,7 +31,7 @@ export default function ChefProfilePage() {
     useEffect(() => {
         const fetchChefData = async () => {
             const id = params.id as string;
-            const data = getChefBySlug(id);
+            const data = await getChefBySlug(id);
             if (!data) {
                 setLoading(false);
                 return;
@@ -50,17 +51,6 @@ export default function ChefProfilePage() {
                 const restDocs = await getDocs(qRest);
                 let foundRestaurants = restDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // Fallback: Fetch by manual slugs if none found via name
-                if (foundRestaurants.length === 0 && data.featuredRestaurantSlugs?.length) {
-                    const qSlugs = query(
-                        collection(db, "come"), 
-                        where("__name__", "in", data.featuredRestaurantSlugs),
-                        limit(5)
-                    );
-                    const slugDocs = await getDocs(qSlugs);
-                    foundRestaurants = slugDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                }
-                
                 setRestaurants(foundRestaurants);
 
                 // 2. Fetch Guides
@@ -121,10 +111,10 @@ export default function ChefProfilePage() {
                 <div className={styles.heroGrid}>
                     <div className={styles.imageCol}>
                         <div className={styles.portraitWrapper}>
-                            <img src={chef.image} alt={chef.name} className={styles.portrait} />
+                            <RetratoChef src={chef.image} nombre={chef.name} className={styles.portrait} />
                             {chef.stars && (
                                 <div className={styles.starsBadge}>
-                                    <Star size={16} fill="currentColor" /> <span>{chef.stars} Estrellas</span>
+                                    <Star size={16} fill="currentColor" /> <span>{chef.stars} {chef.stars === 1 ? "Estrella" : "Estrellas"}</span>
                                 </div>
                             )}
                         </div>
@@ -135,16 +125,24 @@ export default function ChefProfilePage() {
                         <p className={styles.bio}>{chef.bio}</p>
                         
                         <div className={styles.accolades}>
-                            {chef.accolades?.map((acc, idx) => (
-                                <div key={idx} className={styles.accoladeItem}>
-                                    <Award size={16} /> <span>{acc}</span>
+                            {chef.logroClave && (
+                                <div className={styles.accoladeItem}>
+                                    <Award size={16} /> <span>{chef.logroClave}</span>
                                 </div>
-                            ))}
+                            )}
+                            {chef.restaurant && (
+                                <div className={styles.accoladeItem}>
+                                    <Award size={16} /> <span>{chef.restaurant}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.socials}>
-                            {chef.socials?.instagram && <a href={`https://instagram.com/${chef.socials.instagram}`} target="_blank"><FaInstagram size={20} /></a>}
-                            {chef.socials?.twitter && <a href={`https://twitter.com/${chef.socials.twitter}`} target="_blank"><FaTwitter size={20} /></a>}
+                            {chef.redes.map((perfil) => (
+                                <a key={perfil.red + perfil.usuario} href={perfil.url} target="_blank" rel="noopener noreferrer" title={perfil.usuario}>
+                                    {perfil.red === 'instagram' ? <FaInstagram size={20} /> : perfil.red === 'facebook' ? <FaFacebookF size={20} /> : <FaTwitter size={20} />}
+                                </a>
+                            ))}
                             <button className={styles.shareBtn}>Seguir Perfil</button>
                         </div>
                     </div>
