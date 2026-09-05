@@ -234,3 +234,11 @@
         margin: 2rem auto 4rem;
     }
 }
+
+.estado {
+    grid-column: 1 / -1;
+    padding: 5rem 2rem;
+    text-align: center;
+    color: var(--foreground-muted);
+    font-family: var(--font-modern);
+}

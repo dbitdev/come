@@ -1,113 +1,131 @@
 "use client";
 
-import React, { useState } from 'react';
-import styles from './ChefsPage.module.css';
-import Link from 'next/link';
-import { Award, Utensils, Star, Search, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { collection, getDocs } from "firebase/firestore";
+import { ChevronRight, MapPin, Search, Star, Utensils } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { slugify } from "@/lib/utils";
+import RetratoChef from "@/components/RetratoChef";
+import styles from "./ChefsPage.module.css";
 
-const MOCK_CHEFS = [
-    {
-        id: 'alfonso-cadena',
-        name: 'Alfonso Cadena',
-        restaurant: 'Hueso / Carbón',
-        image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=400&q=80',
-        specialty: 'Cocina de Autor',
-        stars: 1,
-    },
-    {
-        id: 'elena-reygadas',
-        name: 'Elena Reygadas',
-        restaurant: 'Rosetta',
-        image: 'https://images.unsplash.com/photo-1583394838336-acd977730f8a?auto=format&fit=crop&w=400&q=80',
-        specialty: 'Panadería / Contemporánea',
-        stars: 1,
-    },
-    {
-        id: 'enrique-olvera',
-        name: 'Enrique Olvera',
-        restaurant: 'Pujol',
-        image: 'https://images.unsplash.com/photo-1595273670150-db0a3d39074f?auto=format&fit=crop&w=400&q=80',
-        specialty: 'Alta Cocina Mexicana',
-        stars: 2,
-    },
-    {
-        id: 'daniela-soto-innes',
-        name: 'Daniela Soto-Innes',
-        restaurant: 'Cosme (NY)',
-        image: 'https://images.unsplash.com/photo-1605522455879-0520448106a7?auto=format&fit=crop&w=400&q=80',
-        specialty: 'Contemporánea',
-        stars: 0,
-    },
-    {
-        id: 'jorge-vallejo',
-        name: 'Jorge Vallejo',
-        restaurant: 'Quintonil',
-        image: 'https://images.unsplash.com/photo-1581299894007-aaa50297cf16?auto=format&fit=crop&w=400&q=80',
-        specialty: 'Ingrediente Local',
-        stars: 2,
-    },
-    {
-        id: 'gabriela-camara',
-        name: 'Gabriela Cámara',
-        restaurant: 'Contramar',
-        image: 'https://images.unsplash.com/photo-1560697529-7236591c0066?auto=format&fit=crop&w=400&q=80',
-        specialty: 'Pescados y Mariscos',
-    },
-];
+type Chef = {
+  id: string;
+  nombre: string;
+  especialidad: string;
+  restaurante: string;
+  imagen?: string;
+  estrellas: number;
+  bio?: string;
+  ubicacion?: string;
+  logroClave?: string;
+};
 
 export default function ChefsPage() {
-    const [searchTerm, setSearchTerm] = useState("");
+  const [chefs, setChefs] = useState<Chef[]>([]);
+  const [termino, setTermino] = useState("");
+  const [cargando, setCargando] = useState(true);
 
-    const filteredChefs = MOCK_CHEFS.filter(chef => 
-        chef.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chef.restaurant.toLowerCase().includes(searchTerm.toLowerCase())
+  // Antes esta página mostraba una lista fija escrita en el código: nombres que
+  // no estaban en la base y fotos que ya no existen. Ahora lee Firestore.
+  useEffect(() => {
+    (async () => {
+      if (!db) return setCargando(false);
+      try {
+        const snapshot = await getDocs(collection(db, "chefs"));
+        setChefs(
+          snapshot.docs.map((doc) => {
+            const d = doc.data();
+            return {
+              id: doc.id,
+              nombre: d.name || d.nombre || "Chef",
+              especialidad: d.specialty || d.especialidad || "Cocina mexicana",
+              restaurante: d.restaurant || d.restaurante || "",
+              imagen: d.image || d.photoUrl || undefined,
+              estrellas: Number(d.estrellas ?? d.michelinStars) || 0,
+              bio: d.bio || undefined,
+              ubicacion: d.ubicacion || d.estado || undefined,
+              logroClave: d.logroClave || d.awards || undefined,
+            };
+          })
+        );
+      } catch {
+        setChefs([]);
+      } finally {
+        setCargando(false);
+      }
+    })();
+  }, []);
+
+  const visibles = useMemo(() => {
+    const aguja = termino.trim().toLowerCase();
+    if (!aguja) return chefs;
+    return chefs.filter((c) =>
+      `${c.nombre} ${c.restaurante} ${c.especialidad} ${c.ubicacion ?? ""}`.toLowerCase().includes(aguja)
     );
+  }, [chefs, termino]);
 
-    return (
-        <div className={styles.container}>
-            <header className={styles.hero}>
-                <div className={styles.heroContent}>
-                    <h1>Maestros de la Cocina</h1>
-                    <p>Descubre a los visionarios que están redefiniendo el panorama gastronómico de México.</p>
-                </div>
-            </header>
-
-            <main className={styles.main}>
-                <div className={styles.searchBar}>
-                    <Search size={20} />
-                    <input 
-                        type="text" 
-                        placeholder="Buscar chef o restaurante..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-
-                <div className={styles.chefsGrid}>
-                    {filteredChefs.map((chef) => (
-                        <div key={chef.id} className={styles.chefCard}>
-                            <div className={styles.imageWrapper}>
-                                <img src={chef.image} alt={chef.name} />
-                                {chef.stars ? (
-                                    <div className={styles.starsBadge}>
-                                        <Star size={12} fill="currentColor" /> {chef.stars}
-                                    </div>
-                                ) : null}
-                            </div>
-                            <div className={styles.info}>
-                                <div className={styles.specialty}>{chef.specialty}</div>
-                                <h3 className={styles.name}>{chef.name}</h3>
-                                <div className={styles.restaurant}>
-                                    <Utensils size={14} /> <span>{chef.restaurant}</span>
-                                </div>
-                                <Link href={`/chefs/${chef.id}`} className={styles.viewBtn}>
-                                    Ver Perfil <ChevronRight size={14} />
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </main>
+  return (
+    <div className={styles.container}>
+      <header className={styles.hero}>
+        <div className={styles.heroContent}>
+          <h1>Maestros de la Cocina</h1>
+          <p>Descubre a los visionarios que están redefiniendo el panorama gastronómico de México.</p>
         </div>
-    );
+      </header>
+
+      <main className={styles.main}>
+        <div className={styles.searchBar}>
+          <Search size={20} />
+          <input
+            type="text"
+            placeholder="Buscar chef, restaurante o ciudad…"
+            value={termino}
+            onChange={(e) => setTermino(e.target.value)}
+            aria-label="Buscar chef"
+          />
+        </div>
+
+        {cargando ? (
+          <div className={styles.estado}>Cargando chefs…</div>
+        ) : (
+          <div className={styles.chefsGrid}>
+            {visibles.map((chef) => (
+              <div key={chef.id} className={styles.chefCard}>
+                <div className={styles.imageWrapper}>
+                  <RetratoChef src={chef.imagen} nombre={chef.nombre} />
+                  {chef.estrellas > 0 && (
+                    <div className={styles.starsBadge}>
+                      <Star size={12} fill="currentColor" /> {chef.estrellas}
+                    </div>
+                  )}
+                </div>
+                <div className={styles.info}>
+                  <div className={styles.specialty}>{chef.especialidad}</div>
+                  <h3 className={styles.name}>{chef.nombre}</h3>
+                  {chef.restaurante && (
+                    <div className={styles.restaurant}>
+                      <Utensils size={14} /> <span>{chef.restaurante}</span>
+                    </div>
+                  )}
+                  {chef.ubicacion && (
+                    <div className={styles.restaurant}>
+                      <MapPin size={14} /> <span>{chef.ubicacion}</span>
+                    </div>
+                  )}
+                  <Link href={`/chefs/${slugify(chef.nombre)}`} className={styles.viewBtn}>
+                    Ver Perfil <ChevronRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!cargando && visibles.length === 0 && (
+          <div className={styles.estado}>No encontramos chefs con esa búsqueda.</div>
+        )}
+      </main>
+    </div>
+  );
 }
