@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     siteName: "Néctar",
     images: [
       {
-        url: "/come.jpg",
-        width: 1200,
-        height: 630,
+        url: "/come-icono.png",
+        width: 1024,
+        height: 1024,
         alt: "Come - La Guía Gastronómica de México",
       },
     ],
@@ -42,11 +42,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Come - La Guía Gastronómica de México",
     description: "La guía definitiva y curada de las mejores experiencias gastronómicas en México.",
-    images: ["/come.jpg"],
+    images: ["/come-icono.png"],
   },
   icons: {
-    icon: "/c.png",
-    apple: "/c.png",
+    icon: [
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/come-icono.png", sizes: "1024x1024", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
   }
 };
 

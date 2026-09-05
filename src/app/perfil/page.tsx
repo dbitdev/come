@@ -1,111 +1,221 @@
 "use client";
 
-import React from 'react';
-import { useAuth } from "@/context/AuthContext";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import {
+  ArrowRight,
+  Building2,
+  ChefHat,
+  Clock,
+  LogOut,
+  Mail,
+  MapPin,
+  Plus,
+  Star,
+  Store,
+  Utensils,
+} from "lucide-react";
+import { auth, db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
+import { slugify } from "@/lib/utils";
 import styles from "./profile.module.css";
-import { FaUserCircle, FaEnvelope, FaCalendarAlt, FaStar, FaSignOutAlt, FaPlusCircle } from 'react-icons/fa';
-import { auth, db } from '@/lib/firebase';
-import Link from 'next/link';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
-type UserBusiness = { id:string; restaurantName?:string; name?:string; category?:string };
 
-export default function UserProfilePage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
-    const [userBusinesses, setUserBusinesses] = useState<UserBusiness[]>([]);
-    const [fetchingBusinesses, setFetchingBusinesses] = useState(true);
+type Negocio = {
+  id: string;
+  nombre: string;
+  categoria: string;
+  imagen?: string;
+  estado: string;
+  direccion?: string;
+  platillos: number;
+};
 
-    useEffect(() => {
-        const fetchBusinesses = async () => {
-            if (user && db) {
-                try {
-                    const q = query(collection(db, "come"), where("userId", "==", user.uid));
-                    const querySnapshot = await getDocs(q);
-                    const businesses = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setUserBusinesses(businesses);
-                } catch (error) {
-                    console.error("Error fetching businesses:", error);
-                } finally {
-                    setFetchingBusinesses(false);
-                }
-            }
-        };
+export default function PerfilPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [negocios, setNegocios] = useState<Negocio[]>([]);
+  const [cargando, setCargando] = useState(true);
 
-        if (!loading && user) {
-            fetchBusinesses();
-        }
-    }, [user, loading]);
+  useEffect(() => {
+    if (!loading && !user) router.replace("/login");
+  }, [user, loading, router]);
 
-    useEffect(() => {
-        if (!loading && !user) router.replace('/login');
-    }, [loading, user, router]);
+  useEffect(() => {
+    (async () => {
+      if (!user || !db) return setCargando(false);
+      try {
+        const snapshot = await getDocs(query(collection(db, "come"), where("userId", "==", user.uid)));
+        setNegocios(
+          snapshot.docs.map((doc) => {
+            const d = doc.data();
+            const menu = Array.isArray(d.menu) ? d.menu : [];
+            return {
+              id: doc.id,
+              nombre: d.restaurantName || d.name || "Mi negocio",
+              categoria: d.category || "Cocina mexicana",
+              imagen: d.image || menu[0]?.image,
+              estado: d.status === "published" ? "Publicado" : "En revisión",
+              direccion: d.address,
+              platillos: menu.length,
+            };
+          })
+        );
+      } catch {
+        setNegocios([]);
+      } finally {
+        setCargando(false);
+      }
+    })();
+  }, [user]);
 
-    if (loading || !user) {
-        return <div className={styles.loadingContainer}><div className={styles.spinner}></div></div>;
-    }
+  const nombre = useMemo(() => user?.displayName || user?.email?.split("@")[0] || "Invitado", [user]);
+  const inicial = nombre.trim().charAt(0).toUpperCase();
+  const desde = user?.metadata?.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString("es-MX", { year: "numeric", month: "long" })
+    : null;
 
-    const handleLogout = async () => {
-        await auth.signOut();
-        router.push('/');
-    };
+  if (loading || !user) return <main className={styles.estado}>Cargando tu perfil…</main>;
 
-    return (
-        <div className={styles.wrapper}>
-            <div className={styles.container}>
-                <div className={styles.sidebar}>
-                    <div className={styles.profileHeader}>
-                        {user.photoURL ? (
-                            <img src={user.photoURL} alt="Avatar" className={styles.avatar} />
-                        ) : (
-                            <FaUserCircle className={styles.avatarPlaceholder} />
-                        )}
-                        <h2 className={styles.name}>{user.displayName || "Gourmet"}</h2>
-                        <span className={styles.badge}>Miembro Come</span>
-                    </div>
-
-                    <nav className={styles.sideNav}>
-                        <button className={styles.navItemActive}><FaUserCircle /> Mi Cuenta</button>
-                        <button className={styles.navItem}><FaStar /> Favoritos</button>
-                        <Link href="/nomina-lugar" className={styles.navItem} style={{ textDecoration: 'none' }}>
-                            <FaPlusCircle /> Nominar un Lugar
-                        </Link>
-                        <button onClick={handleLogout} className={styles.logoutBtn}><FaSignOutAlt /> Cerrar Sesión</button>
-                    </nav>
-                </div>
-
-                <main className={styles.content}>
-                    <section className={styles.section}>
-                        <h1 className={styles.sectionTitle}>Información Personal</h1>
-                        <div className={styles.infoGrid}>
-                            <div className={styles.infoCard}>
-                                <label><FaEnvelope /> Email</label>
-                                <p>{user.email}</p>
-                            </div>
-                            <div className={styles.infoCard}>
-                                <label><FaCalendarAlt /> Fecha de Registro</label>
-                                <p>{user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "Reciente"}</p>
-                            </div>
-                        </div>
-                    </section>
-
-
-
-                    <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Tus Restaurantes Favoritos</h2>
-                        <div className={styles.emptyState}>
-                            <FaStar className={styles.emptyIcon} />
-                            <p>Aún no has guardado ningún restaurante.</p>
-                            <Link href="/restaurantes" className={styles.exploreBtn}>Explorar restaurantes</Link>
-                        </div>
-                    </section>
-                    <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Tus negocios</h2>
-                        {fetchingBusinesses ? <p>Cargando negocios…</p> : userBusinesses.length ? <div className={styles.businessGrid}>{userBusinesses.map((business)=><article className={styles.businessCard} key={business.id}><h3>{business.restaurantName || business.name}</h3><p className={styles.bizCategory}>{business.category || "Restaurante"}</p><div className={styles.bizActions}><Link className={styles.editBtn} href={`/gestiona-negocio/${business.id}`}>Gestionar</Link></div></article>)}</div> : <div className={styles.emptyState}><p>Aún no administras ningún establecimiento.</p><Link href="/registra-negocio" className={styles.exploreBtn}>Registrar negocio</Link></div>}
-                    </section>
-                </main>
+  return (
+    <main className={styles.page}>
+      {/* Encabezado editorial, en la línea del resto del sitio */}
+      <header className={styles.hero}>
+        <div className={styles.heroInner}>
+          <div className={styles.avatar} aria-hidden="true">
+            {inicial}
+          </div>
+          <div className={styles.heroCopy}>
+            <span className={styles.eyebrow}>TU CUENTA</span>
+            <h1>{nombre}</h1>
+            <div className={styles.heroMeta}>
+              <span>
+                <Mail size={15} /> {user.email}
+              </span>
+              {desde && (
+                <span>
+                  <Clock size={15} /> Miembro desde {desde}
+                </span>
+              )}
             </div>
+          </div>
+          <button className={styles.logout} onClick={() => auth && signOut(auth)}>
+            <LogOut size={16} /> Cerrar sesión
+          </button>
         </div>
-    );
+      </header>
+
+      <div className={styles.body}>
+        {/* Accesos */}
+        <section className={styles.shortcuts}>
+          <Link href="/restaurantes" className={styles.shortcut}>
+            <Utensils size={20} />
+            <b>Explorar</b>
+            <small>Restaurantes y lugares</small>
+          </Link>
+          <Link href="/guias" className={styles.shortcut}>
+            <MapPin size={20} />
+            <b>Guías</b>
+            <small>Rutas para salir a comer</small>
+          </Link>
+          <Link href="/nomina-lugar" className={styles.shortcut}>
+            <Store size={20} />
+            <b>Nominar</b>
+            <small>Propón un lugar</small>
+          </Link>
+          <Link href="/nomina-chef" className={styles.shortcut}>
+            <ChefHat size={20} />
+            <b>Nominar chef</b>
+            <small>Propón a quien cocina</small>
+          </Link>
+        </section>
+
+        {/* Negocios del usuario */}
+        <section className={styles.block}>
+          <div className={styles.blockHead}>
+            <div>
+              <span className={styles.eyebrow}>TUS NEGOCIOS</span>
+              <h2>Lo que administras en Come</h2>
+            </div>
+            <Link href="/registra-negocio" className={styles.cta}>
+              <Plus size={17} /> Registrar negocio
+            </Link>
+          </div>
+
+          {cargando ? (
+            <div className={styles.placeholder}>Buscando tus negocios…</div>
+          ) : negocios.length === 0 ? (
+            <div className={styles.placeholder}>
+              <Building2 size={30} />
+              <p>Todavía no registras ningún negocio.</p>
+              <Link href="/registra-negocio" className={styles.cta}>
+                Registrar el primero <ArrowRight size={16} />
+              </Link>
+            </div>
+          ) : (
+            <div className={styles.grid}>
+              {negocios.map((negocio) => (
+                <article key={negocio.id} className={styles.card}>
+                  <div className={styles.cardPhoto}>
+                    {negocio.imagen ? (
+                      <img src={negocio.imagen} alt={negocio.nombre} />
+                    ) : (
+                      <span aria-hidden="true">{negocio.nombre.charAt(0)}</span>
+                    )}
+                    <span
+                      className={negocio.estado === "Publicado" ? styles.badgeOk : styles.badgePending}
+                    >
+                      {negocio.estado}
+                    </span>
+                  </div>
+                  <div className={styles.cardBody}>
+                    <span className={styles.cardCategory}>{negocio.categoria.toUpperCase()}</span>
+                    <h3>{negocio.nombre}</h3>
+                    {negocio.direccion && (
+                      <p>
+                        <MapPin size={13} /> {negocio.direccion}
+                      </p>
+                    )}
+                    <p>
+                      <Utensils size={13} />{" "}
+                      {negocio.platillos > 0
+                        ? `${negocio.platillos} platillos en el menú`
+                        : "Sin menú cargado"}
+                    </p>
+                    <div className={styles.cardActions}>
+                      <Link href={`/gestiona-negocio/${negocio.id}`}>Gestionar</Link>
+                      {negocio.estado === "Publicado" && (
+                        <Link href={`/lugares/${slugify(negocio.nombre)}`} className={styles.cardGhost}>
+                          Ver ficha
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Favoritos: todavía no hay sistema de guardado */}
+        <section className={styles.block}>
+          <div className={styles.blockHead}>
+            <div>
+              <span className={styles.eyebrow}>GUARDADOS</span>
+              <h2>Tus favoritos</h2>
+            </div>
+          </div>
+          <div className={styles.placeholder}>
+            <Star size={30} />
+            <p>Guardar lugares llegará pronto. Mientras tanto, explora el directorio.</p>
+            <Link href="/restaurantes" className={styles.cta}>
+              Ver restaurantes <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }
