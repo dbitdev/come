@@ -5,6 +5,9 @@ runConfig:
   maxInstances: 10
   minInstances: 0
 
+# Los secretos de cobro (Stripe y Mercado Pago) se quitaron: no los lee ningún
+# archivo de src/ y su ausencia en Secret Manager rompía la compilación.
+# Vuelve a declararlos cuando se porte el flujo de pagos.
 environmentVariables:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     secret: NEXT_PUBLIC_FIREBASE_API_KEY
@@ -52,31 +55,10 @@ environmentVariables:
     availability:
       - BUILD
       - RUNTIME
-  - variable: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-    secret: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  - variable: NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
+    secret: NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
     availability:
       - BUILD
-      - RUNTIME
-  - variable: STRIPE_SECRET_KEY
-    secret: STRIPE_SECRET_KEY
-    availability:
-      - RUNTIME
-  - variable: NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
-    secret: NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: MERCADOPAGO_ACCESS_TOKEN
-    secret: MERCADOPAGO_ACCESS_TOKEN
-    availability:
-      - RUNTIME
-  - variable: MERCADOPAGO_CLIENT_ID
-    secret: MERCADOPAGO_CLIENT_ID
-    availability:
-      - RUNTIME
-  - variable: MERCADOPAGO_CLIENT_SECRET
-    secret: MERCADOPAGO_CLIENT_SECRET
-    availability:
       - RUNTIME
   - variable: NEXT_PUBLIC_WORDPRESS_API_URL
     value: https://mexicatv.com/graphql

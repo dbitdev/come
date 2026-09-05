@@ -59,3 +59,7 @@ package-lock.json
 yarn.lock
 npm-shrinkwrap.json
 bun.lockb
+
+# Logs de la CLI de Firebase
+firebase-debug.log
+firestore-debug.log
