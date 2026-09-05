@@ -3,13 +3,27 @@ import { getAuth } from "firebase/auth";
 import { initializeFirestore, getFirestore, Firestore, terminate, setLogLevel } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// En producción (Firebase App Hosting) la configuración llega en
+// FIREBASE_WEBAPP_CONFIG, que el propio App Hosting inyecta a partir del web
+// app enlazado al backend; en local viene del .env.local. Se prefiere lo
+// explícito y se cae a lo inyectado.
+function configDelHosting(): Record<string, string> {
+  try {
+    return JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_WEBAPP_CONFIG || "{}");
+  } catch {
+    return {};
+  }
+}
+
+const inyectada = configDelHosting();
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || inyectada.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || inyectada.authDomain,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || inyectada.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || inyectada.storageBucket,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || inyectada.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || inyectada.appId
 };
 
 // Validation

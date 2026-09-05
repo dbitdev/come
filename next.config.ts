@@ -16,7 +16,16 @@ const securityHeaders = [
   },
 ];
 
+// App Hosting inyecta FIREBASE_WEBAPP_CONFIG con la configuración del web app
+// enlazado al backend. No lleva el prefijo NEXT_PUBLIC_, así que Next no la
+// incrusta en el bundle del cliente por su cuenta: se reexpone aquí. Esto hace
+// que el sitio funcione en producción aunque el apphosting.yaml no se aplique.
+const configWebDeAppHosting = process.env.FIREBASE_WEBAPP_CONFIG ?? "";
+
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_FIREBASE_WEBAPP_CONFIG: configWebDeAppHosting,
+  },
   // Firebase App Hosting (Cloud Run) runs Next.js in server mode.
   // Do NOT use output: 'export' — that is for static hosting only.
   poweredByHeader: false,
