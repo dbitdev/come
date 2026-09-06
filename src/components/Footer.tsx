@@ -17,6 +17,7 @@ export default function Footer() {
           <div>
             <b>SOBRE COME</b>
             <Link href="/restaurantes">Restaurantes</Link>
+            <Link href="/cocina-tradicional">Cocina tradicional</Link>
             <Link href="/guias">Guías y rutas</Link>
             <Link href="/chefs">Chefs</Link>
             <Link href="/mapa">Mapa</Link>

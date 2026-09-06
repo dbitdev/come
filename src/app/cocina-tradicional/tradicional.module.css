@@ -1,0 +1,98 @@
+.pagina { background: #fffdf7; }
+
+/* ── Portada ─────────────────────────────────────────────────────────── */
+.portada {
+  background:
+    linear-gradient(100deg, #053d27 0%, #053d27ee 46%, #053d2755 100%),
+    url('https://images.unsplash.com/photo-1584208632869-05fa2b2a5934?auto=format&fit=crop&w=2000&q=85') center/cover;
+  color: #fffdf0;
+  padding: clamp(5rem, 9vw, 9rem) max(5vw, 1.25rem);
+}
+.portadaCopy { max-width: 780px; }
+.portadaCopy > span {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .75rem; font-weight: 800; letter-spacing: .14em;
+}
+.portadaCopy h1 {
+  font-size: clamp(3.2rem, 6vw, 6.4rem); line-height: .92;
+  margin: 1.1rem 0 1.4rem; letter-spacing: -.03em;
+}
+.portadaCopy p { color: #dff0e2; font-size: 1.12rem; max-width: 62ch; line-height: 1.5; }
+.portadaAcciones { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+.portadaAcciones a {
+  background: #70dc76; color: #063d29; padding: 1rem 1.6rem;
+  font-weight: 800; border-radius: 4px;
+}
+.portadaAcciones .secundario { background: transparent; color: #fffdf0; border: 1px solid #ffffff55; }
+
+/* ── Estados ─────────────────────────────────────────────────────────── */
+.estados { padding: 3.5rem max(5vw, 1.25rem) 0; max-width: 1500px; margin: auto; }
+.estados h2 { font-size: 1.1rem; font-weight: 800; margin: 0 0 1rem; color: #0a4b31; }
+.chips { display: flex; flex-wrap: wrap; gap: .6rem; }
+.chips a {
+  display: inline-flex; align-items: center; gap: .4rem;
+  border: 1px solid #cfd8cf; background: #fff; color: #0a4b31;
+  border-radius: 100px; padding: .55rem 1.1rem; font-weight: 700; font-size: .9rem;
+}
+.chips a:hover { border-color: #0a4b31; }
+/* El conteo se lee como dato secundario, no como parte del nombre del estado. */
+.chips em { font-style: normal; font-weight: 600; opacity: .5; font-size: .78rem; }
+
+/* ── Bloques ─────────────────────────────────────────────────────────── */
+.bloque, .bloqueChefs { padding: 5rem max(5vw, 1.25rem); max-width: 1500px; margin: auto; }
+.bloqueChefs { background: #f3ede0; max-width: none; }
+.encabezado {
+  display: flex; justify-content: space-between; align-items: end;
+  gap: 2rem; margin-bottom: 2.5rem;
+}
+.encabezado span { font-size: .75rem; font-weight: 800; letter-spacing: .14em; color: #15914f; }
+.encabezado h2 {
+  font-size: clamp(2.4rem, 4vw, 4.2rem); margin-top: .7rem;
+  letter-spacing: -.03em; line-height: 1;
+}
+.encabezado > a { display: flex; align-items: center; gap: .4rem; font-weight: 700; white-space: nowrap; }
+
+.rejilla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+.rejilla > a { background: #fff; display: block; }
+.rejilla img, .sinFoto { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.sinFoto { background: linear-gradient(160deg, #0a603c, #064d31); }
+.rejilla > a > div { padding: 1.1rem 1.2rem 1.4rem; }
+.rejilla span { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: #14894c; font-weight: 800; }
+.rejilla h3 { font-family: var(--font-modern); font-size: 1.35rem; letter-spacing: -.025em; margin: .45rem 0; line-height: 1.15; }
+.rejilla p { display: flex; gap: .35rem; align-items: center; margin: 0; font-size: .85rem; color: #5c6b62; }
+
+.rejillaChefs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; max-width: 1500px; margin: auto; }
+/* El retrato puede ser foto o inicial de reserva; el marco lo pone el contenedor. */
+.retrato { position: relative; width: 100%; aspect-ratio: 4/4.7; overflow: hidden; margin-bottom: 1rem; }
+.retrato > img, .retrato > div {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 20%; margin: 0;
+}
+.rejillaChefs span { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: #14894c; font-weight: 800; }
+.rejillaChefs h3 { font-family: var(--font-modern); font-size: 1.3rem; letter-spacing: -.025em; margin: .4rem 0 .2rem; }
+.rejillaChefs p { display: flex; gap: .3rem; align-items: center; margin: 0; font-size: .85rem; color: #5c6b62; }
+
+/* ── Estados vacío y cierre ──────────────────────────────────────────── */
+.vacio {
+  padding: 6rem max(5vw, 1.25rem); max-width: 720px; margin: auto; text-align: center; color: #0a4b31;
+}
+.vacio h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin: 1rem 0; letter-spacing: -.02em; }
+.vacio p { color: #5c6b62; margin-bottom: 1.8rem; }
+.vacio a, .cierre a {
+  display: inline-block; background: #064d31; color: #fffdf0;
+  padding: 1rem 1.6rem; font-weight: 800; border-radius: 4px;
+}
+
+.cierre { padding: 6rem max(5vw, 1.25rem); max-width: 820px; margin: auto; }
+.cierre span { font-size: .75rem; font-weight: 800; letter-spacing: .14em; color: #15914f; }
+.cierre h2 { font-size: clamp(2.2rem, 4vw, 3.6rem); margin: 1rem 0; letter-spacing: -.03em; line-height: 1.05; }
+.cierre p { color: #5c6b62; margin-bottom: 1.8rem; font-size: 1.05rem; }
+
+@media (max-width: 950px) {
+  .rejilla { grid-template-columns: repeat(2, 1fr); }
+  .rejillaChefs { grid-template-columns: repeat(2, 1fr); }
+  .encabezado { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 600px) {
+  .rejilla { grid-template-columns: 1fr; }
+}

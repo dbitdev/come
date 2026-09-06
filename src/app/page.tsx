@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, getDocs, limit, query } from "firebase/firestore";
-import { ArrowRight, CalendarDays, ChefHat, ChevronLeft, ChevronRight, Compass, Map, MapPin, Search, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, ChefHat, ChevronLeft, ChevronRight, Compass, Map, MapPin, Search, ShoppingBag, Sparkles, Star } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import styles from "./page.module.css";
@@ -41,7 +41,8 @@ const cuisines: [string, string][] = [
 
 const colecciones: [string, string, string][] = [
   ["Taquerías de barrio", "1512838243191-e81e8f66f1fd", "Tacos"],
-  ["Mercados y fondas", "1584208632869-05fa2b2a5934", "Fonda"],
+  // Ésta no va al buscador: tiene página propia.
+  ["Cocina tradicional", "1584208632869-05fa2b2a5934", "__tradicional"],
   ["Marisquerías", "1517244683847-7456b63c5969", "Mariscos"],
   ["Cocina de autor", "1551504734-5ee1c4a1479b", "Cocina de autor"],
 ];
@@ -52,7 +53,7 @@ const fallbackPlaces = [
   { id:"rosetta", name:"Rosetta", category:"Italiana mexicana", address:"Roma Norte, CDMX", image:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=85" },
 ];
 
-type Place = { id:string; name:string; category:string; address:string; image:string; rating?:string|number };
+type Place = { id:string; name:string; category:string; address:string; image:string; rating?:string|number; estado?:string; isMichelin?:boolean; estrellas?:number };
 type GuideCard = { id:string; slug:string; title:string; description:string; heroImage:string };
 
 // Carrusel horizontal de tipos de cocina.
@@ -115,7 +116,134 @@ function AppBand(){
   </section>;
 }
 
+/**
+ * Lugares publicados y chefs, que es lo que alimenta las bandas de la portada.
+ * Antes cada sección traía su propia lista escrita a mano; esto sale de la base.
+ */
+function useContenidoPortada(){
+  const [places,setPlaces]=useState<Place[]>([]);
+  const [guides,setGuides]=useState<GuideCard[]>([]);
+  const [chefs,setChefs]=useState<Chef[]>([]);
+
+  useEffect(()=>{(async()=>{
+    if(!db) return;
+    try{
+      const [placeSnap,guideSnap]=await Promise.all([
+        getDocs(query(collection(db,"come"),limit(40))),
+        getDocs(query(collection(db,"guides"),limit(4)))
+      ]);
+      setPlaces(placeSnap.docs.filter(doc=>isPublished(doc.data())).map(doc=>{
+        const d=doc.data();
+        return {
+          id:doc.id,
+          name:d.restaurantName||d.name||"Restaurante",
+          category:d.category||"Cocina local",
+          address:d.address||"México",
+          image:d.image||d.menu?.[0]?.image||fallbackPlaces[0].image,
+          rating:d.rating,
+          estado:d.estado,
+          isMichelin:Boolean(d.isMichelin),
+          estrellas:Number(d.michelinStars ?? d.estrellas)||0,
+        };
+      }));
+      setGuides(guideSnap.docs.map(doc=>{const d=doc.data();return{id:doc.id,slug:d.slug||doc.id,title:d.title||"Guía gastronómica",description:d.description||"Una ruta seleccionada para ti.",heroImage:d.heroImage||fallbackPlaces[1].image};}));
+      // Los que tienen retrato van primero: la banda es visual y una fila de
+      // iniciales no dice mucho.
+      const todosLosChefs=await traerChefs();
+      setChefs([...todosLosChefs].sort((a,b)=>Number(Boolean(b.image))-Number(Boolean(a.image))));
+    }catch{/* Sin red, las secciones con datos simplemente no se pintan. */}
+  })()},[]);
+
+  return {places,guides,chefs};
+}
+
+const puntaje = (p: Place) => (p.estrellas||0)*10 + Number(p.rating||0) + (p.isMichelin?5:0);
+
+// Los mejor calificados y con distinción, no una lista fija.
+function SeccionRecomendados({places}:{places:Place[]}){
+  const destacados=useMemo(()=>[...places].sort((a,b)=>puntaje(b)-puntaje(a)).slice(0,6),[places]);
+  if(destacados.length===0) return null;
+  return <section className={styles.feedSection}>
+    <div className={styles.feedHeading}>
+      <div><span>LO MÁS RECOMENDADO</span><h2>Las mesas del momento</h2></div>
+      <Link href="/restaurantes">Ver todos <ArrowRight size={18}/></Link>
+    </div>
+    <div className={styles.placeRail}>
+      {destacados.map(place=>
+        <Link href={rutaLugar(place.name, place.id)} key={place.id} className={styles.placeCard}>
+          <div className={styles.placeThumb}>
+            <img src={place.image} alt={place.name}/>
+            {place.isMichelin&&<b className={styles.michelinTag}><Star size={12} fill="currentColor"/>{(place.estrellas||0)>1?`${place.estrellas} estrellas`:"Estrella Michelin"}</b>}
+          </div>
+          <div>
+            <span>{place.category}</span>
+            <h3>{place.name}</h3>
+            <p><MapPin size={14}/>{place.address}</p>
+          </div>
+        </Link>
+      )}
+    </div>
+  </section>;
+}
+
+// Cocinas reales del directorio, no una lista escrita a mano: si mañana entra
+// una marisquería nueva, aparece sola.
+function SeccionPorCocina({places}:{places:Place[]}){
+  const cocinas=useMemo(()=>{
+    // Ojo: `Map` en este archivo es el icono de lucide-react, no el de JS.
+    const cuenta: Record<string,number> = {};
+    places.forEach(p=>{ if(p.category) cuenta[p.category]=(cuenta[p.category]||0)+1; });
+    return Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).map(([nombre])=>nombre);
+  },[places]);
+  const [activa,setActiva]=useState<string|null>(null);
+  const cocinaActiva=activa&&cocinas.includes(activa)?activa:cocinas[0];
+  const visibles=useMemo(()=>places.filter(p=>p.category===cocinaActiva).slice(0,4),[places,cocinaActiva]);
+  if(cocinas.length===0) return null;
+  return <section className={styles.cuisineSection}>
+    <div className={styles.feedHeading}>
+      <div><span>SEGÚN EL ANTOJO</span><h2>Elige por cocina</h2></div>
+      <Link href="/restaurantes">Ver el directorio <ArrowRight size={18}/></Link>
+    </div>
+    <div className={styles.cuisineChips} role="tablist" aria-label="Tipos de cocina">
+      {cocinas.map(nombre=>
+        <button key={nombre} type="button" role="tab" aria-selected={nombre===cocinaActiva}
+          className={nombre===cocinaActiva?styles.chipActive:styles.chip}
+          onClick={()=>setActiva(nombre)}>{nombre}</button>
+      )}
+    </div>
+    <div className={styles.cuisineGrid}>
+      {visibles.map(place=>
+        <Link href={rutaLugar(place.name, place.id)} key={place.id}>
+          <img src={place.image} alt={place.name}/>
+          <div><h3>{place.name}</h3><p><MapPin size={13}/>{place.address}</p></div>
+        </Link>
+      )}
+    </div>
+  </section>;
+}
+
+// Quienes cocinan, desde Firestore, con la inicial de marca si no hay retrato.
+function SeccionChefs({chefs}:{chefs:Chef[]}){
+  if(chefs.length===0) return null;
+  return <section className={styles.chefSection}>
+    <div className={styles.feedHeading}>
+      <div><span>CONOCE A QUIENES COCINAN</span><h2>Chefs para seguir</h2></div>
+      <Link href="/chefs">Ver chefs <ArrowRight size={18}/></Link>
+    </div>
+    <div className={styles.chefRail}>
+      {chefs.slice(0,3).map(chef=>
+        <Link href={`/chefs/${chef.slug}`} key={chef.id}>
+          <div className={styles.chefPortrait}><RetratoChef src={chef.image} nombre={chef.name}/></div>
+          {chef.restaurant&&<span><ChefHat size={15}/>{chef.restaurant}</span>}
+          <h3>{chef.name}</h3>
+        </Link>
+      )}
+    </div>
+  </section>;
+}
+
 function PublicLanding(){
+  const {places,chefs}=useContenidoPortada();
   return <main className={styles.page}>
     <section className={styles.hero}>
       <img src={img("1552332386-f8dd00dc2f85", 2200)} alt="Tacos de la calle recién servidos" /><div className={styles.shade}/>
@@ -128,13 +256,19 @@ function PublicLanding(){
 
     <CuisineRail/>
 
+    <SeccionRecomendados places={places}/>
+
     <section className={styles.intro}><span>EL DESTINO PARA COMER MEJOR</span><h2>Todo México en tu mesa</h2><p>Del puesto de la esquina al menú de degustación: un solo lugar para descubrir dónde se come rico, conocer a quienes cocinan y pasar del antojo a la reservación o al pedido.</p></section>
 
     <section className={styles.featureRow}><div className={styles.featureImage}><img src={img("1504544750208-dc0358e63f7f",1400)} alt="Tacos recién hechos con limón y salsa"/></div><div className={styles.featureCopy}><span>DESCUBRE</span><h2>Un país que se come de mil maneras</h2><p>Mercados, fondas, marisquerías, panaderías y mesas de autor. Busca por cocina, chef, colonia, ocasión o platillo, desde los clásicos de siempre hasta los secretos mejor guardados de cada ciudad.</p><Link href="/restaurantes">Explorar restaurantes <ArrowRight size={18}/></Link></div></section>
 
     <section className={`${styles.featureRow} ${styles.reverse}`}><div className={styles.featureImage}><img src={img("1414235077428-338989a2e8c0",1400)} alt="Restaurante preparado para recibir comensales"/></div><div className={styles.featureCopy}><span>RESERVA</span><h2>Aparta tu mesa sin batallar</h2><p>Encuentra lugar para hoy, experiencias de temporada y rutas gastronómicas para el fin de semana. La disponibilidad en tiempo real irá llegando conforme cada negocio active sus reservaciones.</p><Link href="/restaurantes">Encontrar una mesa <CalendarDays size={18}/></Link></div></section>
 
-    <section className={styles.browse}><div className={styles.browseHead}><div><span>COLECCIONES</span><h2>Para cuando ya sabes qué se te antoja</h2></div><Link href="/guias">Ver guías <ArrowRight size={18}/></Link></div><div className={styles.restaurantStrip}>{colecciones.map(([name,id,q])=><Link href={`/restaurantes?search=${encodeURIComponent(q)}`} key={name}><img src={img(id,1000)} alt={name}/><h3>{name}</h3></Link>)}</div></section>
+    <section className={styles.browse}><div className={styles.browseHead}><div><span>COLECCIONES</span><h2>Para cuando ya sabes qué se te antoja</h2></div><Link href="/guias">Ver guías <ArrowRight size={18}/></Link></div><div className={styles.restaurantStrip}>{colecciones.map(([name,id,q])=><Link href={q==="__tradicional"?"/cocina-tradicional":`/restaurantes?search=${encodeURIComponent(q)}`} key={name}><img src={img(id,1000)} alt={name}/><h3>{name}</h3></Link>)}</div></section>
+
+    <SeccionPorCocina places={places}/>
+
+    <SeccionChefs chefs={chefs}/>
 
     <AppBand/>
 
@@ -144,28 +278,9 @@ function PublicLanding(){
 
 function MemberHome(){
   const { user } = useAuth();
-  const [places,setPlaces]=useState<Place[]>(fallbackPlaces);
-  const [guides,setGuides]=useState<GuideCard[]>([]);
-  const [chefs,setChefs]=useState<Chef[]>([]);
+  const {places:placesRemotos,guides,chefs}=useContenidoPortada();
+  const places=placesRemotos.length?placesRemotos:fallbackPlaces;
   const firstName=(user?.displayName || user?.email?.split("@")[0] || "foodie").split(" ")[0];
-
-  useEffect(()=>{(async()=>{
-    if(!db) return;
-    try{
-      const [placeSnap,guideSnap]=await Promise.all([
-        getDocs(query(collection(db,"come"),limit(8))),
-        getDocs(query(collection(db,"guides"),limit(4)))
-      ]);
-      const nextPlaces=placeSnap.docs.filter(doc=>isPublished(doc.data())).map(doc=>{const d=doc.data(); return {id:doc.id,name:d.restaurantName||d.name||"Restaurante",category:d.category||"Cocina local",address:d.address||"México",image:d.image||d.menu?.[0]?.image||fallbackPlaces[0].image,rating:d.rating};});
-      const nextGuides=guideSnap.docs.map(doc=>{const d=doc.data();return{id:doc.id,slug:d.slug||doc.id,title:d.title||"Guía gastronómica",description:d.description||"Una ruta seleccionada para ti.",heroImage:d.heroImage||fallbackPlaces[1].image};});
-      if(nextPlaces.length) setPlaces(nextPlaces);
-      setGuides(nextGuides);
-      // Los que tienen retrato van primero: la banda es visual y una fila de
-      // iniciales no dice mucho.
-      const todosLosChefs=await traerChefs();
-      setChefs([...todosLosChefs].sort((a,b)=>Number(Boolean(b.image))-Number(Boolean(a.image))));
-    }catch{/* La experiencia conserva recomendaciones editoriales si la red no está disponible. */}
-  })()},[]);
 
   const guideCards=useMemo(()=>guides.length?guides:[
     {id:"centro",slug:"mexico/cocina-tradicional",title:"Sabores esenciales de México",description:"Mercados, fondas y mesas que cuentan nuestra historia.",heroImage:"https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1000&q=85"},
@@ -185,7 +300,8 @@ function MemberHome(){
     </nav>
     <section className={styles.feedSection}><div className={styles.feedHeading}><div><span>RECOMENDADOS PARA TI</span><h2>Lugares que vale la pena conocer</h2></div><Link href="/restaurantes">Ver todos <ArrowRight size={18}/></Link></div><div className={styles.placeRail}>{places.slice(0,6).map(place=><Link href={rutaLugar(place.name, place.id)} key={place.id} className={styles.placeCard}><img src={place.image} alt={place.name}/><div><span>{place.category}</span><h3>{place.name}</h3><p><MapPin size={14}/>{place.address}</p></div></Link>)}</div></section>
     <section className={styles.guideBand}><div className={styles.feedHeading}><div><span>PLANES PARA GUARDAR</span><h2>Guías hechas para salir a comer</h2></div><Link href="/guias">Todas las guías <ArrowRight size={18}/></Link></div><div className={styles.guideGrid}>{guideCards.slice(0,3).map(guide=><Link href={`/guias/${guide.slug}`} key={guide.id}><img src={guide.heroImage} alt={guide.title}/><div><h3>{guide.title}</h3><p>{guide.description}</p><b>Explorar ruta <ArrowRight size={15}/></b></div></Link>)}</div></section>
-    {chefs.length>0&&<section className={styles.chefSection}><div className={styles.feedHeading}><div><span>CONOCE A QUIENES COCINAN</span><h2>Chefs para seguir</h2></div><Link href="/chefs">Ver chefs <ArrowRight size={18}/></Link></div><div className={styles.chefRail}>{chefs.slice(0,3).map(chef=><Link href={`/chefs/${chef.slug}`} key={chef.id}><div className={styles.chefPortrait}><RetratoChef src={chef.image} nombre={chef.name}/></div>{chef.restaurant&&<span><ChefHat size={15}/>{chef.restaurant}</span>}<h3>{chef.name}</h3></Link>)}</div></section>}
+    <SeccionPorCocina places={places}/>
+    <SeccionChefs chefs={chefs}/>
     <section className={styles.memberMap}><div><span>EXPLORA TU CIUDAD</span><h2>Todo lo bueno,<br/>cerca de ti.</h2><p>Abre el mapa para encontrar restaurantes y experiencias alrededor de tu ubicación.</p><Link href="/mapa">Explorar el mapa <MapPin size={18}/></Link></div></section>
   </main>
 }

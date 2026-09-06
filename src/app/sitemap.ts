@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     '',
     '/restaurantes',
+    '/cocina-tradicional',
     '/lugares',
     '/mapa',
     '/chefs',

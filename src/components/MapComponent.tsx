@@ -48,6 +48,11 @@ function MapContent() {
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    // Secciones del mapa: el buscador libre no sirve para explorar, sólo para
+    // buscar algo que ya sabes cómo se llama.
+    const [filtroEstado, setFiltroEstado] = useState<string | null>(null);
+    const [filtroCocina, setFiltroCocina] = useState<string | null>(null);
+    const [soloMichelin, setSoloMichelin] = useState(false);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [locating, setLocating] = useState(false);
@@ -82,10 +87,30 @@ function MapContent() {
         fetchRestaurants();
     }, [fetchRestaurants]);
 
-    const filteredRestaurants = restaurants.filter(r => 
-        (r.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (r.category || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Estados y cocinas salen del propio directorio: si mañana entra un lugar de
+    // Yucatán, la sección aparece sola.
+    const contar = (campo: string) => {
+        const cuenta: Record<string, number> = {};
+        restaurants.forEach(r => { const v = r[campo]; if (v) cuenta[v] = (cuenta[v] || 0) + 1; });
+        return Object.entries(cuenta).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    };
+    const estados = contar("estado");
+    const cocinas = contar("category");
+    const hayFiltros = Boolean(filtroEstado || filtroCocina || soloMichelin || searchQuery);
+
+    const filteredRestaurants = restaurants.filter(r => {
+        const texto = searchQuery.toLowerCase();
+        const coincideTexto = !texto
+            || (r.name || "").toLowerCase().includes(texto)
+            || (r.category || "").toLowerCase().includes(texto)
+            || (r.estado || "").toLowerCase().includes(texto);
+        return coincideTexto
+            && (!filtroEstado || r.estado === filtroEstado)
+            && (!filtroCocina || r.category === filtroCocina)
+            && (!soloMichelin || Boolean(r.isMichelin));
+    });
+
+    const limpiarFiltros = () => { setFiltroEstado(null); setFiltroCocina(null); setSoloMichelin(false); setSearchQuery(""); };
 
     const handleLocateUser = useCallback(() => {
         if (typeof window !== "undefined" && "geolocation" in navigator) {
@@ -221,6 +246,64 @@ function MapContent() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
+                    </div>
+
+                    <div className={styles.secciones}>
+                        <div className={styles.seccion}>
+                            <h3>Por estado</h3>
+                            <div className={styles.chips}>
+                                {estados.map(([nombre, total]) => (
+                                    <button
+                                        key={nombre}
+                                        type="button"
+                                        aria-pressed={filtroEstado === nombre}
+                                        className={filtroEstado === nombre ? styles.chipActivo : styles.chip}
+                                        onClick={() => setFiltroEstado(filtroEstado === nombre ? null : nombre)}
+                                    >
+                                        {nombre} <em>{total}</em>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className={styles.seccion}>
+                            <h3>Por cocina</h3>
+                            <div className={styles.chips}>
+                                {cocinas.map(([nombre, total]) => (
+                                    <button
+                                        key={nombre}
+                                        type="button"
+                                        aria-pressed={filtroCocina === nombre}
+                                        className={filtroCocina === nombre ? styles.chipActivo : styles.chip}
+                                        onClick={() => setFiltroCocina(filtroCocina === nombre ? null : nombre)}
+                                    >
+                                        {nombre} <em>{total}</em>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className={styles.seccionPie}>
+                            <button
+                                type="button"
+                                aria-pressed={soloMichelin}
+                                className={soloMichelin ? styles.chipActivo : styles.chip}
+                                onClick={() => setSoloMichelin(!soloMichelin)}
+                            >
+                                <Star size={13} fill="currentColor" /> Con estrella Michelin
+                            </button>
+                            {hayFiltros && (
+                                <button type="button" className={styles.limpiar} onClick={limpiarFiltros}>
+                                    Limpiar filtros
+                                </button>
+                            )}
+                        </div>
+
+                        <p className={styles.conteo}>
+                            {filteredRestaurants.length === restaurants.length
+                                ? `${restaurants.length} lugares en el mapa`
+                                : `${filteredRestaurants.length} de ${restaurants.length} lugares`}
+                        </p>
                     </div>
                 </div>
                 <ul className={styles.placesList}>

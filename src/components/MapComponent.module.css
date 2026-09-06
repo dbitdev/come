@@ -534,3 +534,95 @@
     background: #fff;
     color: #064d31;
 }
+
+/* ── Secciones del mapa: explorar por estado y por cocina ─────────────── */
+.secciones {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.seccion h3 {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #15914f;
+    margin: 0 0 0.6rem;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.chip,
+.chipActivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid #d8ded8;
+    background: #fff;
+    color: #0a4b31;
+    border-radius: 100px;
+    padding: 0.42rem 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.chip:hover {
+    border-color: #0a4b31;
+    transform: none;
+}
+
+.chipActivo {
+    background: #064d31;
+    border-color: #064d31;
+    color: #fffdf0;
+    transform: none;
+}
+
+/* El conteo por chip se lee como dato secundario, no como parte del nombre. */
+.chip em,
+.chipActivo em {
+    font-style: normal;
+    font-weight: 600;
+    opacity: 0.55;
+    font-size: 0.75rem;
+}
+
+.seccionPie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.limpiar {
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: #6b7a71;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+}
+
+.limpiar:hover {
+    color: #0a4b31;
+    transform: none;
+}
+
+.conteo {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b7a71;
+    font-weight: 600;
+}
