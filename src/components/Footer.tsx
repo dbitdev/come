@@ -69,7 +69,7 @@ export default function Footer() {
             <p>© {new Date().getFullYear()} Come · Mexica Gourmet</p>
             <div className={styles.legalLinks}>
               <Link href="/terminos">Términos y condiciones</Link>
-              <Link href="/terminos">Aviso de privacidad</Link>
+              <Link href="/privacidad">Aviso de privacidad</Link>
             </div>
           </div>
         </div>
