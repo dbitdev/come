@@ -55,6 +55,18 @@
 
 /* ── Formularios ─────────────────────────────────── */
 .adminForm{display:flex;flex-direction:column;gap:1.1rem}
+/* Las reglas de campo vivían sólo bajo .formSection, así que el formulario del
+   panel lateral heredaba los estilos del navegador: etiquetas inline y el campo
+   de estrellas desbordando la tarjeta. */
+.adminForm label{display:block;font-size:.8rem;font-weight:700;color:var(--foreground);margin-bottom:.4rem}
+.adminForm input,.adminForm textarea,.adminForm select{box-sizing:border-box;width:100%;background:var(--background);border:1px solid var(--border-light);border-radius:6px;padding:.8rem 1rem;font-family:var(--font-modern);font-size:.95rem;color:var(--foreground)}
+.adminForm input:focus,.adminForm textarea:focus,.adminForm select:focus{outline:0;border-color:var(--primary);background:#fff}
+.adminForm textarea{resize:vertical}
+/* Renglón de dos campos (ubicación + estrellas). */
+.formRow{display:flex;gap:1rem;align-items:flex-start}
+.formRow>*{min-width:0}
+.formRowGrow{flex:1}
+.formRowNarrow{flex:0 0 96px}
 .formSection{background:#fff;border:1px solid var(--border-light);border-radius:10px;padding:1.6rem;display:flex;flex-direction:column;gap:.9rem}
 .formSection label{font-size:.8rem;font-weight:700;color:var(--foreground)}
 .formSection input,.formSection textarea,.formSection select{width:100%;background:var(--background);border:1px solid var(--border-light);border-radius:6px;padding:.8rem 1rem;font-family:var(--font-modern);font-size:.95rem;color:var(--foreground)}

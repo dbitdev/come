@@ -24,3 +24,22 @@ export function slugify(text: string): string {
 export function isPublished(data: { status?: string } | undefined | null): boolean {
   return (data?.status ?? "published") !== "pending";
 }
+
+/**
+ * URL pública de un lugar. Preferimos el nombre convertido en slug
+ * ("levadura-de-olla") porque el id de Firestore no le dice nada a nadie ni
+ * ayuda en buscadores. La ruta /lugares/[slug] resuelve por slug o por id, así
+ * que los enlaces viejos siguen funcionando.
+ */
+export function rutaLugar(nombre?: string | null, id?: string | null): string {
+    const slug = nombre ? slugify(nombre) : "";
+    const destino = slug || id || "";
+    return destino ? `/lugares/${destino}` : "/lugares";
+}
+
+/** Igual que rutaLugar, para el menú digital del lugar. */
+export function rutaMenu(nombre?: string | null, id?: string | null): string {
+    const slug = nombre ? slugify(nombre) : "";
+    const destino = slug || id || "";
+    return destino ? `/lugares/menu/${destino}` : "/lugares";
+}

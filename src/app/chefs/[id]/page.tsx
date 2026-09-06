@@ -19,6 +19,7 @@ import {
     Clock
 } from 'lucide-react';
 import { FaInstagram, FaTwitter, FaFacebookF } from 'react-icons/fa';
+import { rutaLugar } from "@/lib/utils";
 
 export default function ChefProfilePage() {
     const params = useParams();
@@ -158,7 +159,7 @@ export default function ChefProfilePage() {
                         </h2>
                         <div className={styles.restaurantGrid}>
                             {restaurants.map(res => (
-                                <Link key={res.id} href={`/lugares/${res.slug || res.id}`} className={styles.restCard}>
+                                <Link key={res.id} href={rutaLugar(res.restaurantName || res.name, res.id)} className={styles.restCard}>
                                     <img src={res.image || "/placeholder-restaurant.jpg"} alt={res.name} />
                                     <div className={styles.restInfo}>
                                         <h3>{res.restaurantName || res.name}</h3>

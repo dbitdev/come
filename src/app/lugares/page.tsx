@@ -7,6 +7,7 @@ import styles from "./lugares.module.css";
 import { Star, Award, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { rutaLugar } from "@/lib/utils";
 
 // Metadata cannot be used in a Client Component. Page titles are managed via side effects if needed.
 
@@ -25,8 +26,8 @@ export default function LugaresPage({
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const handleCardClick = (id: string) => {
-        router.push(`/lugares/${id}`);
+    const handleCardClick = (restaurant: { id: string; restaurantName?: string; name?: string }) => {
+        router.push(rutaLugar(restaurant.restaurantName || restaurant.name, restaurant.id));
     };
 
     useEffect(() => {
@@ -131,7 +132,7 @@ export default function LugaresPage({
                         </div>
                         <div className={styles.grid}>
                             {restaurantsByCategory[category].map((restaurant: any) => (
-                                <div key={restaurant.id} className={styles.cardWrapper} onClick={() => handleCardClick(restaurant.id)} style={{ cursor: 'pointer' }}>
+                                <div key={restaurant.id} className={styles.cardWrapper} onClick={() => handleCardClick(restaurant)} style={{ cursor: 'pointer' }}>
                                     <div className={styles.card}>
                                         <div className={styles.imageWrapper}>
                                             <img src={restaurant.image} alt={restaurant.name} className={styles.image} />

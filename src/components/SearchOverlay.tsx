@@ -7,7 +7,7 @@ import { collection, getDocs, limit, query } from "firebase/firestore";
 import { ChefHat, MapPin, Search, Utensils, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import styles from "./SearchOverlay.module.css";
-import { isPublished } from "@/lib/utils";
+import { isPublished, rutaLugar } from "@/lib/utils";
 
 const ANTOJOS = ["Tacos al pastor", "Birria", "Mariscos", "Pozole", "Mole", "Cochinita pibil", "Chilaquiles", "Café de olla"];
 const COCINAS = ["Mexicana", "Antojitos", "Carne asada", "Hamburguesas", "Pizza", "Sushi", "Ramen", "Italiana", "Desayunos", "Postres"];
@@ -121,7 +121,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                 <ul>
                   {resultados.lugares.map((place) => (
                     <li key={place.id}>
-                      <Link href={`/lugares/${place.id}`} onClick={onClose}>
+                      <Link href={rutaLugar(place.name, place.id)} onClick={onClose}>
                         <b>{place.name}</b><small>{place.category} · {place.address}</small>
                       </Link>
                     </li>

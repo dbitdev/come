@@ -7,7 +7,9 @@ import { ArrowRight, CalendarDays, ChefHat, ChevronLeft, ChevronRight, Compass, 
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import styles from "./page.module.css";
-import { isPublished } from "@/lib/utils";
+import { isPublished, rutaLugar } from "@/lib/utils";
+import { traerChefs, type Chef } from "@/lib/chefs";
+import RetratoChef from "@/components/RetratoChef";
 
 const img = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=85`;
 
@@ -48,12 +50,6 @@ const fallbackPlaces = [
   { id:"pujol", name:"Pujol", category:"Mexicana contemporánea", address:"Polanco, CDMX", image:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=85" },
   { id:"contramar", name:"Contramar", category:"Mariscos", address:"Roma Norte, CDMX", image:"https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1000&q=85" },
   { id:"rosetta", name:"Rosetta", category:"Italiana mexicana", address:"Roma Norte, CDMX", image:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=85" },
-];
-
-const featuredChefs = [
-  { id:"elena-reygadas", name:"Elena Reygadas", place:"Rosetta", image:"https://images.unsplash.com/photo-1583394838336-acd977730f8a?auto=format&fit=crop&w=700&q=85" },
-  { id:"enrique-olvera", name:"Enrique Olvera", place:"Pujol", image:"https://images.unsplash.com/photo-1595273670150-db0a3d39074f?auto=format&fit=crop&w=700&q=85" },
-  { id:"gabriela-camara", name:"Gabriela Cámara", place:"Contramar", image:"https://images.unsplash.com/photo-1560697529-7236591c0066?auto=format&fit=crop&w=700&q=85" },
 ];
 
 type Place = { id:string; name:string; category:string; address:string; image:string; rating?:string|number };
@@ -150,6 +146,7 @@ function MemberHome(){
   const { user } = useAuth();
   const [places,setPlaces]=useState<Place[]>(fallbackPlaces);
   const [guides,setGuides]=useState<GuideCard[]>([]);
+  const [chefs,setChefs]=useState<Chef[]>([]);
   const firstName=(user?.displayName || user?.email?.split("@")[0] || "foodie").split(" ")[0];
 
   useEffect(()=>{(async()=>{
@@ -163,6 +160,10 @@ function MemberHome(){
       const nextGuides=guideSnap.docs.map(doc=>{const d=doc.data();return{id:doc.id,slug:d.slug||doc.id,title:d.title||"Guía gastronómica",description:d.description||"Una ruta seleccionada para ti.",heroImage:d.heroImage||fallbackPlaces[1].image};});
       if(nextPlaces.length) setPlaces(nextPlaces);
       setGuides(nextGuides);
+      // Los que tienen retrato van primero: la banda es visual y una fila de
+      // iniciales no dice mucho.
+      const todosLosChefs=await traerChefs();
+      setChefs([...todosLosChefs].sort((a,b)=>Number(Boolean(b.image))-Number(Boolean(a.image))));
     }catch{/* La experiencia conserva recomendaciones editoriales si la red no está disponible. */}
   })()},[]);
 
@@ -182,9 +183,9 @@ function MemberHome(){
       <Link href="/ordenar"><span><ShoppingBag/></span><b>Ordenar</b><small>Entrega o pickup</small></Link>
       <Link href="/guias"><span><CalendarDays/></span><b>Planear</b><small>Guías y rutas</small></Link>
     </nav>
-    <section className={styles.feedSection}><div className={styles.feedHeading}><div><span>RECOMENDADOS PARA TI</span><h2>Lugares que vale la pena conocer</h2></div><Link href="/restaurantes">Ver todos <ArrowRight size={18}/></Link></div><div className={styles.placeRail}>{places.slice(0,6).map(place=><Link href={`/lugares/${place.id}`} key={place.id} className={styles.placeCard}><img src={place.image} alt={place.name}/><div><span>{place.category}</span><h3>{place.name}</h3><p><MapPin size={14}/>{place.address}</p></div></Link>)}</div></section>
+    <section className={styles.feedSection}><div className={styles.feedHeading}><div><span>RECOMENDADOS PARA TI</span><h2>Lugares que vale la pena conocer</h2></div><Link href="/restaurantes">Ver todos <ArrowRight size={18}/></Link></div><div className={styles.placeRail}>{places.slice(0,6).map(place=><Link href={rutaLugar(place.name, place.id)} key={place.id} className={styles.placeCard}><img src={place.image} alt={place.name}/><div><span>{place.category}</span><h3>{place.name}</h3><p><MapPin size={14}/>{place.address}</p></div></Link>)}</div></section>
     <section className={styles.guideBand}><div className={styles.feedHeading}><div><span>PLANES PARA GUARDAR</span><h2>Guías hechas para salir a comer</h2></div><Link href="/guias">Todas las guías <ArrowRight size={18}/></Link></div><div className={styles.guideGrid}>{guideCards.slice(0,3).map(guide=><Link href={`/guias/${guide.slug}`} key={guide.id}><img src={guide.heroImage} alt={guide.title}/><div><h3>{guide.title}</h3><p>{guide.description}</p><b>Explorar ruta <ArrowRight size={15}/></b></div></Link>)}</div></section>
-    <section className={styles.chefSection}><div className={styles.feedHeading}><div><span>CONOCE A QUIENES COCINAN</span><h2>Chefs para seguir</h2></div><Link href="/chefs">Ver chefs <ArrowRight size={18}/></Link></div><div className={styles.chefRail}>{featuredChefs.map(chef=><Link href={`/chefs/${chef.id}`} key={chef.id}><img src={chef.image} alt={chef.name}/><span><ChefHat size={15}/>{chef.place}</span><h3>{chef.name}</h3></Link>)}</div></section>
+    {chefs.length>0&&<section className={styles.chefSection}><div className={styles.feedHeading}><div><span>CONOCE A QUIENES COCINAN</span><h2>Chefs para seguir</h2></div><Link href="/chefs">Ver chefs <ArrowRight size={18}/></Link></div><div className={styles.chefRail}>{chefs.slice(0,3).map(chef=><Link href={`/chefs/${chef.slug}`} key={chef.id}><div className={styles.chefPortrait}><RetratoChef src={chef.image} nombre={chef.name}/></div>{chef.restaurant&&<span><ChefHat size={15}/>{chef.restaurant}</span>}<h3>{chef.name}</h3></Link>)}</div></section>}
     <section className={styles.memberMap}><div><span>EXPLORA TU CIUDAD</span><h2>Todo lo bueno,<br/>cerca de ti.</h2><p>Abre el mapa para encontrar restaurantes y experiencias alrededor de tu ubicación.</p><Link href="/mapa">Explorar el mapa <MapPin size={18}/></Link></div></section>
   </main>
 }

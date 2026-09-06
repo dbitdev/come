@@ -1,5 +1,5 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import SinglePlaceMapWrapper from '@/components/SinglePlaceMapWrapper';
@@ -14,7 +14,7 @@ import {
     BookOpen
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaTwitter } from 'react-icons/fa';
-import { slugify } from '@/lib/utils';
+import { rutaMenu, slugify } from '@/lib/utils';
 import Link from 'next/link';
 import styles from './profile.module.css';
 import { searchArticles } from '@/lib/wordpress';
@@ -105,12 +105,20 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
     let restaurant: Restaurant | null = null;
     let relatedArticles: any[] = [];
     let similarPlaces: any[] = [];
+    let destinoCanonico: string | null = null;
 
     try {
         if (!db) throw new Error("Firebase DB not initialized");
 
         const foundData = await getRestaurant(slug);
         if (foundData) {
+            // La ruta sigue aceptando el id de Firestore para no romper enlaces
+            // viejos, pero la dirección buena es la del nombre. El redirect no
+            // puede ir aquí dentro: lanza una excepción propia de Next que este
+            // try se tragaría, así que sólo anotamos el destino.
+            const canonico = slugify(foundData.name || "");
+            if (canonico && slug !== canonico) destinoCanonico = `/lugares/${canonico}`;
+
             restaurant = foundData;
             const name = restaurant.name;
             const id = restaurant.id;
@@ -145,6 +153,10 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
         }
     } catch (err) {
         console.error("Error fetching restaurant profile data:", err);
+    }
+
+    if (destinoCanonico) {
+        redirect(destinoCanonico);
     }
 
     if (!restaurant) {
@@ -221,10 +233,10 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                             {restaurant.address}
                         </div>
                     </div>
-                    {restaurant.menu && restaurant.menu.length > 0 && <Link href={`/lugares/menu/${restaurant.id}`} className={styles.menuCta}>Ver menú</Link>}
+                    {restaurant.menu && restaurant.menu.length > 0 && <Link href={rutaMenu(restaurant.name, restaurant.id)} className={styles.menuCta}>Ver menú</Link>}
                 </header>
 
-                {restaurant.menu && restaurant.menu.length > 0 && <section className={styles.menuHighlights}><div className={styles.highlightHead}><span>DESTACADOS DEL MENÚ</span><h2>{restaurant.description || `Lo mejor de ${restaurant.name}`}</h2><Link href={`/lugares/menu/${restaurant.id}`}>Ver el menú completo <ChevronRight size={18}/></Link></div><div className={styles.highlightGrid}>{restaurant.menu.slice(0,4).map((item,index)=><Link href={`/lugares/menu/${restaurant.id}`} key={`${item.name}-${index}`}><img src={item.image || restaurant.image} alt={item.name || "Platillo"}/><h3>{item.name || "Platillo destacado"}</h3><p>{item.description || item.ingredients || "Preparado por el restaurante."}</p><b>Ordenar ahora</b></Link>)}</div></section>}
+                {restaurant.menu && restaurant.menu.length > 0 && <section className={styles.menuHighlights}><div className={styles.highlightHead}><span>DESTACADOS DEL MENÚ</span><h2>{restaurant.description || `Lo mejor de ${restaurant.name}`}</h2><Link href={rutaMenu(restaurant.name, restaurant.id)}>Ver el menú completo <ChevronRight size={18}/></Link></div><div className={styles.highlightGrid}>{restaurant.menu.slice(0,4).map((item,index)=><Link href={rutaMenu(restaurant.name, restaurant.id)} key={`${item.name}-${index}`}><img src={item.image || restaurant.image} alt={item.name || "Platillo"}/><h3>{item.name || "Platillo destacado"}</h3><p>{item.description || item.ingredients || "Preparado por el restaurante."}</p><b>Ordenar ahora</b></Link>)}</div></section>}
 
                 <div className={styles.grid}>
                     {/* Main Content Column */}
@@ -371,7 +383,7 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                             </button>
                         </a>
 
-                        <Link href={`/lugares/menu/${restaurant.id}`} style={{ textDecoration: 'none' }}>
+                        <Link href={rutaMenu(restaurant.name, restaurant.id)} style={{ textDecoration: 'none' }}>
                             <button className={styles.actionBtn} style={{ background: '#fff', color: '#000', border: '2px solid #000', marginTop: '-1rem' }}>
                                 <UtensilsCrossed style={{ marginRight: '8px' }} size={18} /> Menú Digital
                             </button>

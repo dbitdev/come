@@ -11,6 +11,7 @@ import { MapPin, Star, X } from 'lucide-react';
 import GoogleMapsWrapper from './GoogleMapsWrapper';
 import { GuideStop } from '@/types/guide';
 import styles from './InteractiveGuideMap.module.css';
+import { rutaLugar } from "@/lib/utils";
 
 interface InteractiveGuideMapProps {
   stops: GuideStop[];
@@ -117,7 +118,7 @@ function MapContent({ stops, activeStopIndex }: InteractiveGuideMapProps) {
                             </p>
                             {selectedStop.location.restaurantId && (
                                 <a 
-                                    href={`/lugares/${selectedStop.location.restaurantId}`} 
+                                    href={rutaLugar(selectedStop.location.name, selectedStop.location.restaurantId)} 
                                     className={styles.infoLink}
                                 >
                                     Ver perfil completo

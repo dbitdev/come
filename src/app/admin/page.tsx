@@ -633,8 +633,8 @@ export default function AdminDashboard() {
                                                         placeholder="Nombre..."
                                                     />
 
-                                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                                        <div style={{ flex: 1 }}>
+                                                    <div className={styles.formRow}>
+                                                        <div className={styles.formRowGrow}>
                                                             <label>Categoría</label>
                                                             <input 
                                                                 value={editingRestaurant.category || ''} 
@@ -642,7 +642,7 @@ export default function AdminDashboard() {
                                                                 placeholder="Ej. Mexicana Moderna"
                                                             />
                                                         </div>
-                                                        <div style={{ width: '100px' }}>
+                                                        <div className={styles.formRowNarrow}>
                                                             <label>Estrellas</label>
                                                             <input 
                                                                 type="number" 
@@ -694,8 +694,8 @@ export default function AdminDashboard() {
                                                         <span style={{ fontSize: '0.9rem', color: '#888' }}>.{APP_DOMAIN}</span>
                                                     </div>
 
-                                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                                        <div style={{ flex: 1 }}>
+                                                    <div className={styles.formRow}>
+                                                        <div className={styles.formRowGrow}>
                                                             <label>Latitud</label>
                                                             <input 
                                                                 type="number" step="any"
@@ -703,7 +703,7 @@ export default function AdminDashboard() {
                                                                 onChange={e => setEditingRestaurant({...editingRestaurant, lat: parseFloat(e.target.value)})}
                                                             />
                                                         </div>
-                                                        <div style={{ flex: 1 }}>
+                                                        <div className={styles.formRowGrow}>
                                                             <label>Longitud</label>
                                                             <input 
                                                                 type="number" step="any"
@@ -790,12 +790,12 @@ export default function AdminDashboard() {
                                                         onChange={e => setEditingChef({...editingChef, restaurant: e.target.value})}
                                                     />
 
-                                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                                        <div style={{ flex: 1 }}>
+                                                    <div className={styles.formRow}>
+                                                        <div className={styles.formRowGrow}>
                                                             <label>Ubicación</label>
                                                             <input 
                                                                 value={editingChef.ubicacion || ''} 
-                                                                onChange={e => setEditingChef({...editingChef, name: e.target.value})}
+                                                                onChange={e => setEditingChef({...editingChef, ubicacion: e.target.value})}
                                                             />
                                                         </div>
                                                         <div style={{ width: '100px' }}>
@@ -803,7 +803,7 @@ export default function AdminDashboard() {
                                                             <input 
                                                                 type="number" 
                                                                 value={editingChef.estrellas || 0} 
-                                                                onChange={e => setEditingChef({...editingChef, estrellas: parseInt(e.target.value)})}
+                                                                onChange={e => setEditingChef({...editingChef, estrellas: Number(e.target.value) || 0})}
                                                             />
                                                         </div>
                                                     </div>

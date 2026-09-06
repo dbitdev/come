@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ChevronLeft, Share2, Map as MapIcon, BookOpen, Utensils, Award, User, Clock } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { rutaLugar } from "@/lib/utils";
 
 export default function GuideViewer() {
     const params = useParams();
@@ -181,7 +182,7 @@ export default function GuideViewer() {
                                     <MapPin size={14} /> {stop.location?.name || "Ubicación"}
                                 </div>
                                 {stop.location?.restaurantId && (
-                                    <Link href={`/lugares/${stop.location.restaurantId}`} className={styles.profileLink}>
+                                    <Link href={rutaLugar(stop.location?.name, stop.location.restaurantId)} className={styles.profileLink}>
                                         Ver Perfil Completo
                                     </Link>
                                 )}

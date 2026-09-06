@@ -1,16 +1,21 @@
 "use client";
 import { useEffect,useMemo,useState } from "react";
 import { useParams,useRouter } from "next/navigation";
-import { doc,getDoc } from "firebase/firestore";
+import { collection,doc,getDoc,getDocs } from "firebase/firestore";
+import { slugify } from "@/lib/utils";
 import { ArrowLeft,Minus,Plus,ShoppingBag,Star } from "lucide-react";
 import { db } from "@/lib/firebase";
 import styles from "./menu.module.css";
 
 type Item={name:string;description?:string;ingredients?:string;image?:string;price:number};
+// Lo que trae el documento de Firestore, que no coincide del todo con lo que pinta la pantalla.
+type DatosLugar={restaurantName?:string;name?:string;category?:string;rating?:number|string;image?:string;address?:string;menu?:Partial<Item>[]};
 type Restaurant={name:string;category?:string;rating?:number;image?:string;address?:string;menu:Item[]};
 export default function MenuPage(){
- const {id}=useParams<{id:string}>(); const router=useRouter(); const [restaurant,setRestaurant]=useState<Restaurant|null>(null); const [loading,setLoading]=useState(true); const [cart,setCart]=useState<Record<number,number>>({});
- useEffect(()=>{(async()=>{if(!db||!id)return;const snap=await getDoc(doc(db,"come",id));if(snap.exists()){const d=snap.data();setRestaurant({name:d.restaurantName||d.name||"Restaurante",category:d.category,rating:Number(d.rating)||4.8,image:d.image||d.menu?.[0]?.image,address:d.address,menu:(Array.isArray(d.menu)?d.menu:[]).map((x)=>({name:x.name||"Platillo",description:x.description,ingredients:x.ingredients,image:x.image,price:Number(x.price)||0}))})}})().catch(()=>setRestaurant(null)).finally(()=>setLoading(false))},[id]);
+ const {slug}=useParams<{slug:string}>(); const router=useRouter(); const [restaurant,setRestaurant]=useState<Restaurant|null>(null); const [loading,setLoading]=useState(true); const [cart,setCart]=useState<Record<number,number>>({});
+ // El parámetro es el nombre en slug ("levadura-de-olla"); aceptamos también
+ // el id de Firestore para no romper enlaces viejos.
+ useEffect(()=>{(async()=>{if(!db||!slug)return;const clave=decodeURIComponent(slug);let d:DatosLugar|null=null;const porId=await getDoc(doc(db,"come",clave));if(porId.exists()){d=porId.data()}else{const todos=await getDocs(collection(db,"come"));for(const item of todos.docs){const datos=item.data();if(slugify(String(datos.restaurantName||datos.name||""))===clave){d=datos;break}}}if(d){setRestaurant({name:d.restaurantName||d.name||"Restaurante",category:d.category,rating:Number(d.rating)||4.8,image:d.image||d.menu?.[0]?.image,address:d.address,menu:(Array.isArray(d.menu)?d.menu:[]).map((x)=>({name:x.name||"Platillo",description:x.description,ingredients:x.ingredients,image:x.image,price:Number(x.price)||0}))})}})().catch(()=>setRestaurant(null)).finally(()=>setLoading(false))},[slug]);
  const total=useMemo(()=>restaurant?.menu.reduce((sum,item,index)=>sum+item.price*(cart[index]||0),0)||0,[cart,restaurant]); const count=Object.values(cart).reduce((a,b)=>a+b,0);
  const change=(index:number,delta:number)=>setCart(old=>({...old,[index]:Math.max(0,(old[index]||0)+delta)}));
  if(loading)return <div className={styles.state}>Cargando menú…</div>; if(!restaurant)return <div className={styles.state}>Restaurante no encontrado.</div>;
