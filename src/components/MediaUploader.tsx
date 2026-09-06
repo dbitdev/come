@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import { mensajeDeError } from "@/lib/erroresStorage";
 import { FaUpload, FaImage, FaVideo, FaTimes, FaCheck } from 'react-icons/fa';
 
 interface MediaUploaderProps {
@@ -50,8 +51,9 @@ export default function MediaUploader({ onUploadComplete, folder = 'general' }: 
                 }, 
                 (error) => {
                     console.error("Upload error:", error);
-                    alert("Error al subir el archivo.");
+                    alert(mensajeDeError(error));
                     setUploading(false);
+                    setPreview(null);
                 }, 
                 async () => {
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);

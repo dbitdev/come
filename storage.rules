@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Media del sitio Come (fotos de restaurantes, chefs y guías).
+//
+// La lectura es pública a propósito: estas imágenes se sirven en el directorio
+// abierto. La escritura queda restringida a la redacción, con el mismo padrón
+// de correos que usa firestore.rules -> isPlatformAdmin().
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isPlatformAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'dbitdev@gmail.com',
+          'admin@come.mx',
+          'parradabito@gmail.com'
+        ];
+    }
+
+    // Sólo imagen o video, y con un tope de tamaño: sin esto, un archivo
+    // enorme o un ejecutable renombrado acabaría servido desde nuestro dominio.
+    function isMediaValida() {
+      return request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType != null
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType.matches('video/.*'));
+    }
+
+    // Carpetas que usa el admin: MediaUploader (restaurants|chefs|guides|general)
+    // y la subida directa del editor de restaurantes (restaurants/{id}/...).
+    match /{carpeta}/{archivo=**} {
+      allow read: if carpeta in ['restaurants', 'chefs', 'guides', 'general'];
+      // En Storage `write` cubre delete, y ahí request.resource es null: por eso
+      // create/update y delete van por separado.
+      allow create, update: if isPlatformAdmin() && isMediaValida();
+      allow delete: if isPlatformAdmin();
+    }
+  }
+}

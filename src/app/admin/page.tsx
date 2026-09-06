@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from '@/lib/firebase';
 import AdminGuard from "@/components/AdminGuard";
 import MediaUploader from "@/components/MediaUploader";
+import { mensajeDeError } from "@/lib/erroresStorage";
 import { slugify } from '@/lib/utils';
 import { 
     collection, 
@@ -163,7 +164,7 @@ export default function AdminDashboard() {
             alert("Imagen subida con éxito");
         } catch (err) {
             console.error("Error uploading image:", err);
-            alert("Error al subir la imagen");
+            alert(mensajeDeError(err));
         } finally {
             setIsUploading(false);
         }

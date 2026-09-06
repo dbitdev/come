@@ -24,5 +24,8 @@
   "_comentario": "Las cabeceras de seguridad se emiten desde next.config.ts porque el despliegue es Firebase App Hosting (Cloud Run), donde esta sección de hosting no aplica.",
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
