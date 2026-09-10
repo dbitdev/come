@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
-import sharp from "sharp";
-import { fotoParaTarjeta } from "@/lib/tarjetaOg";
+import { comoJpeg, fotoParaTarjeta } from "@/lib/tarjetaOg";
 import { getChefBySlug } from "@/lib/chefs";
 
 /**
@@ -91,14 +90,5 @@ export default async function Imagen({ params }: { params: Promise<{ id: string 
     size,
   );
 
-  const jpeg = await sharp(Buffer.from(await tarjeta.arrayBuffer()))
-    .jpeg({ quality: 78, progressive: true })
-    .toBuffer();
-
-  return new Response(new Uint8Array(jpeg), {
-    headers: {
-      "Content-Type": contentType,
-      "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
-    },
-  });
+  return comoJpeg(tarjeta);
 }

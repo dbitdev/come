@@ -1,5 +1,24 @@
+# App Hosting construye en Linux x64, pero pnpm sólo guarda en el lockfile los
+# binarios de la plataforma donde se instaló. Con sharp —que es nativo— eso
+# hacía que el contenedor no pudiera cargarlo y tumbaba /lugares/[slug] y
+# /chefs/[id] con un 500. Declarar las arquitecturas obliga a incluir ambos.
+supportedArchitectures:
+  os:
+    - current
+    - linux
+  cpu:
+    - current
+    - x64
+    - arm64
+  libc:
+    - current
+    - glibc
+
+onlyBuiltDependencies:
+  - sharp
+
 allowBuilds:
-  "@firebase/util": true
-  protobufjs: true
-  sharp: true
-  unrs-resolver: true
+  '@firebase/util': set this to true or false
+  protobufjs: set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
