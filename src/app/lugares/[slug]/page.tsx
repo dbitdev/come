@@ -75,8 +75,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const restaurant = await getRestaurant(decodeURIComponent(slug));
     
     if (!restaurant) {
+    // Si la consulta a Firestore falla o tarda, esta rama es la que se sirve al
+    // rastreador. Sin imagen aquí, el enlace se comparte pelón; con la estática
+    // de la marca al menos siempre hay algo.
         return {
             title: "Restaurante no encontrado | Come",
+            openGraph: {
+                title: "Restaurantes en México | Come",
+                siteName: 'Come',
+                locale: 'es_MX',
+                images: [{ url: '/og-come.jpg', width: 1200, height: 630, alt: 'Come' }],
+            },
+            twitter: { card: 'summary_large_image', images: ['/og-come.jpg'] },
         };
     }
 
