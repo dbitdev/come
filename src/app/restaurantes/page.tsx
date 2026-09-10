@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { collection, getDocs } from "firebase/firestore";
 import { MapPin, Search, Star } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -47,10 +48,39 @@ function tiempoEstimado(id: string) {
   return `${base}-${base + 10} min`;
 }
 
+/**
+ * La página se pinta dentro de un Suspense porque useSearchParams obliga a ello
+ * cuando la ruta se prerenderiza.
+ */
 export default function RestaurantesPage() {
+  return (
+    <Suspense fallback={null}>
+      <Listado />
+    </Suspense>
+  );
+}
+
+function Listado() {
+  // Media docena de sitios enlazan aquí con ?search=: las cocinas de la
+  // portada, las colecciones, el buscador de pantalla completa, el formulario
+  // de la portada con sesión y la página de cocina tradicional. La página
+  // ignoraba el parámetro, así que todos esos enlaces caían en el listado
+  // completo, sin filtrar.
+  const parametros = useSearchParams();
+  const busquedaInicial = parametros.get("search") ?? parametros.get("q") ?? "";
+
   const [lugares, setLugares] = useState<Lugar[]>([]);
-  const [termino, setTermino] = useState("");
-  const [cocina, setCocina] = useState<string | null>(null);
+  const [termino, setTermino] = useState(busquedaInicial);
+  const [cocina, setCocina] = useState<string | null>(busquedaInicial || null);
+
+  // Ajuste durante el render en vez de un efecto: al navegar de una cocina a
+  // otra la ruta cambia sin desmontar la página.
+  const [busquedaPrevia, setBusquedaPrevia] = useState(busquedaInicial);
+  if (busquedaInicial !== busquedaPrevia) {
+    setBusquedaPrevia(busquedaInicial);
+    setTermino(busquedaInicial);
+    setCocina(busquedaInicial || null);
+  }
   const [modo, setModo] = useState<"entrega" | "recoger">("entrega");
   const [orden, setOrden] = useState<"recomendados" | "calificacion">("recomendados");
   const [soloMichelin, setSoloMichelin] = useState(false);
