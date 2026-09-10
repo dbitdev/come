@@ -106,11 +106,10 @@ function AppBand(){
       <span>¿SE TE ANTOJA ALGO NUEVO?</span>
       <h2>Llévate Come en la bolsa</h2>
       <p>Guarda tus taquerías de cabecera, sigue a los chefs que te gustan, arma rutas para el fin de semana y pide sin dar tantas vueltas. Toda la mesa mexicana, en tu teléfono.</p>
-      {/* Badges oficiales de Apple y Google, sin modificar. TODO: sustituir el href
-          por las URLs reales de la ficha en App Store y Google Play al publicar. */}
+      {/* Badges oficiales de Apple y Google, sin modificar. */}
       <div className={styles.storeButtons}>
-        <a href="#" aria-label="Descargar Come en el App Store"><img src="/badges/app-store-es.svg" alt="Descárgala en el App Store"/></a>
-        <a href="#" aria-label="Descargar Come en Google Play"><img src="/badges/google-play-es.png" alt="Disponible en Google Play"/></a>
+        <a href="https://apps.apple.com/mx/app/id6809052402" aria-label="Descargar Come en el App Store"><img src="/badges/app-store-es.svg" alt="Descárgala en el App Store"/></a>
+        <a href="https://play.google.com/store/apps/details?id=com.mxica.come" aria-label="Descargar Come en Google Play"><img src="/badges/google-play-es.png" alt="Disponible en Google Play"/></a>
       </div>
     </div>
   </section>;

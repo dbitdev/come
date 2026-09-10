@@ -462,18 +462,27 @@
     margin-bottom: 0.5rem;
 }
 
-.chefLink {
-    text-decoration: none;
-    display: inline-block;
-}
-
+/* La jerarquía se invirtió: antes el enlace envolvía al nombre, ahora el bloque
+   de nombres contiene un enlace por chef. */
 .chefName {
     font-size: 1.5rem;
     font-weight: 800;
     color: #000;
+}
+
+.chefLink {
+    text-decoration: none;
+    color: inherit;
     transition: color 0.2s;
 }
 
-.chefLink:hover .chefName {
+.chefLink:hover {
     color: var(--primary);
+    text-decoration: underline;
+}
+
+/* Los chefs sin ficha propia se quedan como texto: un enlace muerto es peor. */
+.chefSeparador {
+    color: #94a3b8;
+    font-weight: 500;
 }

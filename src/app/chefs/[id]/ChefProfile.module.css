@@ -473,3 +473,18 @@
         margin: 2rem auto 4rem;
     }
 }
+
+/* Marca los restaurantes donde el chef ya no está. */
+.restPrevio {
+    display: inline-block;
+    margin-top: .35rem;
+    font-style: normal;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #6b7a71;
+    background: #eef1ec;
+    border-radius: 100px;
+    padding: .22rem .55rem;
+}

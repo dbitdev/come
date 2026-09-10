@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 interface AuthContextType {
     user: User | null;
@@ -27,6 +28,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
+            // Sin una ficha por persona no hay a quién asignarle un negocio desde
+            // el admin: la colección `users` estaba vacía porque nadie la escribía.
+            // Va aquí y no en el registro para que cubra también a quien entra con
+            // Google o Apple, y para que los que ya existían queden al entrar.
+            if (user && db) {
+                setDoc(
+                    doc(db, "users", user.uid),
+                    {
+                        email: user.email ?? "",
+                        displayName: user.displayName ?? "",
+                        photoURL: user.photoURL ?? "",
+                        ultimoAcceso: serverTimestamp(),
+                    },
+                    { merge: true },
+                ).catch(() => {
+                    /* Si falla, la sesión sigue siendo válida; no vale bloquear la entrada. */
+                });
+            }
         });
 
         return () => unsubscribe();

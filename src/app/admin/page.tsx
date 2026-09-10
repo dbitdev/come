@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import AdminGuard from "@/components/AdminGuard";
 import MediaUploader from "@/components/MediaUploader";
 import { mensajeDeError } from "@/lib/erroresStorage";
+import { emparejarChefs, lugaresQueMencionan, separarNombres, textoDeChefs } from "@/lib/vinculos";
 import { slugify } from '@/lib/utils';
 import { 
     collection, 
@@ -37,11 +38,50 @@ const TITULOS: Record<string, string> = {
     nominaciones: "Nominaciones por revisar",
 };
 
+/**
+ * Asigna un negocio o una ficha a una persona registrada. El dueño puede luego
+ * editarlo desde su perfil, así que esto lo decide sólo la redacción.
+ */
+function SelectorDueno({
+    usuarios,
+    valor,
+    onChange,
+}: {
+    usuarios: any[];
+    valor?: string;
+    onChange: (uid: string | undefined) => void;
+}) {
+    return (
+        <>
+            <label>Dueño (usuario registrado)</label>
+            <select value={valor || ''} onChange={e => onChange(e.target.value || undefined)}>
+                <option value="">Sin asignar — lo administra la redacción</option>
+                {usuarios.map(u => (
+                    <option key={u.uid} value={u.uid}>
+                        {u.displayName ? `${u.displayName} · ${u.email}` : u.email || u.uid}
+                    </option>
+                ))}
+            </select>
+            {usuarios.length === 0 && (
+                <small style={{ color: '#8a9690' }}>
+                    Todavía no hay personas registradas en la base. Aparecerán aquí la próxima vez que inicien sesión.
+                </small>
+            )}
+            {valor && !usuarios.some(u => u.uid === valor) && (
+                <small style={{ color: '#b4552d' }}>
+                    Asignado a un usuario que ya no está en la lista ({valor}).
+                </small>
+            )}
+        </>
+    );
+}
+
 export default function AdminDashboard() {
     const { user } = useAuth();
     const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus' | 'guias' | 'nominaciones'>('dashboard');
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [chefs, setChefs] = useState<any[]>([]);
+    const [usuarios, setUsuarios] = useState<any[]>([]);
     const [guides, setGuides] = useState<any[]>([]);
     const [leads, setLeads] = useState<any[]>([]);
     const [chefNominations, setChefNominations] = useState<any[]>([]);
@@ -87,6 +127,14 @@ export default function AdminDashboard() {
             const chefsSnapshot = await getDocs(collection(db, "chefs"));
             const chefsData = chefsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setChefs(chefsData);
+
+            // Personas registradas, para poder asignarles un negocio o una ficha.
+            try {
+                const usuariosSnap = await getDocs(collection(db, "users"));
+                setUsuarios(usuariosSnap.docs.map(d => ({ uid: d.id, ...d.data() })));
+            } catch {
+                /* Si las reglas todavía no permiten listarlos, el selector queda vacío. */
+            }
 
             // Fetch Guides
             const guidesSnapshot = await getDocs(collection(db, "guides"));
@@ -332,6 +380,18 @@ export default function AdminDashboard() {
             const rName = data.restaurantName || data.name || "";
             data.subdomain = rName.toLowerCase().replace(/[^a-z0-9]/g, '-') + "." + APP_DOMAIN;
 
+            // Un restaurante puede tener dos chefs. El campo de texto se parte en
+            // nombres y los que ya tienen ficha quedan enlazados por id; el texto
+            // se conserva para el código que todavía lee `chef`.
+            const nombresChef = separarNombres(data.chef);
+            const { vinculados, sinFicha } = emparejarChefs(nombresChef, chefs);
+            data.chefIds = vinculados.map(v => v.id);
+            data.chefsNombres = nombresChef;
+            data.chef = textoDeChefs(nombresChef);
+            data.chefIdsPrevios = Array.isArray(editingRestaurant.chefIdsPrevios)
+                ? editingRestaurant.chefIdsPrevios.filter((idPrevio: string) => !data.chefIds.includes(idPrevio))
+                : [];
+
             if (id) {
                 await updateDoc(doc(db, "come", id), {
                     ...data,
@@ -345,7 +405,11 @@ export default function AdminDashboard() {
             }
             setEditingRestaurant(null);
             fetchData();
-            alert("Restaurante guardado con éxito");
+            alert(
+                sinFicha.length > 0
+                    ? `Restaurante guardado. Enlazados ${vinculados.length} chef(s) con ficha. Sin ficha todavía: ${sinFicha.join(", ")}.`
+                    : `Restaurante guardado. ${vinculados.length} chef(s) enlazados.`
+            );
         } catch (err) {
             console.error(err);
             alert("Error al guardar");
@@ -362,25 +426,63 @@ export default function AdminDashboard() {
         }
     };
 
+    /**
+     * Añade el chef a `chefIds` de todo lugar cuyo campo de chefs lo mencione.
+     * La relación se guarda sólo en el lugar: si viviera también en la ficha del
+     * chef habría dos copias de lo mismo que se pueden contradecir.
+     */
+    const enlazarChefConSusLugares = async (chefId: string | undefined, nombre: string) => {
+        if (!db || !chefId || !nombre) return [];
+        const coincidencias = lugaresQueMencionan(
+            nombre,
+            restaurants.map(r => ({ id: r.id, nombre: r.restaurantName || r.name || "", chef: r.chef })),
+        );
+        const enlazados: string[] = [];
+        for (const lugar of coincidencias) {
+            const actual = restaurants.find(r => r.id === lugar.id);
+            const yaEstaban: string[] = Array.isArray(actual?.chefIds) ? actual.chefIds : [];
+            if (yaEstaban.includes(chefId)) continue;
+            await updateDoc(doc(db, "come", lugar.id), {
+                chefIds: [...yaEstaban, chefId],
+                chefsNombres: separarNombres(actual?.chef),
+                lastUpdated: serverTimestamp(),
+            });
+            enlazados.push(lugar.nombre);
+        }
+        return enlazados;
+    };
+
     const handleSaveChef = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!db || !editingChef) return;
         try {
             const { id, ...data } = editingChef;
+            let chefId = id;
             if (id) {
                 await updateDoc(doc(db, "chefs", id), {
                     ...data,
                     lastUpdated: serverTimestamp()
                 });
             } else {
-                await addDoc(collection(db, "chefs"), {
+                const creado = await addDoc(collection(db, "chefs"), {
                     ...data,
                     createdAt: serverTimestamp()
                 });
+                chefId = creado.id;
             }
+
+            // Al dar de alta o renombrar un chef, engancharlo con los lugares que
+            // ya lo mencionan por su nombre. Antes eso se quedaba sin conectar
+            // hasta que alguien volviera a guardar el restaurante a mano.
+            const enlazados = await enlazarChefConSusLugares(chefId, data.name);
+
             setEditingChef(null);
             fetchData();
-            alert("Chef guardado con éxito");
+            alert(
+                enlazados.length > 0
+                    ? `Chef guardado y enlazado con: ${enlazados.join(", ")}.`
+                    : "Chef guardado. Ningún restaurante del directorio lo menciona todavía."
+            );
         } catch (err) {
             console.error(err);
             alert("Error al guardar chef");
@@ -656,7 +758,16 @@ export default function AdminDashboard() {
                                                     <input 
                                                         value={editingRestaurant.chef || ''} 
                                                         onChange={e => setEditingRestaurant({...editingRestaurant, chef: e.target.value})}
-                                                        placeholder="Nombre del chef..."
+                                                        placeholder="Separa con coma si son varios: Julio Castillo, Hugo Jimenez"
+                                                    />
+                                                    <small style={{ color: '#8a9690' }}>
+                                                        Al guardar se enlazan solos los que ya tengan ficha de chef.
+                                                    </small>
+
+                                                    <SelectorDueno
+                                                        usuarios={usuarios}
+                                                        valor={editingRestaurant.userId}
+                                                        onChange={uid => setEditingRestaurant({...editingRestaurant, userId: uid})}
                                                     />
 
                                                     <label>Descripción</label>
@@ -831,6 +942,12 @@ export default function AdminDashboard() {
                                                         value={editingChef.redes || ''} 
                                                         onChange={e => setEditingChef({...editingChef, redes: e.target.value})}
                                                         placeholder="@usuario"
+                                                    />
+
+                                                    <SelectorDueno
+                                                        usuarios={usuarios}
+                                                        valor={editingChef.userId}
+                                                        onChange={uid => setEditingChef({...editingChef, userId: uid})}
                                                     />
 
                                                     <button type="submit" className={styles.primaryBtn}>

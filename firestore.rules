@@ -114,7 +114,10 @@ service cloud.firestore {
 
     // ── Datos de cada persona (direcciones, favoritos) ──────────
     match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // La redacción necesita listar personas para poder asignarles un negocio
+      // desde el admin; los datos de cada quien siguen siendo suyos para escribir.
+      allow read: if isPlatformAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if isSignedIn() && request.auth.uid == userId;
       match /{document=**} {
         allow read, write: if isSignedIn() && request.auth.uid == userId;
       }

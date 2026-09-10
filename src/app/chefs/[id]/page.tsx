@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaTwitter, FaFacebookF } from 'react-icons/fa';
 import { rutaLugar } from "@/lib/utils";
+import { lugaresQueMencionan } from '@/lib/vinculos';
 
 export default function ChefProfilePage() {
     const params = useParams();
@@ -42,16 +43,38 @@ export default function ChefProfilePage() {
             if (!db) return;
             
             try {
-                // 1. Fetch Restaurants
-                // First search by direct chef name in the DB
-                const qRest = query(
-                    collection(db, "come"), 
-                    where("chef", "==", data.name),
-                    limit(10)
-                );
-                const restDocs = await getDocs(qRest);
-                let foundRestaurants = restDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // 1. Sus restaurantes.
+                // La igualdad exacta contra `chef` fallaba en cuanto un lugar
+                // tenía dos chefs: "Julio Castillo, Hugo Jimenez" no es igual a
+                // ninguno de los dos nombres. Ahora se consulta por el arreglo de
+                // ids, y se conserva el barrido por nombre para los documentos
+                // que todavía no se han migrado.
+                const [porIdActual, porIdPrevio] = await Promise.all([
+                    getDocs(query(collection(db, "come"), where("chefIds", "array-contains", data.id), limit(10))),
+                    getDocs(query(collection(db, "come"), where("chefIdsPrevios", "array-contains", data.id), limit(10))),
+                ]);
 
+                const encontrados = new Map<string, any>();
+                porIdActual.docs.forEach(d => encontrados.set(d.id, { id: d.id, ...d.data(), esPrevio: false }));
+                porIdPrevio.docs.forEach(d => {
+                    if (!encontrados.has(d.id)) encontrados.set(d.id, { id: d.id, ...d.data(), esPrevio: true });
+                });
+
+                if (encontrados.size === 0) {
+                    const todos = await getDocs(query(collection(db, "come"), limit(60)));
+                    lugaresQueMencionan(
+                        data.name,
+                        todos.docs.map(d => {
+                            const v = d.data();
+                            return { id: d.id, nombre: v.restaurantName || v.name || "", chef: v.chef };
+                        }),
+                    ).forEach(lugar => {
+                        const original = todos.docs.find(d => d.id === lugar.id);
+                        if (original) encontrados.set(lugar.id, { id: lugar.id, ...original.data(), esPrevio: false });
+                    });
+                }
+
+                const foundRestaurants = [...encontrados.values()];
                 setRestaurants(foundRestaurants);
 
                 // 2. Fetch Guides
@@ -164,6 +187,9 @@ export default function ChefProfilePage() {
                                     <div className={styles.restInfo}>
                                         <h3>{res.restaurantName || res.name}</h3>
                                         <span>{res.category}</span>
+                                        {/* Distinguir dónde cocina hoy de dónde cocinó antes:
+                                            presentarlos igual afirma algo que puede ser falso. */}
+                                        {res.esPrevio && <em className={styles.restPrevio}>Estuvo aquí</em>}
                                     </div>
                                 </Link>
                             ))}

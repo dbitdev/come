@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaTwitter } from 'react-icons/fa';
 import { rutaMenu, slugify } from '@/lib/utils';
+import { emparejarChefs, separarNombres } from '@/lib/vinculos';
+import { traerChefs } from '@/lib/chefs';
 import Link from 'next/link';
 import styles from './profile.module.css';
 import { searchArticles } from '@/lib/wordpress';
@@ -163,6 +165,21 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
         notFound();
     }
 
+    // Los nombres salen del arreglo nuevo y, mientras no se haya migrado todo el
+    // directorio, del texto libre de siempre.
+    const nombresDeChef: string[] = Array.isArray((restaurant as any).chefsNombres) && (restaurant as any).chefsNombres.length
+        ? (restaurant as any).chefsNombres
+        : separarNombres(restaurant.chef);
+    const chefsConFicha = new Map<string, string>();
+    if (nombresDeChef.length > 0) {
+        const todos = await traerChefs();
+        const { vinculados } = emparejarChefs(nombresDeChef, todos.map(c => ({ id: c.id, name: c.name })));
+        for (const v of vinculados) {
+            const ficha = todos.find(c => c.id === v.id);
+            if (ficha) chefsConFicha.set(v.nombre, ficha.slug);
+        }
+    }
+
     const latNum = restaurant.lat ? Number(restaurant.lat) : null;
     const lngNum = restaurant.lng ? Number(restaurant.lng) : null;
     const hasCoords = latNum !== null && lngNum !== null && !isNaN(latNum) && !isNaN(lngNum);
@@ -269,14 +286,30 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                                 {restaurant.description || "Una propuesta culinaria excepcional que redefine los sabores tradicionales con técnicas contemporáneas de vanguardia."}
                             </p>
 
-                            {restaurant.chef && (
+                            {nombresDeChef.length > 0 && (
                                 <div className={styles.chefSection}>
-                                    <span className={styles.chefLabel}>Liderado por</span>
-                                    <Link href={`/chefs/${slugify(restaurant.chef)}`} className={styles.chefLink}>
-                                        <div className={styles.chefName}>{restaurant.chef}</div>
-                                    </Link>
+                                    <span className={styles.chefLabel}>
+                                        {nombresDeChef.length > 1 ? 'Liderado por' : 'Liderado por'}
+                                    </span>
+                                    {/* Un enlace por chef: antes los dos nombres iban dentro
+                                        de un solo enlace, que apuntaba a un slug inexistente. */}
+                                    <div className={styles.chefName}>
+                                        {nombresDeChef.map((nombre, indice) => {
+                                            const ficha = chefsConFicha.get(nombre);
+                                            return (
+                                                <span key={nombre}>
+                                                    {indice > 0 && <span className={styles.chefSeparador}>, </span>}
+                                                    {ficha ? (
+                                                        <Link href={`/chefs/${ficha}`} className={styles.chefLink}>{nombre}</Link>
+                                                    ) : (
+                                                        <span>{nombre}</span>
+                                                    )}
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
                                     <p style={{ marginTop: '1rem', color: '#666' }}>
-                                        Visionario de la cocina {restaurant.category.toLowerCase()}, cuya pasión por los ingredientes locales ha posicionado a {restaurant.name} como un referente internacional.
+                                        {nombresDeChef.length > 1 ? 'Cocina a cuatro manos' : 'Cocina'} de {restaurant.category.toLowerCase()} en {restaurant.name}.
                                     </p>
                                 </div>
                             )}

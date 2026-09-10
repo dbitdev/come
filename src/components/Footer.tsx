@@ -2,6 +2,12 @@ import Link from "next/link";
 import { FaFacebookF, FaInstagram, FaTiktok } from "react-icons/fa";
 import styles from "./Footer.module.css";
 
+// Fichas en las tiendas. La de Apple ya existe (la app está en revisión); la de
+// Google responde 404 hasta que se publique, pero es la dirección definitiva y
+// no hay que volver a tocarla.
+const ENLACE_APP_STORE = "https://apps.apple.com/mx/app/id6809052402";
+const ENLACE_GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.mxica.come";
+
 const ciudades = [
   "Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Querétaro",
   "Mérida", "Oaxaca", "Tijuana", "León", "Toluca",
@@ -53,9 +59,18 @@ export default function Footer() {
               <h3>Descarga la app de Come</h3>
               <p>Sigue tu pedido, guarda tus lugares y recibe recomendaciones hechas para tu antojo.</p>
             </div>
-            {/* El QR apunta a comeapp.com.mx/ordenar; cámbialo por el enlace de la
-                ficha en las tiendas cuando la app esté publicada. */}
-            <img src="/qr-app.svg" alt="Código QR para abrir Come en tu teléfono" />
+            {/* En escritorio el QR tiene sentido: se escanea con el teléfono. En el
+                teléfono no sirve para nada, así que ahí van los badges de las
+                tiendas. Se pintan los dos y el CSS enseña el que toca. */}
+            <img className={styles.qr} src="/qr-app.svg" alt="Código QR para abrir Come en tu teléfono" />
+            <div className={styles.tiendas}>
+              <a href={ENLACE_APP_STORE} aria-label="Descargar Come en el App Store">
+                <img src="/badges/app-store-es.svg" alt="Descárgala en el App Store" />
+              </a>
+              <a href={ENLACE_GOOGLE_PLAY} aria-label="Descargar Come en Google Play">
+                <img src="/badges/google-play-es.png" alt="Disponible en Google Play" />
+              </a>
+            </div>
           </div>
 
           <div className={styles.legal}>
