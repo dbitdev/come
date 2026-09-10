@@ -14,8 +14,14 @@ supportedArchitectures:
     - current
     - glibc
 
+# Declarar sólo sharp hacía que pnpm rechazara los scripts de los demás y el
+# build de CI abortara con ERR_PNPM_IGNORED_BUILDS. La lista tiene que ser
+# completa: es la que escribiría `pnpm approve-builds`.
 onlyBuiltDependencies:
+  - '@firebase/util'
+  - protobufjs
   - sharp
+  - unrs-resolver
 
 allowBuilds:
   '@firebase/util': set this to true or false
