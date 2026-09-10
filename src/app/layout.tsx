@@ -21,12 +21,12 @@ export const metadata: Metadata = {
   title: "Come - La Guía Gastronómica de México",
   description: "Descubre los mejores restaurantes, chefs y tendencias gourmet en México. La guía definitiva para los amantes del buen comer.",
   keywords: ["gastronomía", "México", "restaurantes", "chefs", "guía gourmet", "estrellas michelin"],
-  authors: [{ name: "Néctar Editorial" }],
+  authors: [{ name: "Come" }],
   openGraph: {
     title: "Come - La Guía Gastronómica de México",
     description: "La guía definitiva y curada de las mejores experiencias gastronómicas en México.",
     url: "https://comeapp.com.mx",
-    siteName: "Néctar",
+    siteName: "Come",
     images: [
       {
         url: "/come-icono.png",

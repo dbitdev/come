@@ -45,6 +45,7 @@ interface Restaurant {
     };
     lat?: number | string;
     lng?: number | string;
+    estado?: string;
     menu?: Array<{name?:string;description?:string;ingredients?:string;image?:string;price?:number}>;
 }
 
@@ -75,27 +76,33 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     
     if (!restaurant) {
         return {
-            title: "Restaurante no encontrado | Néctar",
+            title: "Restaurante no encontrado | Come",
         };
     }
 
-    const title = `${restaurant.name} - ${restaurant.category} | Néctar`;
-    const description = restaurant.description || `Descubre ${restaurant.name} en la Ciudad de México. ${restaurant.category} de alta gama en Néctar.`;
+    const title = `${restaurant.name} · ${restaurant.category} | Come`;
+    const description = restaurant.description || `${restaurant.name}: ${restaurant.category.toLowerCase()} en ${restaurant.estado || "México"}. Dirección, menú y cómo llegar, en Come.`;
 
+    // Sin `images` aquí, Next usa opengraph-image.tsx, que rearma la foto a
+    // 1200×630. Mandar la original hacía que WhatsApp se rindiera: las que sube
+    // la redacción pesan varios MB.
+    const canonica = `/lugares/${slugify(restaurant.name || '')}`;
     return {
         title,
         description,
+        alternates: { canonical: canonica },
         openGraph: {
             title,
             description,
-            images: [restaurant.image],
+            url: canonica,
+            siteName: 'Come',
+            locale: 'es_MX',
             type: 'website',
         },
         twitter: {
             card: 'summary_large_image',
             title,
             description,
-            images: [restaurant.image],
         },
     };
 }
