@@ -87,21 +87,20 @@ function CuisineRail(){
 function AppBand(){
   return <section className={styles.appBand}>
     <div className={styles.appArt}>
-      <div className={styles.phone}>
-        <span aria-hidden="true"/>
-        <div className={styles.phoneScreen}>
-          <div className={styles.island} aria-hidden="true"/>
-          <div className={styles.phoneBar}><b>come</b><Search size={14}/></div>
-          <p className={styles.phoneTitle}>¿Qué se te antoja hoy?</p>
-          <div className={styles.phoneChips}><span>Tacos</span><span>Birria</span><span>Mariscos</span></div>
-          <div className={styles.phoneGrid}>
-            {cuisines.slice(0,4).map(([name,id])=><figure key={name}><img src={img(id,240)} alt="" aria-hidden="true"/><figcaption>{name}</figcaption></figure>)}
-          </div>
-          <div className={styles.phoneTabs}><span>Inicio</span><span>Pedidos</span><span>Cuenta</span></div>
-          <div className={styles.homeBar} aria-hidden="true"/>
-        </div>
-      </div>
+      {/* El teléfono estaba dibujado con CSS y su pantalla era una maqueta a mano
+          que no correspondía con la app. Esta es la captura real, la misma que
+          se publica en las tiendas. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className={styles.appMockup}
+        src="/app-mockup.png"
+        alt="La app de Come en un iPhone, mostrando el inicio con restaurantes y cocinas"
+        width={760}
+        height={1644}
+        loading="lazy"
+      />
     </div>
+
     <div className={styles.appCopy}>
       <span>¿SE TE ANTOJA ALGO NUEVO?</span>
       <h2>Llévate Come en la bolsa</h2>
