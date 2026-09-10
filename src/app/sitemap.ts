@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { getLatestNews } from '@/lib/wordpress';
+import { traerChefs } from '@/lib/chefs';
 import { slugify, isPublished } from "@/lib/utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx';
@@ -37,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // 2. Dynamic Restaurant Routes (from Firebase)
-  let restaurantRoutes: any[] = [];
+  let restaurantRoutes: MetadataRoute.Sitemap = [];
   try {
     if (db) {
       const querySnapshot = await getDocs(collection(db, "come"));
@@ -56,11 +57,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Error generating sitemap for restaurants:", error);
   }
 
+  // 2b. Perfiles de chef. Quedaban fuera del índice: once páginas con contenido
+  // propio que ningún buscador estaba viendo.
+  let chefRoutes: MetadataRoute.Sitemap = [];
+  try {
+    chefRoutes = (await traerChefs()).map((chef) => ({
+      url: `${BASE_URL}/chefs/${chef.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }));
+  } catch (error) {
+    console.error("Error generating sitemap for chefs:", error);
+  }
+
   // 3. Dynamic News Routes (from WordPress)
-  let newsRoutes: any[] = [];
+  let newsRoutes: MetadataRoute.Sitemap = [];
   try {
     const news = await getLatestNews(100); // Fetch up to 100 latest items
-    newsRoutes = news.map((post: any) => ({
+    newsRoutes = news.map((post: { slug: string; date: string }) => ({
       url: `${BASE_URL}/noticias/${post.slug}`,
       lastModified: new Date(post.date),
       changeFrequency: 'monthly' as const,
@@ -70,5 +85,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Error generating sitemap for news:", error);
   }
 
-  return [...staticRoutes, ...restaurantRoutes, ...newsRoutes];
+  return [...staticRoutes, ...restaurantRoutes, ...chefRoutes, ...newsRoutes];
 }

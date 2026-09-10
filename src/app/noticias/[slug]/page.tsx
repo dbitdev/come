@@ -17,11 +17,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug(slug);
 
   if (!post) {
-    return { title: 'Noticia no encontrada | Néctar' };
+    return { title: 'Historia no encontrada | Come' };
   }
 
-  const title = `${post.title} | Néctar Editorial`;
-  const description = post.excerpt?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Lee la crónica completa sobre ${post.title} en Néctar.`;
+  const title = `${post.title} | Come`;
+  const description = post.excerpt?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Lee la crónica completa sobre ${post.title} en Come.`;
 
   return {
     title,
@@ -63,7 +63,7 @@ export default async function Page({ params }: Props) {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Néctar Editorial',
+      name: 'Come',
       logo: {
         '@type': 'ImageObject',
         url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/c.png`,

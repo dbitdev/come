@@ -75,28 +75,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     
     if (!restaurant) {
         return {
-            title: "Restaurante no encontrado | Néctar",
+            title: "Restaurante no encontrado | Come",
         };
     }
 
-    const title = `${restaurant.name} - ${restaurant.category} | Néctar`;
-    const description = restaurant.description || `Descubre ${restaurant.name} en la Ciudad de México. ${restaurant.category} de alta gama en Néctar.`;
+    const title = `${restaurant.name} · ${restaurant.category} | Come`;
+    const description = restaurant.description || `${restaurant.name}: ${restaurant.category.toLowerCase()} en México. Dirección, menú y cómo llegar, en Come.`;
 
+    // Sin `images` aquí, Next usa opengraph-image.tsx. Mandar la foto original
+    // hacía que WhatsApp se rindiera: las que sube la redacción pesan varios MB.
+    const canonica = `/lugares/${slugify(restaurant.name || '')}`;
     return {
         title,
         description,
+        alternates: { canonical: canonica },
         openGraph: {
             title,
             description,
-            images: [restaurant.image],
+            url: canonica,
+            siteName: 'Come',
+            locale: 'es_MX',
             type: 'website',
         },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description,
-            images: [restaurant.image],
-        },
+        twitter: { card: 'summary_large_image', title, description },
     };
 }
 
