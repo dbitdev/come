@@ -1076,7 +1076,7 @@ export default function AdminDashboard() {
                                                     <label>Imagen del Restaurante</label>
                                                     <MediaUploader 
                                                         folder="restaurants" 
-                                                        onUploadComplete={(url) => setEditingRestaurant({...editingRestaurant, image: url})} 
+                                                        onUploadComplete={(url, _tipo, tarjeta) => setEditingRestaurant({...editingRestaurant, image: url, ...(tarjeta ? { imagenTarjeta: tarjeta } : {})})} 
                                                     />
                                                     <input 
                                                         value={editingRestaurant.image || ''} 
@@ -1225,7 +1225,7 @@ export default function AdminDashboard() {
                                                     <label>Imagen del Chef</label>
                                                     <MediaUploader 
                                                         folder="chefs" 
-                                                        onUploadComplete={(url) => setEditingChef({...editingChef, image: url})} 
+                                                        onUploadComplete={(url, _tipo, tarjeta) => setEditingChef({...editingChef, image: url, ...(tarjeta ? { imagenTarjeta: tarjeta } : {})})} 
                                                     />
                                                     <input 
                                                         value={editingChef.image || ''} 

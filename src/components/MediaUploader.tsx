@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { mensajeDeError } from "@/lib/erroresStorage";
+import { generarImagenDeTarjeta } from "@/lib/imagenTarjeta";
 import { FaUpload, FaImage, FaVideo, FaTimes, FaCheck } from 'react-icons/fa';
 
 interface MediaUploaderProps {
-    onUploadComplete: (url: string, type: 'image' | 'video') => void;
+    /** `tarjeta` es la versión 1200x630 para compartir, cuando se pudo generar. */
+    onUploadComplete: (url: string, type: 'image' | 'video', tarjeta?: string) => void;
     folder?: string;
 }
 
@@ -57,7 +59,24 @@ export default function MediaUploader({ onUploadComplete, folder = 'general' }: 
                 }, 
                 async () => {
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    onUploadComplete(downloadURL, isImage ? 'image' : 'video');
+
+                    // La versión pequeña para compartir se sube junto a la foto,
+                    // para que el servidor no tenga que recortar nada después.
+                    let urlTarjeta: string | undefined;
+                    if (isImage) {
+                        try {
+                            const recorte = await generarImagenDeTarjeta(file);
+                            if (recorte && storage) {
+                                const refTarjeta = ref(storage, `tarjetas/${folder}/${Date.now()}_${file.name}.jpg`);
+                                const subida = await uploadBytesResumable(refTarjeta, recorte);
+                                urlTarjeta = await getDownloadURL(subida.ref);
+                            }
+                        } catch {
+                            /* Sin ella se comparte con la tarjeta de marca. */
+                        }
+                    }
+
+                    onUploadComplete(downloadURL, isImage ? 'image' : 'video', urlTarjeta);
                     setUploading(false);
                     setPreview(null);
                 }

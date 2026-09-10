@@ -45,6 +45,7 @@ interface Restaurant {
     };
     lat?: number | string;
     lng?: number | string;
+    imagenTarjeta?: string;
     menu?: Array<{name?:string;description?:string;ingredients?:string;image?:string;price?:number}>;
 }
 
@@ -82,9 +83,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const title = `${restaurant.name} · ${restaurant.category} | Come`;
     const description = restaurant.description || `${restaurant.name}: ${restaurant.category.toLowerCase()} en México. Dirección, menú y cómo llegar, en Come.`;
 
-    // Sin `images` aquí, Next usa opengraph-image.tsx. Mandar la foto original
-    // hacía que WhatsApp se rindiera: las que sube la redacción pesan varios MB.
+    // `imagenTarjeta` es la foto ya recortada a 1200x630 y comprimida, generada
+    // al subirla. Mandar la original hacía que WhatsApp se rindiera: las que
+    // sube la redacción pesan varios MB. Si un lugar todavía no la tiene, se
+    // cae a la tarjeta de marca de opengraph-image.tsx.
     const canonica = `/lugares/${slugify(restaurant.name || '')}`;
+    // Si el lugar todavía no tiene su recorte, va la imagen fija de la marca:
+    // una estática no puede fallar en el servidor, que es la lección de haber
+    // intentado generarla al vuelo.
+    const imagenCompartir = restaurant.imagenTarjeta || '/og-come.jpg';
+    const imagenes = [{ url: imagenCompartir, width: 1200, height: 630, alt: restaurant.name }];
     return {
         title,
         description,
@@ -96,8 +104,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             siteName: 'Come',
             locale: 'es_MX',
             type: 'website',
+            images: imagenes,
         },
-        twitter: { card: 'summary_large_image', title, description },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [imagenCompartir],
+        },
     };
 }
 

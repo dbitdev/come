@@ -19,13 +19,28 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     chef.bio?.slice(0, 160) ||
     `${chef.name}, ${chef.role.toLowerCase()}${donde ? ` en ${donde}` : ""}. Trayectoria y reconocimientos, en Come.`;
   const canonica = `/chefs/${chef.slug}`;
+  // Igual que en los lugares: el recorte del retrato, o la imagen fija.
+  const imagenCompartir = chef.imagenTarjeta || "/og-come.jpg";
 
   return {
     title,
     description,
     alternates: { canonical: canonica },
-    openGraph: { title, description, url: canonica, siteName: "Come", locale: "es_MX", type: "profile" },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: {
+      title,
+      description,
+      url: canonica,
+      siteName: "Come",
+      locale: "es_MX",
+      type: "profile",
+      images: [{ url: imagenCompartir, width: 1200, height: 630, alt: chef.name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imagenCompartir],
+    },
   };
 }
 

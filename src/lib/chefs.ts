@@ -16,6 +16,8 @@ export interface Chef {
   bio: string;
   /** Vacío cuando el documento no trae un retrato utilizable. */
   image: string;
+  /** La foto ya recortada a 1200x630 para compartir el enlace. */
+  imagenTarjeta?: string;
   stars?: number;
   ubicacion?: string;
   restaurant?: string;
@@ -69,6 +71,7 @@ function aChef(id: string, d: Record<string, any>): Chef {
     role: d.specialty || d.especialidad || "Cocina mexicana",
     bio: d.bio || d.trajectory || "",
     image: d.image || d.photoUrl || "",
+    imagenTarjeta: d.imagenTarjeta || undefined,
     stars: Number(d.estrellas ?? d.michelinStars) || 0,
     ubicacion: d.ubicacion || d.estado || undefined,
     restaurant: d.restaurant || d.restaurante || undefined,

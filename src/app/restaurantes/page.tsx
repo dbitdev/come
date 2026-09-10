@@ -210,15 +210,6 @@ function Listado() {
           </label>
         </div>
 
-        <div className={styles.seal}>
-          <span className={styles.sealMark}>c</span>
-          <p>
-            {cocina
-              ? `Lugares de ${cocina.toLowerCase()} elegidos por la redacción.`
-              : "Lugares elegidos uno por uno por la redacción de Come."}
-          </p>
-        </div>
-
         {cargando ? (
           <div className={styles.empty}>Cargando restaurantes…</div>
         ) : (
