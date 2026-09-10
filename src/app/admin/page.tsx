@@ -34,7 +34,6 @@ const TITULOS: Record<string, string> = {
     restaurantes: "Negocios y lugares",
     chefs: "Directorio de chefs",
     guias: "Guías interactivas",
-    menus: "Menús digitales",
     nominaciones: "Nominaciones por revisar",
 };
 
@@ -42,6 +41,156 @@ const TITULOS: Record<string, string> = {
  * Asigna un negocio o una ficha a una persona registrada. El dueño puede luego
  * editarlo desde su perfil, así que esto lo decide sólo la redacción.
  */
+type PlatilloEditable = { name: string; description?: string; price: number; section?: string };
+
+/**
+ * Carga de la carta de un negocio, dentro de su propio editor.
+ *
+ * El lugar aporta su PDF o la dirección de su carta y el sistema propone los
+ * platillos; nada se guarda hasta que alguien los revisa. El parser es de
+ * reglas, así que con cartas maquetadas a columnas o hechas de imágenes va a
+ * fallar, y por eso avisa en vez de publicar cualquier cosa.
+ */
+function GestorDeMenu({
+    lugarId,
+    menu,
+    onChange,
+}: {
+    lugarId?: string;
+    menu: PlatilloEditable[];
+    onChange: (siguiente: PlatilloEditable[]) => void;
+}) {
+    const [fuente, setFuente] = useState("");
+    const [leyendo, setLeyendo] = useState(false);
+    const [subiendo, setSubiendo] = useState(false);
+    const [aviso, setAviso] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const leerDesde = async (url: string) => {
+        setLeyendo(true); setError(null); setAviso(null);
+        try {
+            const respuesta = await fetch("/api/menu/extraer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
+            });
+            const datos = await respuesta.json();
+            if (!respuesta.ok) throw new Error(datos?.error || "No se pudo leer la carta.");
+            if (datos.aviso) setAviso(datos.aviso);
+            if (datos.platillos?.length) {
+                // Se suman a lo que ya había, sin repetir por nombre.
+                const existentes = new Set(menu.map(p => normalizar(p.name)));
+                const nuevos = datos.platillos.filter((p: PlatilloEditable) => !existentes.has(normalizar(p.name)));
+                onChange([...menu, ...nuevos]);
+                setAviso(`Se leyeron ${nuevos.length} platillo(s). Revísalos antes de guardar.`);
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "No se pudo leer la carta.");
+        } finally {
+            setLeyendo(false);
+        }
+    };
+
+    const subirPdf = async (archivo: File) => {
+        if (!storage) return setError("Storage no está disponible.");
+        if (archivo.type !== "application/pdf") return setError("El archivo debe ser un PDF.");
+        setSubiendo(true); setError(null); setAviso(null);
+        try {
+            const referencia = ref(storage, `menus/${lugarId || "nuevo"}/${Date.now()}_${archivo.name}`);
+            const subida = await uploadBytes(referencia, archivo);
+            const url = await getDownloadURL(subida.ref);
+            setFuente(url);
+            await leerDesde(url);
+        } catch (e) {
+            setError(mensajeDeError(e));
+        } finally {
+            setSubiendo(false);
+        }
+    };
+
+    const editar = (indice: number, campo: keyof PlatilloEditable, valor: string) => {
+        onChange(menu.map((p, i) => i === indice
+            ? { ...p, [campo]: campo === "price" ? Number(valor) || 0 : valor }
+            : p));
+    };
+
+    return (
+        <div className={styles.menuBloque}>
+            <div className={styles.menuOrigen}>
+                <div className={styles.menuFuente}>
+                    <input
+                        value={fuente}
+                        onChange={e => setFuente(e.target.value)}
+                        placeholder="Dirección de la carta del lugar (PDF o página)"
+                    />
+                    <button
+                        type="button"
+                        className={styles.primaryBtn}
+                        disabled={!fuente.trim() || leyendo}
+                        onClick={() => leerDesde(fuente.trim())}
+                    >
+                        {leyendo ? "Leyendo…" : "Leer carta"}
+                    </button>
+                </div>
+                <label className={styles.menuConteo} style={{ cursor: "pointer" }}>
+                    {subiendo ? "Subiendo el PDF…" : "…o sube el PDF de la carta"}
+                    <input
+                        type="file"
+                        accept="application/pdf"
+                        style={{ display: "none" }}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) subirPdf(f); }}
+                    />
+                </label>
+            </div>
+
+            {error && <p className={styles.menuError}>{error}</p>}
+            {aviso && <p className={styles.menuAviso}>{aviso}</p>}
+
+            {menu.length > 0 && (
+                <>
+                    <div className={styles.menuEncabezado}>
+                        <span>Platillo</span><span>Descripción</span><span>Precio</span><span />
+                    </div>
+                    <div className={styles.menuTabla}>
+                        {menu.map((platillo, indice) => (
+                            <div key={indice} className={styles.menuFila}>
+                                <input value={platillo.name} onChange={e => editar(indice, "name", e.target.value)} />
+                                <input
+                                    value={platillo.description || ""}
+                                    onChange={e => editar(indice, "description", e.target.value)}
+                                    placeholder={platillo.section ? `— ${platillo.section}` : "Sin descripción"}
+                                />
+                                <input type="number" value={platillo.price} onChange={e => editar(indice, "price", e.target.value)} />
+                                <button
+                                    type="button"
+                                    className={styles.deleteBtn}
+                                    title="Quitar platillo"
+                                    onClick={() => onChange(menu.filter((_, i) => i !== indice))}
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            <div className={styles.menuPie}>
+                <span className={styles.menuConteo}>
+                    {menu.length === 0 ? "Sin platillos todavía" : `${menu.length} platillo(s)`}
+                </span>
+                <button
+                    type="button"
+                    className={styles.editBtn}
+                    onClick={() => onChange([...menu, { name: "", price: 0 }])}
+                >
+                    <FaPlus /> Agregar platillo
+                </button>
+            </div>
+        </div>
+    );
+}
+
 type ChefDelLugar = { nombre: string; id?: string; previo?: boolean };
 /** Lo que el gestor necesita de una ficha de chef. */
 type FichaDeChef = { id: string; name: string; restaurant?: string };
@@ -210,7 +359,7 @@ function SelectorDueno({
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'menus' | 'guias' | 'nominaciones'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'guias' | 'nominaciones'>('dashboard');
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [chefs, setChefs] = useState<any[]>([]);
     const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -525,6 +674,18 @@ export default function AdminDashboard() {
             const vinculados = data.chefIds;
             const sinFicha = actuales.filter(c => !c.id).map(c => c.nombre);
 
+            // Un platillo sin nombre es una fila que quedó a medias.
+            if (Array.isArray(data.menu)) {
+                data.menu = data.menu
+                    .filter((p: PlatilloEditable) => p?.name?.trim())
+                    .map((p: PlatilloEditable) => ({
+                        name: p.name.trim(),
+                        price: Number(p.price) || 0,
+                        ...(p.description?.trim() ? { description: p.description.trim() } : {}),
+                        ...(p.section ? { section: p.section } : {}),
+                    }));
+            }
+
             if (id) {
                 await updateDoc(doc(db, "come", id), {
                     ...data,
@@ -685,7 +846,6 @@ export default function AdminDashboard() {
                         <button onClick={() => setActiveSection('restaurantes')} className={activeSection === 'restaurantes' ? styles.navItemActive : styles.navItem}><FaUtensils /> Negocios / Lugares</button>
                         <button onClick={() => setActiveSection('chefs')} className={activeSection === 'chefs' ? styles.navItemActive : styles.navItem}><FaUsers /> Directorio de Chefs</button>
                         <button onClick={() => setActiveSection('guias')} className={activeSection === 'guias' ? styles.navItemActive : styles.navItem}><FaMapMarkerAlt /> Guías Interactivas</button>
-                        <button onClick={() => setActiveSection('menus')} className={activeSection === 'menus' ? styles.navItemActive : styles.navItem}><FaBookOpen /> Menús Digitales</button>
                         <button onClick={() => setActiveSection('nominaciones')} className={activeSection === 'nominaciones' ? styles.navItemActive : styles.navItem}>
                             <FaConciergeBell /> Nominaciones
                             {(chefNominations.length + placeNominations.length + leads.length) > 0 && <span className={styles.badge}>{chefNominations.length + placeNominations.length + leads.length}</span>}
@@ -897,6 +1057,13 @@ export default function AdminDashboard() {
                                                         usuarios={usuarios}
                                                         valor={editingRestaurant.userId}
                                                         onChange={uid => setEditingRestaurant({...editingRestaurant, userId: uid})}
+                                                    />
+
+                                                    <label>Menú del lugar</label>
+                                                    <GestorDeMenu
+                                                        lugarId={editingRestaurant.id}
+                                                        menu={Array.isArray(editingRestaurant.menu) ? editingRestaurant.menu : []}
+                                                        onChange={siguiente => setEditingRestaurant({...editingRestaurant, menu: siguiente})}
                                                     />
 
                                                     <label>Descripción</label>
@@ -1195,31 +1362,6 @@ export default function AdminDashboard() {
                                 </section>
                             )}
 
-                            {activeSection === 'menus' && (
-                                <section className={styles.tableSection}>
-                                    <h2>Gestión de Cartas Digitales</h2>
-                                    <table className={styles.adminTable}>
-                                        <thead>
-                                            <tr>
-                                                <th>Restaurante</th>
-                                                <th>Platillos</th>
-                                                <th>Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {restaurants.filter(r => r.menu?.length > 0).map(r => (
-                                                <tr key={r.id}>
-                                                    <td>{r.restaurantName}</td>
-                                                    <td>{r.menu.length} platillos</td>
-                                                    <td className={styles.actions}>
-                                                        <button className={styles.editBtn} title="Próximamente: Editor de Menú"><FaBookOpen /></button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </section>
-                            )}
                         </>
                     )}
                 </main>

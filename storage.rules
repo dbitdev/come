@@ -24,13 +24,14 @@ service firebase.storage {
       return request.resource.size < 25 * 1024 * 1024
         && request.resource.contentType != null
         && (request.resource.contentType.matches('image/.*')
-            || request.resource.contentType.matches('video/.*'));
+            || request.resource.contentType.matches('video/.*')
+            || request.resource.contentType == 'application/pdf');
     }
 
     // Carpetas que usa el admin: MediaUploader (restaurants|chefs|guides|general)
     // y la subida directa del editor de restaurantes (restaurants/{id}/...).
     match /{carpeta}/{archivo=**} {
-      allow read: if carpeta in ['restaurants', 'chefs', 'guides', 'general'];
+      allow read: if carpeta in ['restaurants', 'chefs', 'guides', 'general', 'menus'];
       // En Storage `write` cubre delete, y ahí request.resource es null: por eso
       // create/update y delete van por separado.
       allow create, update: if isPlatformAdmin() && isMediaValida();
