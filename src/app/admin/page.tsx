@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import AdminGuard from "@/components/AdminGuard";
 import MediaUploader from "@/components/MediaUploader";
 import { mensajeDeError } from "@/lib/erroresStorage";
-import { emparejarChefs, lugaresQueMencionan, separarNombres, textoDeChefs } from "@/lib/vinculos";
+import { lugaresQueMencionan, normalizar, separarNombres, textoDeChefs } from "@/lib/vinculos";
 import { slugify } from '@/lib/utils';
 import { 
     collection, 
@@ -42,12 +42,144 @@ const TITULOS: Record<string, string> = {
  * Asigna un negocio o una ficha a una persona registrada. El dueño puede luego
  * editarlo desde su perfil, así que esto lo decide sólo la redacción.
  */
+type ChefDelLugar = { nombre: string; id?: string; previo?: boolean };
+/** Lo que el gestor necesita de una ficha de chef. */
+type FichaDeChef = { id: string; name: string; restaurant?: string };
+/** Lo que el gestor necesita del documento del lugar. */
+type LugarEditable = {
+    chefsLista?: ChefDelLugar[];
+    chefsNombres?: string[];
+    chefIds?: string[];
+    chefIdsPrevios?: string[];
+    chef?: string;
+};
+
+/**
+ * La lista que edita el formulario. Sale del documento en cualquiera de sus dos
+ * formas: la nueva (arreglos) y la vieja (un texto con comas), porque el
+ * directorio todavía no está migrado del todo.
+ */
+function chefsDelLugar(lugar: LugarEditable | null | undefined): ChefDelLugar[] {
+    if (Array.isArray(lugar?.chefsLista)) return lugar.chefsLista;
+
+    const nombres: string[] = Array.isArray(lugar?.chefsNombres) && lugar.chefsNombres.length
+        ? lugar.chefsNombres
+        : separarNombres(lugar?.chef);
+    const ids: string[] = Array.isArray(lugar?.chefIds) ? lugar.chefIds : [];
+    const previos: string[] = Array.isArray(lugar?.chefIdsPrevios) ? lugar.chefIdsPrevios : [];
+
+    return nombres.map((nombre, i) => ({
+        nombre,
+        id: ids[i],
+        previo: Boolean(ids[i] && previos.includes(ids[i])),
+    }));
+}
+
+
+/**
+ * Un restaurante puede tener dos chefs, y puede tener chefs que ya se fueron.
+ * Escribirlos separados por coma en un solo campo era justo lo que hacía que se
+ * perdiera el segundo al editar; aquí se agregan y se quitan de uno en uno.
+ */
+function GestorDeChefs({
+    lista,
+    fichas,
+    onChange,
+}: {
+    lista: ChefDelLugar[];
+    fichas: FichaDeChef[];
+    onChange: (siguiente: ChefDelLugar[]) => void;
+}) {
+    const [nuevoNombre, setNuevoNombre] = useState("");
+
+    const yaEsta = (nombre: string, id?: string) =>
+        lista.some(c => (id && c.id === id) || normalizar(c.nombre) === normalizar(nombre));
+
+    const agregarDeFicha = (chefId: string) => {
+        const ficha = fichas.find(f => f.id === chefId);
+        if (!ficha || yaEsta(ficha.name, ficha.id)) return;
+        onChange([...lista, { nombre: ficha.name, id: ficha.id }]);
+    };
+
+    const agregarSuelto = () => {
+        const nombre = nuevoNombre.trim();
+        if (!nombre || yaEsta(nombre)) return setNuevoNombre("");
+        // Si el nombre coincide con una ficha existente, se enlaza solo.
+        const ficha = fichas.find(f => normalizar(f.name) === normalizar(nombre));
+        onChange([...lista, { nombre: ficha ? ficha.name : nombre, id: ficha?.id }]);
+        setNuevoNombre("");
+    };
+
+    const disponibles = fichas.filter(f => !lista.some(c => c.id === f.id));
+
+    return (
+        <>
+            <label>Chefs del lugar</label>
+            <div className={styles.chefsLista}>
+                {lista.length === 0 && <span className={styles.chefsVacio}>Sin chefs asignados.</span>}
+                {lista.map((chef, indice) => (
+                    <div key={`${chef.nombre}-${indice}`} className={styles.chefFila}>
+                        <span className={styles.chefNombre}>
+                            {chef.nombre}
+                            {chef.id
+                                ? <em className={styles.chefEtiquetaOk}>con ficha</em>
+                                : <em className={styles.chefEtiquetaSin}>sin ficha</em>}
+                        </span>
+                        <label className={styles.chefPrevio}>
+                            <input
+                                type="checkbox"
+                                checked={Boolean(chef.previo)}
+                                onChange={e => onChange(lista.map((c, i) => i === indice ? { ...c, previo: e.target.checked } : c))}
+                            />
+                            Ya no está
+                        </label>
+                        <button
+                            type="button"
+                            className={styles.deleteBtn}
+                            title="Quitar"
+                            onClick={() => onChange(lista.filter((_, i) => i !== indice))}
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            <div className={styles.chefAgregar}>
+                <select
+                    value=""
+                    onChange={e => { agregarDeFicha(e.target.value); e.target.value = ""; }}
+                    disabled={disponibles.length === 0}
+                >
+                    <option value="">
+                        {disponibles.length === 0 ? "No quedan fichas por agregar" : "Agregar un chef del directorio…"}
+                    </option>
+                    {disponibles.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}{f.restaurant ? ` · ${f.restaurant}` : ""}</option>
+                    ))}
+                </select>
+                <div className={styles.chefAgregarSuelto}>
+                    <input
+                        value={nuevoNombre}
+                        onChange={e => setNuevoNombre(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); agregarSuelto(); } }}
+                        placeholder="…o escribe un chef que todavía no tiene ficha"
+                    />
+                    <button type="button" className={styles.editBtn} onClick={agregarSuelto} title="Agregar">
+                        <FaPlus />
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
 function SelectorDueno({
     usuarios,
     valor,
     onChange,
 }: {
-    usuarios: any[];
+    usuarios: { uid: string; email?: string; displayName?: string }[];
     valor?: string;
     onChange: (uid: string | undefined) => void;
 }) {
@@ -380,17 +512,18 @@ export default function AdminDashboard() {
             const rName = data.restaurantName || data.name || "";
             data.subdomain = rName.toLowerCase().replace(/[^a-z0-9]/g, '-') + "." + APP_DOMAIN;
 
-            // Un restaurante puede tener dos chefs. El campo de texto se parte en
-            // nombres y los que ya tienen ficha quedan enlazados por id; el texto
-            // se conserva para el código que todavía lee `chef`.
-            const nombresChef = separarNombres(data.chef);
-            const { vinculados, sinFicha } = emparejarChefs(nombresChef, chefs);
-            data.chefIds = vinculados.map(v => v.id);
-            data.chefsNombres = nombresChef;
-            data.chef = textoDeChefs(nombresChef);
-            data.chefIdsPrevios = Array.isArray(editingRestaurant.chefIdsPrevios)
-                ? editingRestaurant.chefIdsPrevios.filter((idPrevio: string) => !data.chefIds.includes(idPrevio))
-                : [];
+            // La lista del formulario se traduce a los tres campos que consultan el
+            // sitio y la app. `chef` se conserva como texto derivado para el
+            // código que todavía lo lee.
+            const lista = chefsDelLugar(editingRestaurant);
+            delete data.chefsLista;
+            const actuales = lista.filter(c => !c.previo);
+            data.chefsNombres = actuales.map(c => c.nombre);
+            data.chefIds = actuales.map(c => c.id).filter(Boolean);
+            data.chefIdsPrevios = lista.filter(c => c.previo).map(c => c.id).filter(Boolean);
+            data.chef = textoDeChefs(data.chefsNombres);
+            const vinculados = data.chefIds;
+            const sinFicha = actuales.filter(c => !c.id).map(c => c.nombre);
 
             if (id) {
                 await updateDoc(doc(db, "come", id), {
@@ -754,15 +887,11 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </div>
 
-                                                    <label>Chef</label>
-                                                    <input 
-                                                        value={editingRestaurant.chef || ''} 
-                                                        onChange={e => setEditingRestaurant({...editingRestaurant, chef: e.target.value})}
-                                                        placeholder="Separa con coma si son varios: Julio Castillo, Hugo Jimenez"
+                                                    <GestorDeChefs
+                                                        lista={chefsDelLugar(editingRestaurant)}
+                                                        fichas={chefs}
+                                                        onChange={siguiente => setEditingRestaurant({...editingRestaurant, chefsLista: siguiente})}
                                                     />
-                                                    <small style={{ color: '#8a9690' }}>
-                                                        Al guardar se enlazan solos los que ya tengan ficha de chef.
-                                                    </small>
 
                                                     <SelectorDueno
                                                         usuarios={usuarios}

@@ -104,3 +104,44 @@
   .splitLayout{grid-template-columns:1fr}
   .formOuter{position:static}
 }
+
+/* ── Chefs de un lugar ────────────────────────────────────────────────
+   Se agregan de uno en uno: el campo de texto con comas se comía al
+   segundo chef en cuanto alguien editaba la ficha. */
+.chefsLista { display: flex; flex-direction: column; gap: .5rem; }
+.chefsVacio { font-size: .85rem; color: var(--foreground-muted); }
+.chefFila {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    background: var(--background);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: .6rem .8rem;
+}
+.chefNombre { flex: 1; display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: .95rem; }
+.chefEtiquetaOk, .chefEtiquetaSin {
+    font-style: normal;
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    padding: .18rem .5rem;
+}
+.chefEtiquetaOk { color: #0a4b31; background: #dcf0e2; }
+.chefEtiquetaSin { color: #8a6d3b; background: #f6ecd6; }
+.chefPrevio {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--foreground-muted);
+    white-space: nowrap;
+    margin: 0;
+}
+.chefPrevio input { width: auto; }
+.chefAgregar { display: flex; flex-direction: column; gap: .5rem; margin-top: .2rem; }
+.chefAgregarSuelto { display: flex; gap: .5rem; align-items: center; }
+.chefAgregarSuelto input { flex: 1; }
