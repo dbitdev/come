@@ -32,16 +32,17 @@ const nextConfig: NextConfig = {
   // /order era un re-export de /ordenar: dos URLs con el mismo contenido y sin
   // canónica, que es contenido duplicado para Google.
   async redirects() {
-    return [{ source: "/order", destination: "/ordenar", permanent: true }];
+    return [
+      { source: "/order", destination: "/ordenar", permanent: true },
+      { source: "/guias/chefs", destination: "/chefs", permanent: true },
+      { source: "/lugares/cocina-de-humo-alfonsina", destination: "/lugares/alfonsina", permanent: true },
+      { source: "/lugares/alfonsina-oaxaca", destination: "/lugares/alfonsina", permanent: true },
+    ];
   },
   async headers() {
-    return [
-      { source: "/:path*", headers: securityHeaders },
-      {
-        source: "/_next/static/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
-    ];
+    // Next ya asigna caché inmutable a sus assets con hash. Sobrescribirla aquí
+    // provocó que Chrome conservara chunks viejos durante desarrollo.
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
 };
 

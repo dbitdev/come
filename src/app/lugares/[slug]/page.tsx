@@ -11,10 +11,11 @@ import {
     Phone, 
     Navigation, 
     ChevronRight,
-    BookOpen
+    BookOpen,
+    ShoppingBag
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaTwitter } from 'react-icons/fa';
-import { rutaMenu, slugify } from '@/lib/utils';
+import { isCanonicalPublicPlace, rutaMenu, slugify } from '@/lib/utils';
 import { emparejarChefs, separarNombres } from '@/lib/vinculos';
 import { traerChefs } from '@/lib/chefs';
 import Link from 'next/link';
@@ -22,6 +23,10 @@ import styles from './profile.module.css';
 import { searchArticles } from '@/lib/wordpress';
 import { Metadata } from 'next';
 import Script from 'next/script';
+import FeedSocialCarousel from '@/components/FeedSocialCarousel';
+import { obtenerFeedLugar } from '@/lib/feedSocial';
+import type { SocialVideoSource } from '@/lib/feedSocial';
+import { generateVideoJsonLd } from '@/lib/socialMedia';
 
 interface Restaurant {
     id: string;
@@ -30,7 +35,7 @@ interface Restaurant {
     category: string;
     image: string;
     rating: string | number;
-    address: string;
+    address?: string;
     description?: string;
     chef?: string;
     signatureDishes?: string[];
@@ -42,10 +47,17 @@ interface Restaurant {
         instagram?: string;
         facebook?: string;
         twitter?: string;
+        tiktok?: string;
     };
+    socialVideos?: SocialVideoSource[];
     lat?: number | string;
     lng?: number | string;
     imagenTarjeta?: string;
+    city?: string;
+    ciudad?: string;
+    state?: string;
+    estado?: string;
+    priceRange?: string;
     menu?: Array<{name?:string;description?:string;ingredients?:string;image?:string;price?:number}>;
 }
 
@@ -57,6 +69,7 @@ async function getRestaurant(slug: string): Promise<Restaurant | null> {
         
         for (const docSnap of querySnapshot.docs) {
             const data = docSnap.data();
+            if (!isCanonicalPublicPlace(docSnap.id, data)) continue;
             const name = data.restaurantName || data.name || "";
             const computedSlug = slugify(name);
             
@@ -106,6 +119,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title,
         description,
+        keywords: [restaurant.name, restaurant.category, `restaurante ${restaurant.name}`, `menú ${restaurant.name}`, restaurant.city || restaurant.ciudad, restaurant.estado || restaurant.state, "Come", "ComeApp"].filter(Boolean) as string[],
         alternates: { canonical: canonica },
         openGraph: {
             title,
@@ -209,42 +223,84 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
     const lngNum = restaurant.lng ? Number(restaurant.lng) : null;
     const hasCoords = latNum !== null && lngNum !== null && !isNaN(latNum) && !isNaN(lngNum);
 
+    const address = restaurant.address?.trim() || "";
     const googleMapsUrl = hasCoords 
         ? `https://www.google.com/maps/dir/?api=1&destination=${latNum},${lngNum}`
-        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`;
+        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || restaurant.name)}`;
 
+    const ciudad = restaurant.city || restaurant.ciudad || (address.match(/Puebla/i) ? 'Puebla' : address.match(/Oaxaca/i) ? 'Oaxaca' : address.match(/CDMX|Ciudad de México/i) ? 'Ciudad de México' : undefined);
+    const region = restaurant.estado || restaurant.state || ciudad;
+    const rating = Number(restaurant.rating);
+    const ratingCount = Number((restaurant as Restaurant & { ratingCount?: number }).ratingCount);
+    const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/lugares/${slugify(restaurant.name)}`;
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'Restaurant',
         name: restaurant.name,
         image: restaurant.image,
         description: restaurant.description,
-        address: {
+        address: address || ciudad ? {
             '@type': 'PostalAddress',
-            streetAddress: restaurant.address,
-            addressLocality: 'Ciudad de México',
+            streetAddress: address || undefined,
+            addressLocality: ciudad,
+            addressRegion: region,
             addressCountry: 'MX',
-        },
+        } : undefined,
         geo: hasCoords ? {
             '@type': 'GeoCoordinates',
             latitude: latNum,
             longitude: lngNum,
         } : undefined,
         telephone: restaurant.phone,
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/lugares/${slug}`,
+        url: canonicalUrl,
+        menu: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}${rutaMenu(restaurant.name, restaurant.id)}`,
         servesCuisine: restaurant.category,
-        starRating: {
-            '@type': 'Rating',
-            ratingValue: restaurant.rating,
-        },
+        priceRange: restaurant.priceRange,
+        aggregateRating: Number.isFinite(rating) && Number.isFinite(ratingCount) && ratingCount > 0 ? {
+            '@type': 'AggregateRating',
+            ratingValue: rating,
+            bestRating: 5,
+            ratingCount,
+        } : undefined,
+        sameAs: [
+            restaurant.socials?.instagram,
+            restaurant.socials?.facebook,
+            restaurant.socials?.twitter,
+            restaurant.website,
+        ].filter(Boolean),
     };
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/` },
+            { '@type': 'ListItem', position: 2, name: 'Restaurantes', item: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/restaurantes` },
+            { '@type': 'ListItem', position: 3, name: restaurant.name, item: canonicalUrl },
+        ],
+    };
+
+    const feedSocial = obtenerFeedLugar({
+        nombre: restaurant.name,
+        imagen: restaurant.image,
+        socials: restaurant.socials,
+        socialVideos: restaurant.socialVideos,
+    });
+
+    const videoJsonLds = feedSocial.items.map(v => generateVideoJsonLd({
+        id: v.id,
+        titulo: v.titulo,
+        miniatura: v.miniatura,
+        autor: v.autor,
+        videoUrl: v.videoUrl,
+        url: v.url,
+    }));
 
     return (
         <div className={styles.profileWrapper}>
             <Script
                 id="restaurant-jsonld"
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, breadcrumbJsonLd, ...videoJsonLds]).replace(/</g, '\\u003c') }}
             />
             {/* Hero Section */}
             <div className={styles.hero}>
@@ -253,36 +309,107 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
             </div>
 
             <div className={styles.contentContainer}>
-                {/* Main Header Card */}
-                <header className={styles.mainHeader}>
-                    <div className={styles.category}>{restaurant.category}</div>
-                    <h1 className={styles.name}>{restaurant.name}</h1>
-                    
-                    <div className={styles.badges}>
-                        <div className={styles.rating}>
-                            <Star color="#f5c518" fill="#f5c518" size={18} /> {restaurant.rating}
-                        </div>
+                {/* Header Top Grid: Info y Botones a la izquierda, Mapa a la derecha */}
+                <div className={styles.headerTopGrid}>
+                    <div className={styles.headerLeftCol}>
+                        <header className={styles.mainHeader}>
+                            <div className={styles.category}>{restaurant.category}</div>
+                            <h1 className={styles.name}>{restaurant.name}</h1>
 
-                        {restaurant.isMichelin && (
-                            <div className={styles.michelinStars}>
-                                <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />
-                                <span>{restaurant.michelinStars || 1} Estrellas Michelin</span>
+                            <div className={styles.badges}>
+                                <div className={styles.rating}>
+                                    <Star color="#f5c518" fill="#f5c518" size={18} /> {restaurant.rating}
+                                </div>
+
+                                {restaurant.isMichelin && (
+                                    <div className={styles.michelinStars}>
+                                        <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />
+                                        <span>{restaurant.michelinStars || 1} Estrellas Michelin</span>
+                                    </div>
+                                )}
+
+                                {address && (
+                                    <div className={styles.addressRow}>
+                                        <MapPin color="var(--primary)" size={18} />
+                                        {address}
+                                    </div>
+                                )}
                             </div>
-                        )}
 
-                        <div className={styles.addressRow}>
-                            <MapPin color="var(--primary)" size={18} />
-                            {restaurant.address}
+                            <div className={styles.headerActionTray}>
+                                <Link
+                                    href={rutaMenu(restaurant.name, restaurant.id)}
+                                    className={styles.actionBtn}
+                                >
+                                    <UtensilsCrossed size={18} /> VER MENÚ
+                                </Link>
+                                <Link
+                                    href={rutaMenu(restaurant.name, restaurant.id)}
+                                    className={styles.actionBtnSecondary}
+                                >
+                                    <ShoppingBag size={18} /> ORDENAR
+                                </Link>
+                            </div>
+                        </header>
+                    </div>
+
+                    {/* Mapa en el header del lado derecho */}
+                    <div className={styles.headerRightCol}>
+                        <div className={styles.mapCard}>
+                            <h3>Ubicación</h3>
+                            <div className={styles.mapWrapper}>
+                                {hasCoords ? (
+                                    <SinglePlaceMapWrapper lat={latNum} lng={lngNum} name={restaurant.name} />
+                                ) : (
+                                    <div className={styles.mapPlaceholder}>
+                                        <MapPin size={32} strokeWidth={1} />
+                                        <p>Mapa no disponible</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <a
+                                href={googleMapsUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`${styles.actionBtn} ${styles.mapDirectionsBtn}`}
+                            >
+                                <Navigation size={18} /> CÓMO LLEGAR
+                            </a>
+
+                            <div className={styles.contactInfo}>
+                                {restaurant.phone && (
+                                    <a href={`tel:${restaurant.phone}`} className={styles.contactLink}>
+                                        <Phone color="var(--primary)" size={18} /> {restaurant.phone}
+                                    </a>
+                                )}
+                                {restaurant.website && (
+                                    <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                                        <Globe color="var(--primary)" size={18} /> Web Oficial
+                                    </a>
+                                )}
+                            </div>
+
+                            <div className={styles.socialLinks}>
+                                {restaurant.socials?.instagram && (
+                                    <a href={restaurant.socials.instagram} target="_blank" rel="noreferrer" aria-label={`Instagram de ${restaurant.name}`}><FaInstagram size={24} /></a>
+                                )}
+                                {restaurant.socials?.facebook && (
+                                    <a href={restaurant.socials.facebook} target="_blank" rel="noreferrer" aria-label={`Facebook de ${restaurant.name}`}><FaFacebookF size={24} /></a>
+                                )}
+                                {restaurant.socials?.twitter && (
+                                    <a href={restaurant.socials.twitter} target="_blank" rel="noreferrer" aria-label={`X de ${restaurant.name}`}><FaTwitter size={24} /></a>
+                                )}
+                            </div>
                         </div>
                     </div>
-                    {restaurant.menu && restaurant.menu.length > 0 && <Link href={rutaMenu(restaurant.name, restaurant.id)} className={styles.menuCta}>Ver menú</Link>}
-                </header>
-
-                {restaurant.menu && restaurant.menu.length > 0 && <section className={styles.menuHighlights}><div className={styles.highlightHead}><span>DESTACADOS DEL MENÚ</span><h2>{restaurant.description || `Lo mejor de ${restaurant.name}`}</h2><Link href={rutaMenu(restaurant.name, restaurant.id)}>Ver el menú completo <ChevronRight size={18}/></Link></div><div className={styles.highlightGrid}>{restaurant.menu.slice(0,4).map((item,index)=><Link href={rutaMenu(restaurant.name, restaurant.id)} key={`${item.name}-${index}`}><img src={item.image || restaurant.image} alt={item.name || "Platillo"}/><h3>{item.name || "Platillo destacado"}</h3><p>{item.description || item.ingredients || "Preparado por el restaurante."}</p><b>Ordenar ahora</b></Link>)}</div></section>}
+                </div>
 
                 <div className={styles.grid}>
                     {/* Main Content Column */}
-                    <main className={styles.mainColumn}>
+                    <main className={styles.mainColumnFull}>
+                        {restaurant.menu && restaurant.menu.length > 0 && <section className={styles.menuHighlights}><div className={styles.highlightHead}><span>DESTACADOS DEL MENÚ</span><h2>{restaurant.description || `Lo mejor de ${restaurant.name}`}</h2><Link href={rutaMenu(restaurant.name, restaurant.id)}>Ver el menú completo <ChevronRight size={18}/></Link></div><div className={styles.highlightGrid}>{restaurant.menu.slice(0,4).map((item,index)=><Link href={rutaMenu(restaurant.name, restaurant.id)} key={`${item.name}-${index}`}><img src={item.image || restaurant.image} alt={item.name || "Platillo"}/><h3>{item.name || "Platillo destacado"}</h3><p>{item.description || item.ingredients || "Preparado por el restaurante."}</p><b>Ordenar ahora</b></Link>)}</div></section>}
+
                         {/* Featured In Guides Section */}
                         {(restaurant as any).featuredInGuides && (restaurant as any).featuredInGuides.length > 0 && (
                             <section className={styles.extraSection}>
@@ -351,6 +478,14 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                                     </div>
                                 </div>
                             )}
+
+                            {/* Feed Social de TikTok e Instagram */}
+                            <FeedSocialCarousel
+                                titulo={`Ambiente y cocina en ${restaurant.name}`}
+                                subtitulo="EN TIKTOK E INSTAGRAM"
+                                items={feedSocial.items}
+                                cuentas={feedSocial.cuentas}
+                            />
                         </section>
 
                         {/* Related Articles Section */}
@@ -393,60 +528,6 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                             </section>
                         )}
                     </main>
-
-                    {/* Sidebar Column */}
-                    <aside className={styles.sidebar}>
-                        <div className={styles.mapCard}>
-                            <h3>Ubicación</h3>
-                            <div className={styles.mapWrapper}>
-                                {hasCoords ? (
-                                    <SinglePlaceMapWrapper lat={latNum} lng={lngNum} name={restaurant.name} />
-                                ) : (
-                                    <div className={styles.mapPlaceholder}>
-                                        <MapPin size={32} strokeWidth={1} />
-                                        <p>Mapa no disponible</p>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className={styles.contactInfo}>
-                                {restaurant.phone && (
-                                    <a href={`tel:${restaurant.phone}`} className={styles.contactLink}>
-                                        <Phone color="var(--primary)" size={18} /> {restaurant.phone}
-                                    </a>
-                                )}
-                                {restaurant.website && (
-                                    <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                                        <Globe color="var(--primary)" size={18} /> Web Oficial
-                                    </a>
-                                )}
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '2rem', justifyContent: 'center', fontSize: '1.4rem' }}>
-                                {restaurant.socials?.instagram && (
-                                    <a href={restaurant.socials.instagram} target="_blank" rel="noreferrer" style={{ color: '#E1306C' }}><FaInstagram size={24} /></a>
-                                )}
-                                {restaurant.socials?.facebook && (
-                                    <a href={restaurant.socials.facebook} target="_blank" rel="noreferrer" style={{ color: '#4267B2' }}><FaFacebookF size={24} /></a>
-                                )}
-                                {restaurant.socials?.twitter && (
-                                    <a href={restaurant.socials.twitter} target="_blank" rel="noreferrer" style={{ color: '#1DA1F2' }}><FaTwitter size={24} /></a>
-                                )}
-                            </div>
-                        </div>
-
-                        <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                            <button className={styles.actionBtn}>
-                                <Navigation style={{ marginRight: '8px' }} size={18} /> Cómo Llegar
-                            </button>
-                        </a>
-
-                        <Link href={rutaMenu(restaurant.name, restaurant.id)} style={{ textDecoration: 'none' }}>
-                            <button className={styles.actionBtn} style={{ background: '#fff', color: '#000', border: '2px solid #000', marginTop: '-1rem' }}>
-                                <UtensilsCrossed style={{ marginRight: '8px' }} size={18} /> Menú Digital
-                            </button>
-                        </Link>
-                    </aside>
                 </div>
             </div>
         </div>

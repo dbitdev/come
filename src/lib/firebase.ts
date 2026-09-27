@@ -45,9 +45,10 @@ if (isConfigValid) {
         if (typeof window !== "undefined") {
             // setLogLevel('debug'); // Uncomment for troubleshooting
             
-            // Force long polling on client side for maximum compatibility
+            // Firestore elige el transporte más estable para cada navegador.
+            // Forzar long polling dejaba algunos listados esperando indefinidamente.
             // databaseId is the third parameter of initializeFirestore
-            const opciones = { experimentalForceLongPolling: true };
+            const opciones = { experimentalAutoDetectLongPolling: true };
             db = DB_ID ? initializeFirestore(app, opciones, DB_ID) : initializeFirestore(app, opciones);
         } else {
             db = DB_ID ? getFirestore(app, DB_ID) : getFirestore(app);

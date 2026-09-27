@@ -21,7 +21,7 @@ export default function SinglePlaceMap({ lat, lng, name }: SingleMapProps) {
                 defaultZoom={15}
                 gestureHandling={'none'}
                 disableDefaultUI={true}
-                style={{ width: '100%', height: '100%', minHeight: '300px' }}
+                style={{ width: '100%', height: '100%' }}
             >
                 <AdvancedMarker position={position} title={name}>
                     <Pin background={'#000'} glyphColor={'#fff'} borderColor={'#000'} />

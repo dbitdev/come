@@ -3,18 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "seed:catalog": "node src/scripts/seed-come-catalog.mjs",
+    "seed:chefs": "node src/scripts/seed-come-chefs.mjs",
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
     "@vis.gl/react-google-maps": "^1.7.1",
     "firebase": "^12.10.0",
+    "firebase-admin": "^14.5.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.7.0",
-    "next": "16.1.6",
+    "next": "16.3.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.6.0",
@@ -22,14 +25,14 @@
     "unpdf": "^1.8.1"
   },
   "devDependencies": {
-    "@next/env": "^16.2.9",
+    "@next/env": "^16.3.6",
     "@types/google.maps": "^3.65.2",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.3.6",
     "typescript": "^5"
   },
   "engines": {

@@ -26,6 +26,17 @@ export function isPublished(data: { status?: string } | undefined | null): boole
 }
 
 /**
+ * Registros históricos que ya tienen una ficha canónica con mejores datos.
+ * Se conservan en Firestore para no destruir trabajo editorial, pero no se
+ * publican dos veces en mapas, listados ni sitemap.
+ */
+const DUPLICADOS_NO_CANONICOS = new Set(["alfonsina-oaxaca"]);
+
+export function isCanonicalPublicPlace(id: string, data: { status?: string } | undefined | null): boolean {
+  return isPublished(data) && !DUPLICADOS_NO_CANONICOS.has(id);
+}
+
+/**
  * URL pública de un lugar. Preferimos el nombre convertido en slug
  * ("levadura-de-olla") porque el id de Firestore no le dice nada a nadie ni
  * ayuda en buscadores. La ruta /lugares/[slug] resuelve por slug o por id, así

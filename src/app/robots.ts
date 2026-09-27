@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/perfil/', '/login/', '/register/'],
+      disallow: ['/admin/', '/perfil/', '/login/', '/register/', '/api/'],
     },
     sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}/sitemap.xml`,
   };

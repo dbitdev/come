@@ -21,6 +21,8 @@ import {
 import { FaInstagram, FaTwitter, FaFacebookF } from 'react-icons/fa';
 import { rutaLugar } from "@/lib/utils";
 import { lugaresQueMencionan } from '@/lib/vinculos';
+import FeedSocialCarousel from '@/components/FeedSocialCarousel';
+import { obtenerFeedChef } from '@/lib/feedSocial';
 
 export default function ChefProfilePage() {
     const params = useParams();
@@ -119,13 +121,20 @@ export default function ChefProfilePage() {
     if (loading) return <div className={styles.loading}>Cargando perfil...</div>;
     if (!chef) return <div className={styles.error}>Chef no encontrado</div>;
 
+    const feedSocial = obtenerFeedChef({
+        name: chef.name,
+        image: chef.image,
+        redes: chef.redes,
+        socialVideos: chef.socialVideos,
+    });
+
     return (
         <div className={styles.container}>
             {/* Minimal Sticky Nav */}
             <nav className={styles.stickyNav}>
                 <div className={styles.navContent}>
-                    <Link href="/guias/chefs" className={styles.backLink}>
-                        <ChevronLeft size={18} /> <span>Maestros</span>
+                    <Link href="/chefs" className={styles.backLink}>
+                        <ChevronLeft size={18} /> <span>Chefs</span>
                     </Link>
                 </div>
             </nav>
@@ -239,6 +248,18 @@ export default function ChefProfilePage() {
                             {articles.length === 0 && <p className={styles.emptyMsg}>No hay menciones recientes en la prensa.</p>}
                         </div>
                     </section>
+
+                    {/* Social Feed Section */}
+                    {feedSocial.items.length > 0 && (
+                        <div style={{ gridColumn: '1 / -1' }}>
+                            <FeedSocialCarousel
+                                titulo={`En redes con ${chef.name}`}
+                                subtitulo="TIKTOK E INSTAGRAM"
+                                items={feedSocial.items}
+                                cuentas={feedSocial.cuentas}
+                            />
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

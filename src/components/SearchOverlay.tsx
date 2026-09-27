@@ -3,16 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { collection, getDocs, limit, query } from "firebase/firestore";
 import { ChefHat, MapPin, Search, Utensils, X } from "lucide-react";
-import { db } from "@/lib/firebase";
 import styles from "./SearchOverlay.module.css";
 import { isPublished, rutaLugar } from "@/lib/utils";
+import type { CatalogResponse } from "@/types/catalog";
 
 const ANTOJOS = ["Tacos al pastor", "Birria", "Mariscos", "Pozole", "Mole", "Cochinita pibil", "Chilaquiles", "Café de olla"];
 const COCINAS = ["Mexicana", "Antojitos", "Carne asada", "Hamburguesas", "Pizza", "Sushi", "Ramen", "Italiana", "Desayunos", "Postres"];
 
-type Hit = { id: string; name: string; category: string; address: string };
+type Hit = { id: string; name: string; category: string; address: string; city: string; state: string };
+
+const normalizar = (valor: unknown) => String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
 export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -32,16 +33,18 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   // Se carga una sola vez y el filtrado vive en el cliente: resultados al instante.
   useEffect(() => {
     (async () => {
-      if (!db) return;
       try {
-        const snapshot = await getDocs(query(collection(db, "come"), limit(60)));
-        setPlaces(snapshot.docs.filter((document) => isPublished(document.data())).map((document) => {
-          const data = document.data();
+        const response = await fetch("/api/restaurants");
+        const payload = await response.json() as CatalogResponse;
+        if (!response.ok) throw new Error(payload.error || "No se pudo cargar el catálogo.");
+        setPlaces(payload.restaurants.filter((data) => isPublished(data)).map((data) => {
           return {
-            id: document.id,
+            id: data.id,
             name: data.restaurantName || data.name || "Restaurante",
             category: data.category || "Cocina mexicana",
             address: data.address || "México",
+            city: data.city || data.ciudad || "",
+            state: data.estado || data.state || "",
           };
         }));
       } catch {
@@ -51,11 +54,11 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   }, []);
 
   const resultados = useMemo(() => {
-    const needle = term.trim().toLowerCase();
+    const needle = normalizar(term);
     if (needle.length < 2) return { lugares: [] as Hit[], sugerencias: [] as string[] };
-    const coincide = (text: string) => text.toLowerCase().includes(needle);
+    const coincide = (text: string) => normalizar(text).includes(needle);
     return {
-      lugares: places.filter((place) => coincide(place.name) || coincide(place.category) || coincide(place.address)).slice(0, 6),
+      lugares: places.filter((place) => coincide(`${place.name} ${place.category} ${place.address} ${place.city} ${place.state}`)).slice(0, 6),
       sugerencias: [...ANTOJOS, ...COCINAS].filter(coincide).slice(0, 6),
     };
   }, [term, places]);

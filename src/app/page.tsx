@@ -53,7 +53,7 @@ const fallbackPlaces = [
   { id:"rosetta", name:"Rosetta", category:"Italiana mexicana", address:"Roma Norte, CDMX", image:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=85" },
 ];
 
-type Place = { id:string; name:string; category:string; address:string; image:string; rating?:string|number; estado?:string; isMichelin?:boolean; estrellas?:number };
+type Place = { id:string; name:string; category:string; cuisineTypes?:string[]; address:string; image:string; rating?:string|number; estado?:string; isMichelin?:boolean; estrellas?:number };
 type GuideCard = { id:string; slug:string; title:string; description:string; heroImage:string };
 
 // Carrusel horizontal de tipos de cocina.
@@ -136,6 +136,7 @@ function useContenidoPortada(){
           id:doc.id,
           name:d.restaurantName||d.name||"Restaurante",
           category:d.category||"Cocina local",
+          cuisineTypes:Array.isArray(d.cuisine_type)?d.cuisine_type:[],
           address:d.address||"México",
           image:d.image||d.menu?.[0]?.image||fallbackPlaces[0].image,
           rating:d.rating,
@@ -190,12 +191,16 @@ function SeccionPorCocina({places}:{places:Place[]}){
   const cocinas=useMemo(()=>{
     // Ojo: `Map` en este archivo es el icono de lucide-react, no el de JS.
     const cuenta: Record<string,number> = {};
-    places.forEach(p=>{ if(p.category) cuenta[p.category]=(cuenta[p.category]||0)+1; });
-    return Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).map(([nombre])=>nombre);
+    places.forEach(p=>{
+      const etiquetas=p.cuisineTypes?.length?p.cuisineTypes:[p.category];
+      etiquetas.forEach(nombre=>{ if(nombre) cuenta[nombre]=(cuenta[nombre]||0)+1; });
+    });
+    // La portada presenta una selección breve; el directorio conserva todos los filtros.
+    return Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([nombre])=>nombre);
   },[places]);
   const [activa,setActiva]=useState<string|null>(null);
   const cocinaActiva=activa&&cocinas.includes(activa)?activa:cocinas[0];
-  const visibles=useMemo(()=>places.filter(p=>p.category===cocinaActiva).slice(0,4),[places,cocinaActiva]);
+  const visibles=useMemo(()=>places.filter(p=>(p.cuisineTypes?.length?p.cuisineTypes:[p.category]).includes(cocinaActiva||"")).slice(0,4),[places,cocinaActiva]);
   if(cocinas.length===0) return null;
   return <section className={styles.cuisineSection}>
     <div className={styles.feedHeading}>

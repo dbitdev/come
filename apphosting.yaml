@@ -65,3 +65,13 @@ environmentVariables:
     availability:
       - BUILD
       - RUNTIME
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://comeapp.com.mx
+    availability:
+      - BUILD
+      - RUNTIME
+
+# Antes de activar las conexiones sociales, crea en Secret Manager y agrega aquí
+# (RUNTIME) INSTAGRAM_APP_ID/SECRET, FACEBOOK_APP_ID/SECRET,
+# TIKTOK_CLIENT_KEY/SECRET, SOCIAL_OAUTH_STATE_SECRET,
+# SOCIAL_TOKEN_ENCRYPTION_KEY y SOCIAL_SYNC_CRON_SECRET.

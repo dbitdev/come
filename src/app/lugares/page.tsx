@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./lugares.module.css";
 import { Star, Award, ExternalLink } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
-import { rutaLugar } from "@/lib/utils";
+import { isPublished, rutaLugar } from "@/lib/utils";
+
+const normalizar = (valor: unknown) => String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const normalizarUbicacion = (valor: unknown) => normalizar(valor).replace(/\b(ciudad de mexico|mexico city)\b/g, "cdmx");
 
 // Metadata cannot be used in a Client Component. Page titles are managed via side effects if needed.
 
@@ -19,8 +20,8 @@ export default function LugaresPage({
     const resolvedSearchParams = use(searchParams);
     const rawQuery = resolvedSearchParams.search || "";
     const rawLocation = resolvedSearchParams.location || "";
-    const query = rawQuery.toLowerCase();
-    const location = rawLocation.toLowerCase();
+    const query = normalizar(rawQuery);
+    const location = normalizarUbicacion(rawLocation);
     
     const [allRestaurants, setAllRestaurants] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,15 +34,18 @@ export default function LugaresPage({
     useEffect(() => {
         const fetchData = async () => {
             try {
-                if (db) {
-                    const querySnapshot = await getDocs(collection(db, "come"));
-                    const firestoreRestaurants = querySnapshot.docs.map(doc => {
-                        const data = doc.data();
+                {
+                    const response = await fetch("/api/restaurants");
+                    const payload = await response.json();
+                    if (!response.ok) throw new Error(payload.error || "No se pudo cargar el catálogo.");
+                    const firestoreRestaurants = payload.restaurants.filter((data: Record<string, unknown>) => isPublished(data)).map((data: Record<string, any>) => {
                         return {
-                            id: doc.id,
+                            id: data.id,
                             name: data.restaurantName || data.name,
                             category: data.category,
                             address: data.address || "Dirección no disponible",
+                            city: data.city || data.ciudad || "",
+                            state: data.estado || data.state || "",
                             image: (data.menu && data.menu[0]?.image) || data.image || "/placeholder-restaurant.jpg",
                             rating: data.rating || "Nuevo",
                             isMichelin: !!data.awards || !!data.isMichelin,
@@ -55,8 +59,6 @@ export default function LugaresPage({
                         };
                     });
                     setAllRestaurants(firestoreRestaurants);
-                } else {
-                    setAllRestaurants([]);
                 }
             } catch (error) {
                 console.error("Error fetching places:", error);
@@ -70,14 +72,13 @@ export default function LugaresPage({
     }, []);
 
     const filteredRestaurants = allRestaurants.filter(r => {
+        const indice = normalizar(`${r.name} ${r.category} ${r.description} ${r.chef} ${r.address} ${r.city} ${r.state}`);
+        const indiceUbicacion = normalizarUbicacion(`${r.address} ${r.city} ${r.state}`);
         const matchesSearch = !query || 
-            r.name.toLowerCase().includes(query) || 
-            r.category.toLowerCase().includes(query) ||
-            (r.description && r.description.toLowerCase().includes(query));
+            indice.includes(query);
             
         const matchesLocation = !location || 
-            (r.address && r.address.toLowerCase().includes(location)) ||
-            (r.name && r.name.toLowerCase().includes(location));
+            indiceUbicacion.includes(location);
 
         return matchesSearch && matchesLocation;
     });

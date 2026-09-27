@@ -1,6 +1,7 @@
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { slugify } from "@/lib/utils";
+import type { SocialVideoSource } from "@/lib/feedSocial";
 
 export interface RedSocial {
   red: "instagram" | "facebook" | "twitter" | "tiktok";
@@ -23,6 +24,7 @@ export interface Chef {
   restaurant?: string;
   logroClave?: string;
   redes: RedSocial[];
+  socialVideos: SocialVideoSource[];
 }
 
 /**
@@ -77,6 +79,7 @@ function aChef(id: string, d: Record<string, any>): Chef {
     restaurant: d.restaurant || d.restaurante || undefined,
     logroClave: d.logroClave || d.awards || undefined,
     redes: normalizarRedes(d.redes ?? d.socials),
+    socialVideos: Array.isArray(d.socialVideos) ? d.socialVideos : [],
   };
 }
 

@@ -29,8 +29,31 @@ import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
 import Link from 'next/link';
 import FoodPin from './FoodPin';
 import GoogleMapsWrapper from './GoogleMapsWrapper';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+
+const normalizar = (valor: unknown) => String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+const CENTROS: Record<string, { lat: number; lng: number; estado: string }> = {
+    cdmx: { lat: 19.4326, lng: -99.1332, estado: "CDMX" },
+    "ciudad de mexico": { lat: 19.4326, lng: -99.1332, estado: "CDMX" },
+    puebla: { lat: 19.0414, lng: -98.2063, estado: "Puebla" },
+    oaxaca: { lat: 17.0732, lng: -96.7266, estado: "Oaxaca" },
+    "baja california": { lat: 32.5149, lng: -117.0382, estado: "Baja California" },
+    "quintana roo": { lat: 20.6296, lng: -87.0739, estado: "Quintana Roo" },
+};
+
+function ubicacionBase(place: Record<string, unknown>) {
+    const texto = normalizar(`${place.city || ""} ${place.ciudad || ""} ${place.estado || ""} ${place.state || ""} ${place.address || ""}`);
+    const clave = Object.keys(CENTROS).find((nombre) => texto.includes(nombre));
+    return CENTROS[clave || "cdmx"];
+}
+
+function desplazamientoEstable(id: string) {
+    let semilla = 0;
+    for (let indice = 0; indice < id.length; indice += 1) semilla = (semilla * 31 + id.charCodeAt(indice)) >>> 0;
+    const angulo = (semilla % 360) * Math.PI / 180;
+    const radio = 0.006 + ((semilla >>> 8) % 28) / 1000;
+    return { lat: Math.sin(angulo) * radio, lng: Math.cos(angulo) * radio };
+}
 
 export default function MapComponent() {
     return (
@@ -62,17 +85,25 @@ function MapContent() {
     const geocodingLib = useMapsLibrary('geocoding');
 
     const fetchRestaurants = useCallback(async () => {
-        if (!db) return;
         try {
-            const querySnapshot = await getDocs(collection(db, "come"));
-            const data = querySnapshot.docs.filter(doc => isPublished(doc.data())).map(doc => {
-                const d = doc.data();
+            const response = await fetch("/api/restaurants");
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || "No se pudo cargar el catálogo.");
+            const data = payload.restaurants.filter((d: Record<string, unknown>) => isPublished(d)).map((d: Record<string, any>) => {
+                const base = ubicacionBase(d);
+                const lat = Number(d.lat);
+                const lng = Number(d.lng);
+                const tieneCoordenadas = Number.isFinite(lat) && Number.isFinite(lng);
+                const offset = desplazamientoEstable(String(d.id));
                 return {
-                    id: doc.id,
+                    id: d.id,
                     name: d.restaurantName || d.name,
-                    lat: d.lat || 19.4326,
-                    lng: d.lng || -99.1332,
-                    ...d
+                    ...d,
+                    city: d.city || d.ciudad || base.estado,
+                    estado: d.estado || d.state || base.estado,
+                    lat: tieneCoordenadas ? lat : base.lat + offset.lat,
+                    lng: tieneCoordenadas ? lng : base.lng + offset.lng,
+                    coordinatesApproximate: !tieneCoordenadas,
                 };
             });
             setRestaurants(data);
@@ -99,14 +130,13 @@ function MapContent() {
     const hayFiltros = Boolean(filtroEstado || filtroCocina || soloMichelin || searchQuery);
 
     const filteredRestaurants = restaurants.filter(r => {
-        const texto = searchQuery.toLowerCase();
+        const texto = normalizar(searchQuery);
+        const indice = normalizar(`${r.name} ${r.category} ${r.estado} ${r.state} ${r.city} ${r.ciudad} ${r.address}`);
         const coincideTexto = !texto
-            || (r.name || "").toLowerCase().includes(texto)
-            || (r.category || "").toLowerCase().includes(texto)
-            || (r.estado || "").toLowerCase().includes(texto);
+            || indice.includes(texto);
         return coincideTexto
-            && (!filtroEstado || r.estado === filtroEstado)
-            && (!filtroCocina || r.category === filtroCocina)
+            && (!filtroEstado || normalizar(r.estado || r.state) === normalizar(filtroEstado))
+            && (!filtroCocina || normalizar(r.category).includes(normalizar(filtroCocina)))
             && (!soloMichelin || Boolean(r.isMichelin));
     });
 
@@ -136,10 +166,6 @@ function MapContent() {
         }
     }, [map]);
 
-    useEffect(() => {
-        handleLocateUser();
-    }, []); // Only run once on mount
-
     const lastBoundsRef = useRef<string>("");
 
     useEffect(() => {
@@ -161,54 +187,24 @@ function MapContent() {
         });
     }, [map, filteredRestaurants]); // Remove searchQuery from here, filteredRestaurants is enough
 
-    // Use a separate effect for geocoding that doesn't depend on the whole restaurants array directly if possible
-    // or at least only runs once we have the lib and initial data
-    const geocodingAttemptedRef = useRef<boolean>(false);
-
+    // El catálogo muestra todos los lugares desde el primer render usando una
+    // posición estable alrededor de su ciudad. La dirección exacta se geocodifica
+    // únicamente cuando el usuario abre un lugar, evitando 140 solicitudes y
+    // posibles límites de cuota en cada visita al mapa.
     useEffect(() => {
-        const fetchMissingCoords = async () => {
-            if (!geocodingLib || restaurants.length === 0 || geocodingAttemptedRef.current) return;
-            
-            geocodingAttemptedRef.current = true; // Prevent multiple simultaneous geocoding runs
-            
-            const geocoder = new geocodingLib.Geocoder();
-            const updatedRestaurants = [...restaurants];
-            let changed = false;
-
-            for (let i = 0; i < updatedRestaurants.length; i++) {
-                const r = updatedRestaurants[i];
-                // Only geocode if it has the default CDMX center AND has an address
-                const isDefault = r.lat === 19.4326 && r.lng === -99.1332;
-                if ((!r.lat || !r.lng || isDefault) && r.address) {
-                    try {
-                        const result = await geocoder.geocode({ address: r.address });
-                        if (result.results && result.results[0]) {
-                            const { lat, lng } = result.results[0].geometry.location;
-                            const newLat = lat();
-                            const newLng = lng();
-                            
-                            // Double check it's actually different from what we have
-                            if (Math.abs(newLat - r.lat) > 0.0001 || Math.abs(newLng - r.lng) > 0.0001) {
-                                updatedRestaurants[i] = { ...r, lat: newLat, lng: newLng };
-                                changed = true;
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Geocoding failed for", r.name, e);
-                    }
-                }
-            }
-
-            if (changed) {
-                setRestaurants(updatedRestaurants);
-            }
-        };
-
-        // We only want to run this when geocodingLib becomes available or first batch of restaurants come in
-        if (geocodingLib && restaurants.length > 0 && !geocodingAttemptedRef.current) {
-            fetchMissingCoords();
-        }
-    }, [geocodingLib, restaurants.length]); // Only depend on length to avoid reference loops
+        if (!geocodingLib || !selectedRestaurant?.coordinatesApproximate || !selectedRestaurant.address) return;
+        let cancelado = false;
+        const geocoder = new geocodingLib.Geocoder();
+        geocoder.geocode({ address: `${selectedRestaurant.address}, México` }).then((result) => {
+            const location = result.results?.[0]?.geometry.location;
+            if (!location || cancelado) return;
+            const exacto = { ...selectedRestaurant, lat: location.lat(), lng: location.lng(), coordinatesApproximate: false };
+            setRestaurants((actuales) => actuales.map((place) => place.id === exacto.id ? exacto : place));
+            setSelectedRestaurant(exacto);
+            map?.panTo({ lat: exacto.lat, lng: exacto.lng });
+        }).catch((error) => console.warn("No se pudo precisar la dirección", error));
+        return () => { cancelado = true; };
+    }, [geocodingLib, map, selectedRestaurant]);
 
     // Seleccionar abre la ficha sobre el mapa y centra ahí; para ir al detalle
     // está el botón "Ver lugar" dentro de la ficha.
@@ -307,7 +303,7 @@ function MapContent() {
                     </div>
                 </div>
                 <ul className={styles.placesList}>
-                    {filteredRestaurants.slice(0, 50).map(place => (
+                    {filteredRestaurants.map(place => (
                         <li 
                             key={place.id} 
                             className={`${styles.placeItem} ${selectedRestaurant?.id === place.id ? styles.active : ""}`}

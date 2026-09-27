@@ -8,6 +8,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import Link from "next/link";
 import styles from "./gestiona.module.css";
 import { FaArrowLeft, FaStore, FaUtensils, FaSave, FaPlus, FaTrash } from "react-icons/fa";
+import SocialConnections from "@/components/SocialConnections";
 
 export default function ManageBusinessPage() {
     const { id } = useParams();
@@ -238,6 +239,14 @@ export default function ManageBusinessPage() {
                                 />
                             </div>
                         </div>
+                    </section>
+
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Feed automático de redes</h2>
+                        <p style={{ margin: '-.75rem 0 1.5rem', color: 'var(--foreground-muted)', lineHeight: 1.6 }}>
+                            Conecta las cuentas oficiales una sola vez. Come sincronizará sus videos para mostrarlos en este perfil y en el feed de la app.
+                        </p>
+                        <SocialConnections entityId={id as string} status={businessData?.socialStatus || {}} />
                     </section>
 
                     {/* Menú Digital */}

@@ -27,7 +27,12 @@ service cloud.firestore {
     // solo, cualquiera se pondría estrella Michelin o calificación 5.
     function noSetsEditorialFields() {
       return !request.resource.data.diff(resource.data)
-        .affectedKeys().hasAny(['isMichelin', 'rating', 'featured', 'status', 'awards']);
+        .affectedKeys().hasAny([
+          'name', 'restaurantName', 'address', 'city', 'zone', 'tier',
+          'cuisine_type', 'is_verified', 'is_active', 'is_claimed',
+          'managed_by', 'access_level', 'created_by', 'created_at',
+          'isMichelin', 'rating', 'featured', 'status', 'awards'
+        ]);
     }
 
     function isShortText(value, max) {
@@ -50,8 +55,10 @@ service cloud.firestore {
                         && request.resource.data.get('status', '') == 'pending'
                         && request.resource.data.get('isMichelin', false) == false);
       allow update: if isPlatformAdmin()
-                    || (ownsExistingVenue() && keepsVenueOwnership() && noSetsEditorialFields());
-      allow delete: if isPlatformAdmin() || ownsExistingVenue();
+                    || (resource.data.get('managed_by', '') != 'admin'
+                        && ownsExistingVenue() && keepsVenueOwnership() && noSetsEditorialFields());
+      allow delete: if isPlatformAdmin()
+                    || (resource.data.get('managed_by', '') != 'admin' && ownsExistingVenue());
     }
 
     // ── Directorio de chefs ─────────────────────────────────────
@@ -121,6 +128,11 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
+    }
+
+    // Tokens OAuth y refresh tokens: sólo existen en servidor mediante Admin SDK.
+    match /social_connections/{connectionId} {
+      allow read, write: if false;
     }
 
     match /{document=**} {

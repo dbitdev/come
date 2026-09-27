@@ -1,19 +1,13 @@
 import Link from "next/link";
-import { FaFacebookF, FaInstagram, FaTiktok } from "react-icons/fa";
+import { FaInstagram } from "react-icons/fa";
 import styles from "./Footer.module.css";
+import { SEO_CIUDADES } from "@/lib/seoCatalog";
 
 // Fichas en las tiendas. La de Apple ya existe (la app está en revisión); la de
 // Google responde 404 hasta que se publique, pero es la dirección definitiva y
 // no hay que volver a tocarla.
 const ENLACE_APP_STORE = "https://apps.apple.com/mx/app/id6809052402";
 const ENLACE_GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.mxica.come";
-
-const ciudades = [
-  "Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Querétaro",
-  "Mérida", "Oaxaca", "Tijuana", "León", "Toluca",
-  "Cancún", "Playa del Carmen", "San Luis Potosí", "Morelia", "Veracruz",
-  "Aguascalientes", "Puerto Vallarta", "San Miguel de Allende", "Hermosillo", "Culiacán",
-];
 
 export default function Footer() {
   return (
@@ -44,9 +38,9 @@ export default function Footer() {
         <div className={styles.ciudades}>
           <b>CIUDADES</b>
           <ul>
-            {ciudades.map((ciudad) => (
-              <li key={ciudad}>
-                <Link href={`/restaurantes?location=${encodeURIComponent(ciudad)}`}>{ciudad}</Link>
+            {SEO_CIUDADES.map((ciudad) => (
+              <li key={ciudad.slug}>
+                <Link href={`/restaurantes/ciudad/${ciudad.slug}`}>{ciudad.nombre}</Link>
               </li>
             ))}
             <li><Link href="/mapa" className={styles.verMas}>Ver más</Link></li>
@@ -75,11 +69,8 @@ export default function Footer() {
 
           <div className={styles.legal}>
             <span className={styles.brand}>come</span>
-            {/* TODO: sustituir por los perfiles reales de Come. */}
             <div className={styles.social}>
-              <a href="#" aria-label="Instagram"><FaInstagram /></a>
-              <a href="#" aria-label="Facebook"><FaFacebookF /></a>
-              <a href="#" aria-label="TikTok"><FaTiktok /></a>
+              <a href="https://www.instagram.com/comeapptv/" target="_blank" rel="noreferrer" aria-label="Come en Instagram"><FaInstagram /></a>
             </div>
             <p>© {new Date().getFullYear()} Come · Mexica Gourmet</p>
             <div className={styles.legalLinks}>

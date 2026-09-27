@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from '@/lib/firebase';
 import AdminGuard from "@/components/AdminGuard";
 import MediaUploader from "@/components/MediaUploader";
+import SocialConnections from "@/components/SocialConnections";
+import ImageImporter from "@/components/ImageImporter";
 import { mensajeDeError } from "@/lib/erroresStorage";
 import { lugaresQueMencionan, normalizar, separarNombres, textoDeChefs } from "@/lib/vinculos";
 import { slugify } from '@/lib/utils';
@@ -17,6 +19,7 @@ import {
     updateDoc, 
     deleteDoc, 
     addDoc, 
+    arrayUnion,
     serverTimestamp,
     setDoc
 } from "firebase/firestore";
@@ -671,8 +674,7 @@ export default function AdminDashboard() {
             data.chefIds = actuales.map(c => c.id).filter(Boolean);
             data.chefIdsPrevios = lista.filter(c => c.previo).map(c => c.id).filter(Boolean);
             data.chef = textoDeChefs(data.chefsNombres);
-            const vinculados = data.chefIds;
-            const sinFicha = actuales.filter(c => !c.id).map(c => c.nombre);
+            let vinculados = data.chefIds as string[];
 
             // Un platillo sin nombre es una fila que quedó a medias.
             if (Array.isArray(data.menu)) {
@@ -686,24 +688,58 @@ export default function AdminDashboard() {
                     }));
             }
 
+            let restaurantId = id;
             if (id) {
                 await updateDoc(doc(db, "come", id), {
                     ...data,
                     lastUpdated: serverTimestamp()
                 });
             } else {
-                await addDoc(collection(db, "come"), {
+                const creado = await addDoc(collection(db, "come"), {
                     ...data,
                     createdAt: serverTimestamp()
+                });
+                restaurantId = creado.id;
+            }
+
+            // Un nombre nuevo escrito desde el restaurante crea inmediatamente
+            // su ficha de chef. Si la ficha ya existía, sólo completa el vínculo
+            // inverso. La comparación es exacta y normalizada para no duplicar.
+            const idsResueltos: string[] = [];
+            for (const chefElegido of actuales) {
+                let chefId = chefElegido.id;
+                const existente = chefs.find(c => normalizar(c.name || "") === normalizar(chefElegido.nombre));
+                if (!chefId && existente) chefId = existente.id;
+                if (!chefId) {
+                    const creado = await addDoc(collection(db, "chefs"), {
+                        name: chefElegido.nombre,
+                        restaurant: rName,
+                        restaurantIds: restaurantId ? [restaurantId] : [],
+                        status: "published",
+                        createdAt: serverTimestamp(),
+                    });
+                    chefId = creado.id;
+                } else if (restaurantId) {
+                    await updateDoc(doc(db, "chefs", chefId), {
+                        restaurantIds: arrayUnion(restaurantId),
+                        restaurant: existente?.restaurant || rName,
+                        lastUpdated: serverTimestamp(),
+                    });
+                }
+                idsResueltos.push(chefId);
+            }
+            vinculados = idsResueltos;
+            if (restaurantId) {
+                await updateDoc(doc(db, "come", restaurantId), {
+                    chefIds: idsResueltos,
+                    chefsNombres: actuales.map(c => c.nombre),
+                    chef: textoDeChefs(actuales.map(c => c.nombre)),
+                    lastUpdated: serverTimestamp(),
                 });
             }
             setEditingRestaurant(null);
             fetchData();
-            alert(
-                sinFicha.length > 0
-                    ? `Restaurante guardado. Enlazados ${vinculados.length} chef(s) con ficha. Sin ficha todavía: ${sinFicha.join(", ")}.`
-                    : `Restaurante guardado. ${vinculados.length} chef(s) enlazados.`
-            );
+            alert(`Restaurante guardado. ${vinculados.length} chef(s) con ficha enlazada.`);
         } catch (err) {
             console.error(err);
             alert("Error al guardar");
@@ -763,6 +799,41 @@ export default function AdminDashboard() {
                     createdAt: serverTimestamp()
                 });
                 chefId = creado.id;
+            }
+
+            // La operación inversa también crea el restaurante principal si no
+            // existe todavía y deja ambos documentos enlazados por id.
+            const nombreRestaurante = typeof data.restaurant === "string" ? data.restaurant.trim() : "";
+            if (chefId && nombreRestaurante) {
+                let lugar = restaurants.find(r => normalizar(r.restaurantName || r.name || "") === normalizar(nombreRestaurante));
+                let lugarId = lugar?.id as string | undefined;
+                if (!lugarId) {
+                    const creado = await addDoc(collection(db, "come"), {
+                        restaurantName: nombreRestaurante,
+                        category: "Restaurante",
+                        chef: data.name,
+                        chefsNombres: [data.name],
+                        chefIds: [chefId],
+                        image: "/og-come.jpg",
+                        status: "published",
+                        subdomain: `${slugify(nombreRestaurante)}.${APP_DOMAIN}`,
+                        createdAt: serverTimestamp(),
+                    });
+                    lugarId = creado.id;
+                    lugar = { id: lugarId, restaurantName: nombreRestaurante, chefIds: [] };
+                } else {
+                    const nombres = Array.isArray(lugar.chefsNombres) ? lugar.chefsNombres : separarNombres(lugar.chef);
+                    await updateDoc(doc(db, "come", lugarId), {
+                        chefIds: arrayUnion(chefId),
+                        chefsNombres: nombres.some((n: string) => normalizar(n) === normalizar(data.name)) ? nombres : [...nombres, data.name],
+                        chef: textoDeChefs(nombres.some((n: string) => normalizar(n) === normalizar(data.name)) ? nombres : [...nombres, data.name]),
+                        lastUpdated: serverTimestamp(),
+                    });
+                }
+                await updateDoc(doc(db, "chefs", chefId), {
+                    restaurantIds: arrayUnion(lugarId),
+                    lastUpdated: serverTimestamp(),
+                });
             }
 
             // Al dar de alta o renombrar un chef, engancharlo con los lugares que
@@ -1083,6 +1154,14 @@ export default function AdminDashboard() {
                                                         onChange={e => setEditingRestaurant({...editingRestaurant, image: e.target.value})}
                                                         placeholder="O ingresa URL manual..."
                                                     />
+                                                    {editingRestaurant.id && (
+                                                        <ImageImporter
+                                                            entityType="restaurant"
+                                                            entityId={editingRestaurant.id}
+                                                            website={editingRestaurant.website}
+                                                            onImported={url => setEditingRestaurant({...editingRestaurant, image: url})}
+                                                        />
+                                                    )}
 
                                                     <label>Dirección</label>
                                                     <input 
@@ -1119,6 +1198,125 @@ export default function AdminDashboard() {
                                                             />
                                                         </div>
                                                     </div>
+
+                                                    {/* Contacto y Redes Sociales */}
+                                                    <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1.2rem', background: '#f8fbf8', borderRadius: '8px', border: '1px solid #dbe8db' }}>
+                                                        <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#16884d', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                            Contacto y Redes Sociales
+                                                        </h4>
+
+                                                        <div className={styles.formRow}>
+                                                            <div className={styles.formRowGrow}>
+                                                                <label>Teléfono</label>
+                                                                <input
+                                                                    value={editingRestaurant.phone || ''}
+                                                                    onChange={e => setEditingRestaurant({...editingRestaurant, phone: e.target.value})}
+                                                                    placeholder="+52 55 1234 5678"
+                                                                />
+                                                            </div>
+                                                            <div className={styles.formRowGrow}>
+                                                                <label>Sitio Web Oficial</label>
+                                                                <input
+                                                                    value={editingRestaurant.website || ''}
+                                                                    onChange={e => setEditingRestaurant({...editingRestaurant, website: e.target.value})}
+                                                                    placeholder="https://..."
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={styles.formRow}>
+                                                            <div className={styles.formRowGrow}>
+                                                                <label>Instagram</label>
+                                                                <input
+                                                                    value={editingRestaurant.socials?.instagram || editingRestaurant.instagram || ''}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setEditingRestaurant({
+                                                                            ...editingRestaurant,
+                                                                            instagram: val,
+                                                                            socials: { ...(editingRestaurant.socials || {}), instagram: val }
+                                                                        });
+                                                                    }}
+                                                                    placeholder="https://www.instagram.com/les___batardsmx"
+                                                                />
+                                                            </div>
+                                                            <div className={styles.formRowGrow}>
+                                                                <label>TikTok</label>
+                                                                <input
+                                                                    value={editingRestaurant.socials?.tiktok || editingRestaurant.tiktok || ''}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setEditingRestaurant({
+                                                                            ...editingRestaurant,
+                                                                            tiktok: val,
+                                                                            socials: { ...(editingRestaurant.socials || {}), tiktok: val }
+                                                                        });
+                                                                    }}
+                                                                    placeholder="https://www.tiktok.com/@usuario"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={styles.formRow}>
+                                                            <div className={styles.formRowGrow}>
+                                                                <label>Facebook</label>
+                                                                <input
+                                                                    value={editingRestaurant.socials?.facebook || editingRestaurant.facebook || ''}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setEditingRestaurant({
+                                                                            ...editingRestaurant,
+                                                                            facebook: val,
+                                                                            socials: { ...(editingRestaurant.socials || {}), facebook: val }
+                                                                        });
+                                                                    }}
+                                                                    placeholder="https://www.facebook.com/pagina"
+                                                                />
+                                                            </div>
+                                                            <div className={styles.formRowGrow}>
+                                                                <label>Twitter / X</label>
+                                                                <input
+                                                                    value={editingRestaurant.socials?.twitter || editingRestaurant.twitter || ''}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setEditingRestaurant({
+                                                                            ...editingRestaurant,
+                                                                            twitter: val,
+                                                                            socials: { ...(editingRestaurant.socials || {}), twitter: val }
+                                                                        });
+                                                                    }}
+                                                                    placeholder="https://x.com/usuario"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ marginTop: '1rem' }}>
+                                                            <label>Videos y publicaciones (una URL por línea)</label>
+                                                            <textarea
+                                                                value={(editingRestaurant.socialVideos || []).map((video: any) => typeof video === 'string' ? video : video.url).filter(Boolean).join('\n')}
+                                                                onChange={e => setEditingRestaurant({
+                                                                    ...editingRestaurant,
+                                                                    socialVideos: e.target.value.split('\n').map(url => url.trim()).filter(Boolean)
+                                                                })}
+                                                                placeholder={'https://www.instagram.com/reel/...\nhttps://www.tiktok.com/@usuario/video/...\nhttps://.../video.mp4'}
+                                                                rows={5}
+                                                            />
+                                                            <small style={{ display: 'block', marginTop: '0.45rem', color: '#607068' }}>
+                                                                Acepta publicaciones de Instagram, TikTok y Facebook, o enlaces directos MP4. Se reproducen dentro de Come.
+                                                            </small>
+                                                        </div>
+                                                    </div>
+
+                                                    {editingRestaurant.id && (
+                                                        <div style={{ marginTop: '1.5rem' }}>
+                                                            <label>Feed automático de redes</label>
+                                                            <SocialConnections
+                                                                entityId={editingRestaurant.id}
+                                                                entityType="restaurant"
+                                                                status={editingRestaurant.socialStatus || {}}
+                                                            />
+                                                        </div>
+                                                    )}
 
                                                     <button type="submit" className={styles.primaryBtn}>
                                                         <FaSave /> Guardar Cambios
@@ -1233,6 +1431,21 @@ export default function AdminDashboard() {
                                                         placeholder="URL de la foto..."
                                                     />
 
+                                                    <label>Sitio web oficial</label>
+                                                    <input
+                                                        value={editingChef.website || ''}
+                                                        onChange={e => setEditingChef({...editingChef, website: e.target.value})}
+                                                        placeholder="https://..."
+                                                    />
+                                                    {editingChef.id && (
+                                                        <ImageImporter
+                                                            entityType="chef"
+                                                            entityId={editingChef.id}
+                                                            website={editingChef.website}
+                                                            onImported={url => setEditingChef({...editingChef, image: url})}
+                                                        />
+                                                    )}
+
                                                     <label>Redes Sociales</label>
                                                     <input 
                                                         value={editingChef.redes || ''} 
@@ -1245,6 +1458,13 @@ export default function AdminDashboard() {
                                                         valor={editingChef.userId}
                                                         onChange={uid => setEditingChef({...editingChef, userId: uid})}
                                                     />
+
+                                                    {editingChef.id && (
+                                                        <div style={{ marginTop: '1.5rem' }}>
+                                                            <label>Feed automático de redes</label>
+                                                            <SocialConnections entityId={editingChef.id} entityType="chef" status={editingChef.socialStatus || {}} />
+                                                        </div>
+                                                    )}
 
                                                     <button type="submit" className={styles.primaryBtn}>
                                                         <FaSave /> Guardar Chef
