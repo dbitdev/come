@@ -5,14 +5,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Rol guardado en el documento de la persona. Con exists() para no reventar
+    // cuando la ficha aún no existe (primer inicio de sesión).
+    function roleOf(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        ? get(/databases/$(database)/documents/users/$(uid)).data.get('role', '')
+        : '';
+    }
+
+    // Admin por dos vías: la lista fija de correos de arranque (con correo
+    // verificado) o el rol 'admin' asignado en la ficha del usuario. La segunda
+    // vía es la que permite entrar aunque el correo no esté verificado, porque
+    // el rol sólo lo puede poner otro admin.
     function isPlatformAdmin() {
-      return isSignedIn()
-        && request.auth.token.email_verified == true
-        && request.auth.token.email in [
-          'dbitdev@gmail.com',
-          'admin@come.mx',
-          'parradabito@gmail.com'
-        ];
+      return isSignedIn() && (
+        (request.auth.token.email_verified == true
+          && request.auth.token.email in [
+            'dbitdev@gmail.com',
+            'admin@come.mx',
+            'parradabito@gmail.com'
+          ])
+        || roleOf(request.auth.uid) == 'admin'
+      );
+    }
+
+    // Curador: puede curar contenido, pero no las acciones reservadas al admin
+    // (borrar, destacar, estrellas Michelin). Todo admin es también curador.
+    function isCurator() {
+      return isSignedIn() && (isPlatformAdmin() || roleOf(request.auth.uid) == 'curator');
     }
 
     function ownsExistingVenue() {
@@ -121,10 +141,18 @@ service cloud.firestore {
 
     // ── Datos de cada persona (direcciones, favoritos) ──────────
     match /users/{userId} {
-      // La redacción necesita listar personas para poder asignarles un negocio
-      // desde el admin; los datos de cada quien siguen siendo suyos para escribir.
+      // La redacción necesita listar personas para poder asignarles un negocio o
+      // designar curadores; los datos de cada quien siguen siendo suyos.
       allow read: if isPlatformAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      // El rol es autoridad: sólo un admin lo pone o lo cambia. Un usuario puede
+      // editar su propia ficha SIEMPRE que no toque su `role` (si no, cualquiera
+      // se haría admin o curador solo).
+      allow create: if isSignedIn() && request.auth.uid == userId
+                    && !('role' in request.resource.data);
+      allow update: if isPlatformAdmin()
+                    || (isSignedIn() && request.auth.uid == userId
+                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      allow delete: if isPlatformAdmin();
       match /{document=**} {
         allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
@@ -133,6 +161,15 @@ service cloud.firestore {
     // Tokens OAuth y refresh tokens: sólo existen en servidor mediante Admin SDK.
     match /social_connections/{connectionId} {
       allow read, write: if false;
+    }
+
+    // Las reclamaciones contienen datos de contacto y evidencia. Se crean y
+    // resuelven exclusivamente en el servidor; el usuario sólo puede leer las
+    // suyas y la redacción puede consultar toda la bandeja.
+    match /profile_claims/{claimId} {
+      allow read: if isPlatformAdmin()
+                  || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if false;
     }
 
     match /{document=**} {

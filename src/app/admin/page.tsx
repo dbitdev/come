@@ -27,7 +27,8 @@ import styles from "./admin.module.css";
 import { 
     FaChartBar, FaUtensils, FaUsers, FaStar, FaShieldAlt, 
     FaTrash, FaEdit, FaPlus, FaBookOpen, FaConciergeBell, 
-    FaSync, FaSave, FaTimes, FaImage, FaMapMarkerAlt, FaUpload 
+    FaSync, FaSave, FaTimes, FaImage, FaMapMarkerAlt, FaUpload,
+    FaUserShield
 } from 'react-icons/fa';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
@@ -38,6 +39,8 @@ const TITULOS: Record<string, string> = {
     chefs: "Directorio de chefs",
     guias: "Guías interactivas",
     nominaciones: "Nominaciones por revisar",
+    reclamaciones: "Reclamaciones de perfiles",
+    usuarios: "Usuarios y roles",
 };
 
 /**
@@ -362,7 +365,7 @@ function SelectorDueno({
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'guias' | 'nominaciones'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'guias' | 'nominaciones' | 'reclamaciones' | 'usuarios'>('dashboard');
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [chefs, setChefs] = useState<any[]>([]);
     const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -370,6 +373,7 @@ export default function AdminDashboard() {
     const [leads, setLeads] = useState<any[]>([]);
     const [chefNominations, setChefNominations] = useState<any[]>([]);
     const [placeNominations, setPlaceNominations] = useState<any[]>([]);
+    const [claims, setClaims] = useState<any[]>([]);
     const [workingId, setWorkingId] = useState<string | null>(null);
     const [editingRestaurant, setEditingRestaurant] = useState<any>(null);
     const [editingChef, setEditingChef] = useState<any>(null);
@@ -400,12 +404,14 @@ export default function AdminDashboard() {
             // decía "actividad reciente" mostrando negocios ya publicados.
             setLeads(restData.filter((r: any) => r.status === 'pending'));
 
-            const [chefNomSnap, placeNomSnap] = await Promise.all([
+            const [chefNomSnap, placeNomSnap, claimsSnap] = await Promise.all([
                 getDocs(collection(db, "chef_nominations")),
                 getDocs(collection(db, "place_nominations")),
+                getDocs(collection(db, "profile_claims")),
             ]);
             setChefNominations(chefNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             setPlaceNominations(placeNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setClaims(claimsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
             // Fetch Chefs
             const chefsSnapshot = await getDocs(collection(db, "chefs"));
@@ -428,6 +434,32 @@ export default function AdminDashboard() {
             console.error("Error fetching data:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const revisarReclamacion = async (claim: any, decision: 'approved' | 'rejected') => {
+        if (!user) return;
+        const verificationNotes = window.prompt(
+            decision === 'approved'
+                ? "Describe qué comprobaste antes de aprobar (correo de dominio, llamada, documento, etc.)."
+                : "Indica por qué se rechaza la solicitud."
+        )?.trim();
+        if (!verificationNotes) return;
+        setWorkingId(claim.id);
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch(`/api/admin/claims/${claim.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ decision, verificationNotes }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'No se pudo revisar.');
+            await fetchData();
+        } catch (error) {
+            alert(error instanceof Error ? error.message : 'No se pudo revisar la reclamación.');
+        } finally {
+            setWorkingId(null);
         }
     };
 
@@ -651,6 +683,24 @@ export default function AdminDashboard() {
             alert("Error sincronizando: " + (err as any).message);
         } finally {
             setIsSyncing(false);
+        }
+    };
+
+    // Designar rol a un usuario. '' = usuario normal; 'curator'; 'admin'.
+    // Las reglas de Firestore sólo permiten esto a un admin, así que un curador
+    // o un usuario común no puede promoverse aunque manipule la interfaz.
+    const [rolCambiando, setRolCambiando] = useState<string | null>(null);
+    const cambiarRol = async (uid: string, role: string) => {
+        if (!db) return;
+        setRolCambiando(uid);
+        try {
+            await updateDoc(doc(db, "users", uid), { role });
+            setUsuarios(prev => prev.map(u => u.uid === uid ? { ...u, role } : u));
+        } catch (err) {
+            console.error(err);
+            alert("No se pudo cambiar el rol. ¿Sigues con sesión de admin?");
+        } finally {
+            setRolCambiando(null);
         }
     };
 
@@ -921,6 +971,8 @@ export default function AdminDashboard() {
                             <FaConciergeBell /> Nominaciones
                             {(chefNominations.length + placeNominations.length + leads.length) > 0 && <span className={styles.badge}>{chefNominations.length + placeNominations.length + leads.length}</span>}
                         </button>
+                        <button onClick={() => setActiveSection('reclamaciones')} className={activeSection === 'reclamaciones' ? styles.navItemActive : styles.navItem}><FaShieldAlt /> Reclamaciones</button>
+                        <button onClick={() => setActiveSection('usuarios')} className={activeSection === 'usuarios' ? styles.navItemActive : styles.navItem}><FaUserShield /> Usuarios</button>
                     </nav>
                     
                     <button 
@@ -1051,6 +1103,80 @@ export default function AdminDashboard() {
                                 </>
                             )}
 
+                            {activeSection === 'reclamaciones' && (
+                                <section className={styles.tableSection}>
+                                    <h2>Perfiles reclamados</h2>
+                                    <p>Aprueba únicamente después de comprobar que la persona representa al perfil o a la marca.</p>
+                                    <table className={styles.adminTable}>
+                                        <thead><tr><th>Perfil</th><th>Solicitante y evidencia</th><th>Estado</th><th>Revisión</th></tr></thead>
+                                        <tbody>
+                                            {claims.map((claim) => (
+                                                <tr key={claim.id}>
+                                                    <td><strong>{claim.entityName}</strong><br/><small>{claim.entityType === 'chef' ? 'Chef' : 'Lugar'} · {claim.relationship}</small></td>
+                                                    <td>
+                                                        <a href={`mailto:${claim.businessEmail}`}>{claim.businessEmail}</a><br/>
+                                                        {claim.phone && <><span>{claim.phone}</span><br/></>}
+                                                        {claim.website && <><a href={claim.website} target="_blank" rel="noreferrer">Sitio oficial</a>{' '}</>}
+                                                        {claim.proofUrl && <a href={claim.proofUrl} target="_blank" rel="noreferrer">Evidencia</a>}
+                                                        {claim.notes && <p>{claim.notes}</p>}
+                                                    </td>
+                                                    <td>{claim.status === 'pending' ? 'Pendiente' : claim.status === 'approved' ? 'Aprobada' : 'Rechazada'}</td>
+                                                    <td className={styles.actions}>
+                                                        {claim.status === 'pending' ? <>
+                                                            <button disabled={workingId === claim.id} className={styles.primaryBtn} onClick={() => revisarReclamacion(claim, 'approved')}>Aprobar</button>
+                                                            <button disabled={workingId === claim.id} className={styles.deleteBtn} onClick={() => revisarReclamacion(claim, 'rejected')}>Rechazar</button>
+                                                        </> : <small>{claim.verificationNotes}</small>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {claims.length === 0 && <tr><td colSpan={4} className={styles.emptyRow}>Sin reclamaciones.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </section>
+                            )}
+
+                            {activeSection === 'usuarios' && (
+                                <section className={styles.tableSection}>
+                                    <h2>Usuarios y roles</h2>
+                                    <p>Designa curadores para que ayuden a mantener el directorio, o administradores con acceso completo. Un <strong>curador</strong> puede crear y editar lugares, chefs, guías y notas; borrar, destacar y las estrellas Michelin quedan sólo para administradores.</p>
+                                    <table className={styles.adminTable}>
+                                        <thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Cambiar rol</th></tr></thead>
+                                        <tbody>
+                                            {usuarios.map((u) => (
+                                                <tr key={u.uid}>
+                                                    <td>
+                                                        <strong>{u.displayName || 'Sin nombre'}</strong>
+                                                        <br /><small style={{ color: '#8a9690' }}>{u.uid.slice(0, 10)}…</small>
+                                                    </td>
+                                                    <td>{u.email || '—'}</td>
+                                                    <td>
+                                                        <span className={
+                                                            u.role === 'admin' ? styles.rolAdmin
+                                                            : u.role === 'curator' ? styles.rolCurador
+                                                            : styles.rolNormal
+                                                        }>
+                                                            {u.role === 'admin' ? 'Administrador' : u.role === 'curator' ? 'Curador' : 'Usuario'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <select
+                                                            value={u.role || ''}
+                                                            disabled={rolCambiando === u.uid}
+                                                            onChange={(e) => cambiarRol(u.uid, e.target.value)}
+                                                        >
+                                                            <option value="">Usuario</option>
+                                                            <option value="curator">Curador</option>
+                                                            <option value="admin">Administrador</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {usuarios.length === 0 && <tr><td colSpan={4} className={styles.emptyRow}>Todavía no hay usuarios registrados. Aparecerán aquí cuando inicien sesión.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </section>
+                            )}
+
                             {activeSection === 'restaurantes' && (
                                 <section>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -1129,6 +1255,11 @@ export default function AdminDashboard() {
                                                         valor={editingRestaurant.userId}
                                                         onChange={uid => setEditingRestaurant({...editingRestaurant, userId: uid})}
                                                     />
+
+                                                    <label className={styles.chefPrevio}>
+                                                        <input type="checkbox" checked={Boolean(editingRestaurant.isTraditionalCuisine)} onChange={e => setEditingRestaurant({...editingRestaurant, isTraditionalCuisine: e.target.checked})} />
+                                                        Cocina tradicional (aparece en la sección editorial)
+                                                    </label>
 
                                                     <label>Menú del lugar</label>
                                                     <GestorDeMenu
@@ -1458,6 +1589,10 @@ export default function AdminDashboard() {
                                                         valor={editingChef.userId}
                                                         onChange={uid => setEditingChef({...editingChef, userId: uid})}
                                                     />
+                                                    <label className={styles.chefPrevio}>
+                                                        <input type="checkbox" checked={Boolean(editingChef.isTraditionalCook)} onChange={e => setEditingChef({...editingChef, isTraditionalCook: e.target.checked})} />
+                                                        Cocinera tradicional (aparece en su directorio propio)
+                                                    </label>
 
                                                     {editingChef.id && (
                                                         <div style={{ marginTop: '1.5rem' }}>

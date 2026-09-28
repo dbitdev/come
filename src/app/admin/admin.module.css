@@ -161,3 +161,17 @@
 .menuEncabezado { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,2fr) 88px 34px; gap: .4rem; font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--foreground-muted); }
 .menuPie { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; }
 .menuConteo { font-size: .82rem; font-weight: 700; color: var(--foreground-muted); }
+
+/* ── Insignias de rol (pestaña Usuarios) ─────────────────────────────── */
+.rolAdmin, .rolCurador, .rolNormal {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    padding: 0.22rem 0.6rem;
+}
+.rolAdmin { color: #7a2e12; background: #f6d9c6; }
+.rolCurador { color: #0a4b31; background: #dcf0e2; }
+.rolNormal { color: #5d6c64; background: #eceadd; }
