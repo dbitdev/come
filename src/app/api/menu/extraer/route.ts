@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { leerCarta, textoDeHtml } from "@/lib/menu";
+import { adminAuth } from "@/lib/firebase-admin";
 
 /**
  * Lee la carta de un PDF o de una página y devuelve *candidatos*. No guarda
@@ -82,6 +83,15 @@ async function descargar(url: URL) {
 }
 
 export async function POST(peticion: Request) {
+  // Sólo con sesión: sin esto cualquiera usaría el servidor para bajar y
+  // procesar PDFs ajenos. Lo llama el gestor de menú del admin.
+  const token = peticion.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  try {
+    if (!token) throw new Error("sin token");
+    await adminAuth.verifyIdToken(token);
+  } catch {
+    return NextResponse.json({ error: "Inicia sesión para leer cartas." }, { status: 401 });
+  }
   try {
     const cuerpo = await peticion.json().catch(() => ({}));
     const url = await validarDestino(String(cuerpo?.url || ""));

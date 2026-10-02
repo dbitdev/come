@@ -18,6 +18,18 @@ service firebase.storage {
         ];
     }
 
+    // Rol de la ficha en Firestore (lo pone un admin): curadores y admins por
+    // rol también suben fotos, igual que pueden editar lugares y chefs.
+    function rolDeFicha() {
+      return firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role', '')
+        : '';
+    }
+
+    function puedeSubir() {
+      return request.auth != null && (isPlatformAdmin() || rolDeFicha() in ['admin', 'curator']);
+    }
+
     // Sólo imagen o video, y con un tope de tamaño: sin esto, un archivo
     // enorme o un ejecutable renombrado acabaría servido desde nuestro dominio.
     function isMediaValida() {
@@ -34,7 +46,7 @@ service firebase.storage {
       allow read: if carpeta in ['restaurants', 'chefs', 'guides', 'general', 'menus'];
       // En Storage `write` cubre delete, y ahí request.resource es null: por eso
       // create/update y delete van por separado.
-      allow create, update: if isPlatformAdmin() && isMediaValida();
+      allow create, update: if puedeSubir() && isMediaValida();
       allow delete: if isPlatformAdmin();
     }
   }

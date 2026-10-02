@@ -15,6 +15,32 @@
 .navItemActive svg{color:var(--primary-dark)}
 .badge{display:inline-grid;place-items:center;min-width:21px;height:21px;margin-left:auto;padding:0 6px;border-radius:999px;background:#e0483a;color:#fff;font-size:.68rem;font-weight:800}
 
+/* Pie de la barra lateral: enlace al sitio (y sync Michelin para el admin). */
+.sidebarFooter{display:flex;flex-direction:column;gap:.5rem;padding-top:.9rem;margin-top:.4rem;border-top:1px solid rgba(255,255,255,.14)}
+.sitioLink{display:flex;align-items:center;gap:.6rem;padding:.75rem .9rem;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-family:var(--font-modern);font-size:.9rem;font-weight:700;transition:var(--transition-fast)}
+.sitioLink:hover{background:rgba(255,255,255,.16)}
+.sitioLink svg{color:var(--accent)}
+
+/* ── Barra lateral plegable ──────────────────────────
+   Colapsada deja solo iconos y ensancha el área de edición. */
+.colapsarBtn{margin-left:auto;display:inline-grid;place-items:center;width:28px;height:28px;flex-shrink:0;padding:0;border:0;border-radius:6px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;box-shadow:none;transition:var(--transition-fast)}
+.colapsarBtn:hover{background:rgba(255,255,255,.24);transform:none}
+.sidebar{transition:width .18s ease}
+.sidebarColapsado{width:74px}
+.sidebarColapsado .navLabel{display:none}
+.sidebarColapsado .adminLogo{justify-content:center;gap:0;padding:0 0 1.2rem}
+.sidebarColapsado .adminLogo > svg{display:none}
+.sidebarColapsado .colapsarBtn{margin-left:0}
+.sidebarColapsado .rolAviso{justify-content:center;padding:.5rem 0}
+.sidebarColapsado .navItem,.sidebarColapsado .navItemActive{justify-content:center;padding:.8rem 0}
+.sidebarColapsado .badge{display:none}
+.sidebarColapsado .sitioLink,.sidebarColapsado .sidebarFooter .primaryBtn{justify-content:center;padding:.75rem 0}
+
+/* Botón hamburguesa y fondo del cajón: solo en móvil. */
+.hamburguesa{display:none;position:fixed;top:.85rem;left:.85rem;z-index:50;width:46px;height:46px;place-items:center;border:0;border-radius:12px;background:var(--primary-dark);color:#fff;font-size:1.15rem;cursor:pointer;box-shadow:0 8px 22px rgba(0,61,38,.28)}
+.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:55;animation:aparecer .18s ease}
+@keyframes aparecer{from{opacity:0}to{opacity:1}}
+
 /* ── Contenido ───────────────────────────────────── */
 .mainContent{flex:1;min-width:0;padding:2.5rem max(3vw,1.4rem) 4rem}
 .header{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;padding-bottom:1.4rem;margin-bottom:2.2rem;border-bottom:1px solid var(--border-light)}
@@ -74,12 +100,29 @@
 .emptyState{padding:4rem 2rem;text-align:center;color:var(--foreground-muted);background:#fff;border:1px dashed var(--border-light);border-radius:10px}
 
 @media(max-width:860px){
-  .adminWrapper{flex-direction:column}
-  .sidebar{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;padding:1rem;gap:.4rem}
-  .adminLogo{display:none}
-  .nav{flex-direction:row;gap:.4rem}
-  .navItem,.navItemActive{white-space:nowrap;padding:.7rem .9rem}
-  .mainContent{padding:1.6rem 1.2rem 3rem}
+  .adminWrapper{display:block}
+  /* La barra lateral es un cajón que entra desde la izquierda. */
+  .hamburguesa{display:grid}
+  .sidebar{position:fixed;top:0;left:0;height:100dvh;width:min(82vw,300px);flex-direction:column;padding:1.5rem 1.1rem;transform:translateX(-100%);transition:transform .22s ease;z-index:60;box-shadow:0 0 44px rgba(0,0,0,.4)}
+  .sidebarMobilAbierto{transform:translateX(0)}
+  .backdrop{display:block}
+  .colapsarBtn{display:none}
+  /* En el cajón siempre expandido, aunque el desktop quedara colapsado. */
+  .sidebar.sidebarColapsado{width:min(82vw,300px);padding:1.5rem 1.1rem}
+  .sidebarColapsado .navLabel{display:inline}
+  .sidebarColapsado .adminLogo{display:flex;justify-content:flex-start}
+  .sidebarColapsado .adminLogo > svg{display:inline}
+  .sidebarColapsado .navItem,.sidebarColapsado .navItemActive{justify-content:flex-start;padding:.8rem .9rem}
+  .sidebarColapsado .rolAviso,.sidebarColapsado .sitioLink,.sidebarColapsado .sidebarFooter .primaryBtn{justify-content:flex-start;padding-left:.9rem;padding-right:.9rem}
+  .mainContent{padding:1.5rem 1.2rem 3rem}
+  .header{padding-left:3.4rem}
+
+  /* El formulario a una columna, y al editar ocupa toda la pantalla para no
+     tener que bajar por toda la lista para llegar a él. */
+  .splitLayout{grid-template-columns:1fr}
+  .formOuter{display:none}
+  .formOuterActivo{display:block;position:fixed;inset:0;z-index:65;max-height:100dvh;height:100dvh;border:0;border-radius:0;padding:1.2rem 1.1rem calc(1.2rem + env(safe-area-inset-bottom))}
+  .formOuterActivo .stickySave{bottom:env(safe-area-inset-bottom)}
 }
 
 /* ── Estructura de secciones ─────────────────────── */
@@ -89,8 +132,33 @@
 
 /* Dos columnas: la lista a la izquierda, el formulario a la derecha, pegado. */
 .splitLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.6rem;align-items:start}
-.formOuter{position:sticky;top:1.5rem;background:#fff;border:1px solid var(--border-light);border-radius:10px;padding:1.6rem}
+.listPane{min-width:0;position:sticky;top:1.5rem}
+/* El formulario ocupa como mucho la altura de la ventana y hace scroll interno:
+   así el botón de guardar (pegado abajo) siempre queda a la vista sin bajar
+   por toda la página. */
+.formOuter{position:sticky;top:1.5rem;background:#fff;border:1px solid var(--border-light);border-radius:10px;padding:1.6rem;max-height:calc(100vh - 3rem);overflow-y:auto}
 .formOuter h3{font-family:var(--font-serif);font-size:1.35rem;margin:0;letter-spacing:-.02em}
+/* Encabezado del formulario fijo al hacer scroll dentro del panel. */
+.formOuter .adminForm > div:first-child{position:sticky;top:0;z-index:3;background:#fff;padding:.2rem 0 .7rem}
+/* Botón de guardar siempre visible, pegado al fondo del panel. */
+.stickySave{position:sticky;bottom:0;width:100%;margin-top:1rem;box-shadow:0 -16px 22px rgba(255,255,255,.96);z-index:2}
+
+/* Herramientas de lista: búsqueda + conteo. */
+.listTools{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+.searchInput{flex:1;min-width:0;box-sizing:border-box;background:#fff;border:1px solid var(--border-light);border-radius:8px;padding:.7rem 1rem;font-family:var(--font-modern);font-size:.92rem;color:var(--foreground)}
+.searchInput:focus{outline:0;border-color:var(--primary)}
+.listCount{font-size:.76rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--foreground-muted);white-space:nowrap}
+.listPane .tableSection{margin-bottom:.8rem;max-height:calc(100vh - 15rem);overflow:auto}
+/* Dentro de la columna angosta la tabla se adapta en vez de forzar scroll
+   horizontal (que recortaba el nombre del lugar por la izquierda). */
+.listPane .adminTable{min-width:0}
+
+/* Paginación. */
+.pager{display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:.2rem}
+.pager button{background:#fff;border:1px solid var(--border-light);border-radius:6px;padding:.5rem .9rem;font-family:var(--font-modern);font-size:.85rem;font-weight:700;color:var(--foreground);cursor:pointer;transition:var(--transition-fast)}
+.pager button:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+.pager span{font-size:.85rem;font-weight:700;color:var(--foreground-muted)}
 
 .rowActive{background:var(--pale-green)}
 .rowActive td{background:var(--pale-green)}
@@ -102,7 +170,10 @@
 
 @media(max-width:1000px){
   .splitLayout{grid-template-columns:1fr}
-  .formOuter{position:static}
+  .listPane{position:static}
+  .formOuter{position:static;max-height:none;overflow:visible}
+  .stickySave{position:static;box-shadow:none}
+  .listPane .tableSection{max-height:none}
 }
 
 /* ── Chefs de un lugar ────────────────────────────────────────────────
@@ -175,3 +246,19 @@
 .rolAdmin { color: #7a2e12; background: #f6d9c6; }
 .rolCurador { color: #0a4b31; background: #dcf0e2; }
 .rolNormal { color: #5d6c64; background: #eceadd; }
+
+/* Aviso de modo curador en la barra lateral */
+.rolAviso {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.8rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--border-radius-sm, 8px);
+    background: #dcf0e2;
+    color: #0a4b31;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}

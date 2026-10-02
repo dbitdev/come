@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext";
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import AdminGuard from "@/components/AdminGuard";
 import MediaUploader from "@/components/MediaUploader";
 import SocialConnections from "@/components/SocialConnections";
@@ -10,15 +10,16 @@ import ImageImporter from "@/components/ImageImporter";
 import { mensajeDeError } from "@/lib/erroresStorage";
 import { lugaresQueMencionan, normalizar, separarNombres, textoDeChefs } from "@/lib/vinculos";
 import { slugify } from '@/lib/utils';
+import { leerRolDeUsuario } from "@/lib/roles";
 import { 
-    collection, 
-    getDocs, 
-    query, 
-    orderBy, 
-    doc, 
-    updateDoc, 
-    deleteDoc, 
-    addDoc, 
+    collection,
+    getDocs,
+    query,
+    orderBy,
+    doc,
+    updateDoc,
+    deleteDoc,
+    addDoc,
     arrayUnion,
     serverTimestamp,
     setDoc
@@ -28,8 +29,10 @@ import {
     FaChartBar, FaUtensils, FaUsers, FaStar, FaShieldAlt, 
     FaTrash, FaEdit, FaPlus, FaBookOpen, FaConciergeBell, 
     FaSync, FaSave, FaTimes, FaImage, FaMapMarkerAlt, FaUpload,
-    FaUserShield
+    FaUserShield, FaExternalLinkAlt, FaAngleLeft, FaAngleRight, FaBars, FaCalendarAlt
 } from 'react-icons/fa';
+import PanelReservas from "@/components/reservas/PanelReservas";
+import Link from "next/link";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
@@ -41,6 +44,7 @@ const TITULOS: Record<string, string> = {
     nominaciones: "Nominaciones por revisar",
     reclamaciones: "Reclamaciones de perfiles",
     usuarios: "Usuarios y roles",
+    reservas: "Reservaciones",
 };
 
 /**
@@ -75,9 +79,10 @@ function GestorDeMenu({
     const leerDesde = async (url: string) => {
         setLeyendo(true); setError(null); setAviso(null);
         try {
+            const token = await auth?.currentUser?.getIdToken();
             const respuesta = await fetch("/api/menu/extraer", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
                 body: JSON.stringify({ url }),
             });
             const datos = await respuesta.json();
@@ -365,7 +370,14 @@ function SelectorDueno({
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'guias' | 'nominaciones' | 'reclamaciones' | 'usuarios'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'restaurantes' | 'chefs' | 'guias' | 'nominaciones' | 'reclamaciones' | 'usuarios' | 'reservas'>('dashboard');
+    // Rol del usuario en sesión: define qué ve y qué puede hacer en el panel.
+    // Un curador ve Lugares/Chefs/Guías para crear y editar; las pestañas de
+    // moderación (nominaciones, reclamaciones, usuarios), el borrado y los campos
+    // de autoridad (Michelin, destacado, dueño) quedan sólo para el admin.
+    const [miRol, setMiRol] = useState<'admin' | 'curator' | 'user'>('user');
+    const esAdmin = miRol === 'admin';
+    const esCurador = miRol === 'curator';
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [chefs, setChefs] = useState<any[]>([]);
     const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -383,6 +395,24 @@ export default function AdminDashboard() {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [loading, setLoading] = useState(true);
+    // Búsqueda + paginación de los directorios para no scrollear listas enormes.
+    const [restQuery, setRestQuery] = useState('');
+    const [restPage, setRestPage] = useState(1);
+    const [chefQuery, setChefQuery] = useState('');
+    const [chefPage, setChefPage] = useState(1);
+    const POR_PAGINA = 12;
+    // Barra lateral plegable: colapsada deja solo iconos y da más ancho al editar.
+    const [sidebarColapsado, setSidebarColapsado] = useState(false);
+    // En móvil la barra lateral es un cajón (drawer) que abre un botón hamburguesa.
+    const [menuMobil, setMenuMobil] = useState(false);
+    useEffect(() => {
+        try { setSidebarColapsado(localStorage.getItem('adminSidebarColapsado') === '1'); } catch { /* sin storage */ }
+    }, []);
+    const alternarSidebar = () => setSidebarColapsado(prev => {
+        const siguiente = !prev;
+        try { localStorage.setItem('adminSidebarColapsado', siguiente ? '1' : '0'); } catch { /* sin storage */ }
+        return siguiente;
+    });
 
     const APP_DOMAIN = "comeapp.com.mx";
 
@@ -392,44 +422,62 @@ export default function AdminDashboard() {
         }
     }, [user]);
 
+    // Un curador no tiene esas pestañas; si el estado quedó ahí, lo llevamos a
+    // una que sí puede ver.
+    useEffect(() => {
+        if (esCurador && ['dashboard', 'nominaciones', 'reclamaciones', 'usuarios', 'reservas'].includes(activeSection)) {
+            setActiveSection('restaurantes');
+        }
+    }, [esCurador, activeSection]);
+
     const fetchData = async () => {
-        if (!db) return;
+        if (!db || !user) return;
         setLoading(true);
         try {
-            // Fetch Restaurants
+            // 1) Rol de quien entra. Los correos de arranque son admin; el resto
+            //    sale de su ficha. Un curador no puede leer moderación ni usuarios,
+            //    así que esas lecturas se saltan para no romper el panel entero.
+            const ADMIN_EMAILS = ['dbitdev@gmail.com', 'admin@come.mx', 'parradabito@gmail.com'];
+            let rol: 'admin' | 'curator' | 'user' = ADMIN_EMAILS.includes(user.email || '') ? 'admin' : 'user';
+            if (rol !== 'admin') {
+                // Lectura robusta: AuthContext deja una escritura pendiente que
+                // enmascara el rol recién asignado (ver leerRolDeUsuario).
+                const r = await leerRolDeUsuario(db, user.uid);
+                if (r === 'admin') rol = 'admin';
+                else if (r === 'curator') rol = 'curator';
+            }
+            setMiRol(rol);
+            const admin = rol === 'admin';
+
+            // 2) Contenido que todos (admin y curador) pueden ver y curar.
             const restSnapshot = await getDocs(collection(db, "come"));
             const restData = restSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setRestaurants(restData);
-            // Antes esto eran los 8 primeros registros, no solicitudes: el panel
-            // decía "actividad reciente" mostrando negocios ya publicados.
-            setLeads(restData.filter((r: any) => r.status === 'pending'));
 
-            const [chefNomSnap, placeNomSnap, claimsSnap] = await Promise.all([
-                getDocs(collection(db, "chef_nominations")),
-                getDocs(collection(db, "place_nominations")),
-                getDocs(collection(db, "profile_claims")),
-            ]);
-            setChefNominations(chefNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            setPlaceNominations(placeNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            setClaims(claimsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-
-            // Fetch Chefs
             const chefsSnapshot = await getDocs(collection(db, "chefs"));
-            const chefsData = chefsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setChefs(chefsData);
+            setChefs(chefsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-            // Personas registradas, para poder asignarles un negocio o una ficha.
-            try {
-                const usuariosSnap = await getDocs(collection(db, "users"));
-                setUsuarios(usuariosSnap.docs.map(d => ({ uid: d.id, ...d.data() })));
-            } catch {
-                /* Si las reglas todavía no permiten listarlos, el selector queda vacío. */
-            }
-
-            // Fetch Guides
             const guidesSnapshot = await getDocs(collection(db, "guides"));
-            const guidesData = guidesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setGuides(guidesData);
+            setGuides(guidesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+            // 3) Sólo admin: bandejas de moderación y padrón de usuarios.
+            if (admin) {
+                setLeads(restData.filter((r: any) => r.status === 'pending'));
+                try {
+                    const [chefNomSnap, placeNomSnap, claimsSnap] = await Promise.all([
+                        getDocs(collection(db, "chef_nominations")),
+                        getDocs(collection(db, "place_nominations")),
+                        getDocs(collection(db, "profile_claims")),
+                    ]);
+                    setChefNominations(chefNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setPlaceNominations(placeNomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setClaims(claimsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                } catch { /* reglas o red: la bandeja queda vacía */ }
+                try {
+                    const usuariosSnap = await getDocs(collection(db, "users"));
+                    setUsuarios(usuariosSnap.docs.map(d => ({ uid: d.id, ...d.data() })));
+                } catch { /* sin permiso: el selector de dueño queda vacío */ }
+            }
         } catch (err) {
             console.error("Error fetching data:", err);
         } finally {
@@ -955,34 +1003,83 @@ export default function AdminDashboard() {
         }
     };
 
+    // Directorios filtrados por búsqueda y recortados a la página actual. Se
+    // calcula en render (listas en memoria, es barato) para que la lista no
+    // obligue a scrollear cientos de fichas.
+    const filtrarRest = restaurants.filter(r => {
+        const q = restQuery.trim().toLowerCase();
+        if (!q) return true;
+        return `${r.restaurantName || r.name || ''} ${r.category || ''} ${r.address || ''}`.toLowerCase().includes(q);
+    });
+    const restPaginas = Math.max(1, Math.ceil(filtrarRest.length / POR_PAGINA));
+    const restPagActual = Math.min(restPage, restPaginas);
+    const restVisibles = filtrarRest.slice((restPagActual - 1) * POR_PAGINA, restPagActual * POR_PAGINA);
+
+    const filtrarChefs = chefs.filter(c => {
+        const q = chefQuery.trim().toLowerCase();
+        if (!q) return true;
+        return `${c.name || ''} ${c.specialty || ''} ${c.restaurant || ''} ${c.ubicacion || ''}`.toLowerCase().includes(q);
+    });
+    const chefPaginas = Math.max(1, Math.ceil(filtrarChefs.length / POR_PAGINA));
+    const chefPagActual = Math.min(chefPage, chefPaginas);
+    const chefVisibles = filtrarChefs.slice((chefPagActual - 1) * POR_PAGINA, chefPagActual * POR_PAGINA);
+
     return (
         <AdminGuard>
             <div className={styles.adminWrapper}>
-                <aside className={styles.sidebar}>
+                <button
+                    type="button"
+                    className={styles.hamburguesa}
+                    onClick={() => setMenuMobil(true)}
+                    aria-label="Abrir menú"
+                >
+                    <FaBars />
+                </button>
+                {menuMobil && <div className={styles.backdrop} onClick={() => setMenuMobil(false)} />}
+                <aside className={`${styles.sidebar} ${sidebarColapsado ? styles.sidebarColapsado : ''} ${menuMobil ? styles.sidebarMobilAbierto : ''}`}>
                     <div className={styles.adminLogo}>
-                        <FaShieldAlt /> <span>Come Admin</span>
-                    </div>
-                    <nav className={styles.nav}>
-                        <button onClick={() => setActiveSection('dashboard')} className={activeSection === 'dashboard' ? styles.navItemActive : styles.navItem}><FaChartBar /> Dashboard</button>
-                        <button onClick={() => setActiveSection('restaurantes')} className={activeSection === 'restaurantes' ? styles.navItemActive : styles.navItem}><FaUtensils /> Negocios / Lugares</button>
-                        <button onClick={() => setActiveSection('chefs')} className={activeSection === 'chefs' ? styles.navItemActive : styles.navItem}><FaUsers /> Directorio de Chefs</button>
-                        <button onClick={() => setActiveSection('guias')} className={activeSection === 'guias' ? styles.navItemActive : styles.navItem}><FaMapMarkerAlt /> Guías Interactivas</button>
-                        <button onClick={() => setActiveSection('nominaciones')} className={activeSection === 'nominaciones' ? styles.navItemActive : styles.navItem}>
-                            <FaConciergeBell /> Nominaciones
-                            {(chefNominations.length + placeNominations.length + leads.length) > 0 && <span className={styles.badge}>{chefNominations.length + placeNominations.length + leads.length}</span>}
+                        <FaShieldAlt /> <span className={styles.navLabel}>Come Admin</span>
+                        <button
+                            type="button"
+                            className={styles.colapsarBtn}
+                            onClick={alternarSidebar}
+                            title={sidebarColapsado ? "Expandir menú" : "Colapsar menú"}
+                            aria-label={sidebarColapsado ? "Expandir menú" : "Colapsar menú"}
+                        >
+                            {sidebarColapsado ? <FaAngleRight /> : <FaAngleLeft />}
                         </button>
-                        <button onClick={() => setActiveSection('reclamaciones')} className={activeSection === 'reclamaciones' ? styles.navItemActive : styles.navItem}><FaShieldAlt /> Reclamaciones</button>
-                        <button onClick={() => setActiveSection('usuarios')} className={activeSection === 'usuarios' ? styles.navItemActive : styles.navItem}><FaUserShield /> Usuarios</button>
+                    </div>
+                    {esCurador && <div className={styles.rolAviso}><FaUserShield /> <span className={styles.navLabel}>Modo curador</span></div>}
+                    <nav className={styles.nav} onClick={() => setMenuMobil(false)}>
+                        {esAdmin && <button title="Dashboard" onClick={() => setActiveSection('dashboard')} className={activeSection === 'dashboard' ? styles.navItemActive : styles.navItem}><FaChartBar /> <span className={styles.navLabel}>Dashboard</span></button>}
+                        <button title="Negocios / Lugares" onClick={() => setActiveSection('restaurantes')} className={activeSection === 'restaurantes' ? styles.navItemActive : styles.navItem}><FaUtensils /> <span className={styles.navLabel}>Negocios / Lugares</span></button>
+                        <button title="Directorio de Chefs" onClick={() => setActiveSection('chefs')} className={activeSection === 'chefs' ? styles.navItemActive : styles.navItem}><FaUsers /> <span className={styles.navLabel}>Directorio de Chefs</span></button>
+                        <button title="Guías Interactivas" onClick={() => setActiveSection('guias')} className={activeSection === 'guias' ? styles.navItemActive : styles.navItem}><FaMapMarkerAlt /> <span className={styles.navLabel}>Guías Interactivas</span></button>
+                        {esAdmin && <button title="Reservaciones" onClick={() => setActiveSection('reservas')} className={activeSection === 'reservas' ? styles.navItemActive : styles.navItem}><FaCalendarAlt /> <span className={styles.navLabel}>Reservaciones</span></button>}
+                        {esAdmin && <button title="Nominaciones" onClick={() => setActiveSection('nominaciones')} className={activeSection === 'nominaciones' ? styles.navItemActive : styles.navItem}>
+                            <FaConciergeBell /> <span className={styles.navLabel}>Nominaciones</span>
+                            {(chefNominations.length + placeNominations.length + leads.length) > 0 && <span className={styles.badge}>{chefNominations.length + placeNominations.length + leads.length}</span>}
+                        </button>}
+                        {esAdmin && <button title="Reclamaciones" onClick={() => setActiveSection('reclamaciones')} className={activeSection === 'reclamaciones' ? styles.navItemActive : styles.navItem}><FaShieldAlt /> <span className={styles.navLabel}>Reclamaciones</span></button>}
+                        {esAdmin && <button title="Usuarios" onClick={() => setActiveSection('usuarios')} className={activeSection === 'usuarios' ? styles.navItemActive : styles.navItem}><FaUserShield /> <span className={styles.navLabel}>Usuarios</span></button>}
                     </nav>
-                    
-                    <button 
-                        onClick={handleSyncMichelin} 
-                        className={styles.primaryBtn} 
-                        style={{ marginTop: 'auto', background: isSyncing ? '#444' : 'var(--primary)' }}
-                        disabled={isSyncing}
-                    >
-                        <FaSync className={isSyncing ? styles.spin : ""} /> {isSyncing ? "Sincronizando..." : "Sincronizar Michelin"}
-                    </button>
+
+                    <div className={styles.sidebarFooter}>
+                        {esAdmin && (
+                            <button
+                                onClick={handleSyncMichelin}
+                                className={styles.primaryBtn}
+                                style={{ background: isSyncing ? '#444' : 'var(--primary)' }}
+                                disabled={isSyncing}
+                                title="Sincronizar Michelin"
+                            >
+                                <FaSync className={isSyncing ? styles.spin : ""} /> <span className={styles.navLabel}>{isSyncing ? "Sincronizando..." : "Sincronizar Michelin"}</span>
+                            </button>
+                        )}
+                        <Link href="/" className={styles.sitioLink} title="Ir al sitio">
+                            <FaExternalLinkAlt /> <span className={styles.navLabel}>Ir al sitio</span>
+                        </Link>
+                    </div>
                 </aside>
 
                 <main className={styles.mainContent}>
@@ -1177,6 +1274,12 @@ export default function AdminDashboard() {
                                 </section>
                             )}
 
+                            {activeSection === 'reservas' && esAdmin && (
+                                <section>
+                                    <PanelReservas />
+                                </section>
+                            )}
+
                             {activeSection === 'restaurantes' && (
                                 <section>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -1184,33 +1287,54 @@ export default function AdminDashboard() {
                                         <button className={styles.primaryBtn} onClick={() => setEditingRestaurant({})}><FaPlus /> Nuevo Lugar</button>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                                        <div className={styles.tableSection} style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                                            <table className={styles.adminTable}>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Restaurante</th>
-                                                        <th>Acciones</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {restaurants.map(r => (
-                                                        <tr key={r.id} style={{ background: editingRestaurant?.id === r.id ? '#f0f7ff' : 'transparent' }}>
-                                                            <td>
-                                                                <div style={{ fontWeight: 700 }}>{r.restaurantName || r.name}</div>
-                                                                <div style={{ fontSize: '0.8rem', color: '#888' }}>{r.category}</div>
-                                                            </td>
-                                                            <td className={styles.actions}>
-                                                                <button className={styles.editBtn} onClick={() => setEditingRestaurant(r)}><FaEdit /></button>
-                                                                <button className={styles.deleteBtn} onClick={() => handleDeleteRestaurant(r.id)}><FaTrash /></button>
-                                                            </td>
+                                    <div className={styles.splitLayout}>
+                                        <div className={styles.listPane}>
+                                            <div className={styles.listTools}>
+                                                <input
+                                                    className={styles.searchInput}
+                                                    value={restQuery}
+                                                    onChange={e => { setRestQuery(e.target.value); setRestPage(1); }}
+                                                    placeholder="Buscar por nombre, categoría o dirección…"
+                                                />
+                                                <span className={styles.listCount}>{filtrarRest.length} lugares</span>
+                                            </div>
+                                            <div className={styles.tableSection}>
+                                                <table className={styles.adminTable}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Restaurante</th>
+                                                            <th>Acciones</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        {restVisibles.map(r => (
+                                                            <tr key={r.id} className={editingRestaurant?.id === r.id ? styles.rowActive : undefined}>
+                                                                <td>
+                                                                    <div className={styles.rowMain}>{r.restaurantName || r.name}</div>
+                                                                    <div className={styles.rowSub}>{r.category}</div>
+                                                                </td>
+                                                                <td className={styles.actions}>
+                                                                    <button className={styles.editBtn} onClick={() => setEditingRestaurant(r)}><FaEdit /></button>
+                                                                    {esAdmin && <button className={styles.deleteBtn} onClick={() => handleDeleteRestaurant(r.id)}><FaTrash /></button>}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {restVisibles.length === 0 && (
+                                                            <tr><td colSpan={2} className={styles.emptyRow}>Sin resultados para “{restQuery}”.</td></tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {restPaginas > 1 && (
+                                                <div className={styles.pager}>
+                                                    <button type="button" onClick={() => setRestPage(p => Math.max(1, p - 1))} disabled={restPagActual <= 1}>Anterior</button>
+                                                    <span>{restPagActual} / {restPaginas}</span>
+                                                    <button type="button" onClick={() => setRestPage(p => Math.min(restPaginas, p + 1))} disabled={restPagActual >= restPaginas}>Siguiente</button>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className={styles.formOuter}>
+                                        <div className={`${styles.formOuter} ${editingRestaurant ? styles.formOuterActivo : ''}`}>
                                             {editingRestaurant ? (
                                                 <form onSubmit={handleSaveRestaurant} className={styles.adminForm}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1234,14 +1358,16 @@ export default function AdminDashboard() {
                                                                 placeholder="Ej. Mexicana Moderna"
                                                             />
                                                         </div>
-                                                        <div className={styles.formRowNarrow}>
-                                                            <label>Estrellas</label>
-                                                            <input 
-                                                                type="number" 
-                                                                value={editingRestaurant.michelinStars || 0} 
-                                                                onChange={e => setEditingRestaurant({...editingRestaurant, michelinStars: parseInt(e.target.value), isMichelin: parseInt(e.target.value) > 0})}
-                                                            />
-                                                        </div>
+                                                        {esAdmin && (
+                                                            <div className={styles.formRowNarrow}>
+                                                                <label>Estrellas</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={editingRestaurant.michelinStars || 0}
+                                                                    onChange={e => setEditingRestaurant({...editingRestaurant, michelinStars: parseInt(e.target.value), isMichelin: parseInt(e.target.value) > 0})}
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <GestorDeChefs
@@ -1250,11 +1376,13 @@ export default function AdminDashboard() {
                                                         onChange={siguiente => setEditingRestaurant({...editingRestaurant, chefsLista: siguiente})}
                                                     />
 
-                                                    <SelectorDueno
-                                                        usuarios={usuarios}
-                                                        valor={editingRestaurant.userId}
-                                                        onChange={uid => setEditingRestaurant({...editingRestaurant, userId: uid})}
-                                                    />
+                                                    {esAdmin && (
+                                                        <SelectorDueno
+                                                            usuarios={usuarios}
+                                                            valor={editingRestaurant.userId}
+                                                            onChange={uid => setEditingRestaurant({...editingRestaurant, userId: uid})}
+                                                        />
+                                                    )}
 
                                                     <label className={styles.chefPrevio}>
                                                         <input type="checkbox" checked={Boolean(editingRestaurant.isTraditionalCuisine)} onChange={e => setEditingRestaurant({...editingRestaurant, isTraditionalCuisine: e.target.checked})} />
@@ -1449,7 +1577,7 @@ export default function AdminDashboard() {
                                                         </div>
                                                     )}
 
-                                                    <button type="submit" className={styles.primaryBtn}>
+                                                    <button type="submit" className={`${styles.primaryBtn} ${styles.stickySave}`}>
                                                         <FaSave /> Guardar Cambios
                                                     </button>
                                                 </form>
@@ -1472,34 +1600,55 @@ export default function AdminDashboard() {
                                     </div>
 
                                     <div className={styles.splitLayout}>
-                                        <div className={styles.tableSection}>
-                                            <table className={styles.adminTable}>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Chef</th>
-                                                        <th>Acciones</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {chefs.map(chef => (
-                                                        <tr key={chef.id} className={editingChef?.id === chef.id ? styles.rowActive : undefined}>
-                                                            <td>
-                                                                <div className={styles.rowMain}>{chef.name || "Sin nombre"}</div>
-                                                                <div className={styles.rowSub}>
-                                                                    {[chef.specialty, chef.restaurant, chef.ubicacion].filter(Boolean).join(" · ") || "Sin datos"}
-                                                                </div>
-                                                            </td>
-                                                            <td className={styles.actions}>
-                                                                <button className={styles.editBtn} onClick={() => setEditingChef(chef)}><FaEdit /></button>
-                                                                <button className={styles.deleteBtn} onClick={() => handleDeleteChef(chef.id)}><FaTrash /></button>
-                                                            </td>
+                                        <div className={styles.listPane}>
+                                            <div className={styles.listTools}>
+                                                <input
+                                                    className={styles.searchInput}
+                                                    value={chefQuery}
+                                                    onChange={e => { setChefQuery(e.target.value); setChefPage(1); }}
+                                                    placeholder="Buscar por nombre, especialidad o lugar…"
+                                                />
+                                                <span className={styles.listCount}>{filtrarChefs.length} chefs</span>
+                                            </div>
+                                            <div className={styles.tableSection}>
+                                                <table className={styles.adminTable}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Chef</th>
+                                                            <th>Acciones</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        {chefVisibles.map(chef => (
+                                                            <tr key={chef.id} className={editingChef?.id === chef.id ? styles.rowActive : undefined}>
+                                                                <td>
+                                                                    <div className={styles.rowMain}>{chef.name || "Sin nombre"}</div>
+                                                                    <div className={styles.rowSub}>
+                                                                        {[chef.specialty, chef.restaurant, chef.ubicacion].filter(Boolean).join(" · ") || "Sin datos"}
+                                                                    </div>
+                                                                </td>
+                                                                <td className={styles.actions}>
+                                                                    <button className={styles.editBtn} onClick={() => setEditingChef(chef)}><FaEdit /></button>
+                                                                    {esAdmin && <button className={styles.deleteBtn} onClick={() => handleDeleteChef(chef.id)}><FaTrash /></button>}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {chefVisibles.length === 0 && (
+                                                            <tr><td colSpan={2} className={styles.emptyRow}>Sin resultados para “{chefQuery}”.</td></tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {chefPaginas > 1 && (
+                                                <div className={styles.pager}>
+                                                    <button type="button" onClick={() => setChefPage(p => Math.max(1, p - 1))} disabled={chefPagActual <= 1}>Anterior</button>
+                                                    <span>{chefPagActual} / {chefPaginas}</span>
+                                                    <button type="button" onClick={() => setChefPage(p => Math.min(chefPaginas, p + 1))} disabled={chefPagActual >= chefPaginas}>Siguiente</button>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className={styles.formOuter}>
+                                        <div className={`${styles.formOuter} ${editingChef ? styles.formOuterActivo : ''}`}>
                                             {editingChef ? (
                                                 <form onSubmit={handleSaveChef} className={styles.adminForm}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1534,14 +1683,16 @@ export default function AdminDashboard() {
                                                                 onChange={e => setEditingChef({...editingChef, ubicacion: e.target.value})}
                                                             />
                                                         </div>
-                                                        <div style={{ width: '100px' }}>
-                                                            <label>Estrellas</label>
-                                                            <input 
-                                                                type="number" 
-                                                                value={editingChef.estrellas || 0} 
-                                                                onChange={e => setEditingChef({...editingChef, estrellas: Number(e.target.value) || 0})}
-                                                            />
-                                                        </div>
+                                                        {esAdmin && (
+                                                            <div style={{ width: '100px' }}>
+                                                                <label>Estrellas</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={editingChef.estrellas || 0}
+                                                                    onChange={e => setEditingChef({...editingChef, estrellas: Number(e.target.value) || 0})}
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <label>Biografía Corta</label>
@@ -1584,11 +1735,13 @@ export default function AdminDashboard() {
                                                         placeholder="@usuario"
                                                     />
 
-                                                    <SelectorDueno
-                                                        usuarios={usuarios}
-                                                        valor={editingChef.userId}
-                                                        onChange={uid => setEditingChef({...editingChef, userId: uid})}
-                                                    />
+                                                    {esAdmin && (
+                                                        <SelectorDueno
+                                                            usuarios={usuarios}
+                                                            valor={editingChef.userId}
+                                                            onChange={uid => setEditingChef({...editingChef, userId: uid})}
+                                                        />
+                                                    )}
                                                     <label className={styles.chefPrevio}>
                                                         <input type="checkbox" checked={Boolean(editingChef.isTraditionalCook)} onChange={e => setEditingChef({...editingChef, isTraditionalCook: e.target.checked})} />
                                                         Cocinera tradicional (aparece en su directorio propio)
@@ -1601,7 +1754,7 @@ export default function AdminDashboard() {
                                                         </div>
                                                     )}
 
-                                                    <button type="submit" className={styles.primaryBtn}>
+                                                    <button type="submit" className={`${styles.primaryBtn} ${styles.stickySave}`}>
                                                         <FaSave /> Guardar Chef
                                                     </button>
                                                 </form>
@@ -1641,7 +1794,7 @@ export default function AdminDashboard() {
                                                             </td>
                                                             <td className={styles.actions}>
                                                                 <button className={styles.editBtn} onClick={() => setEditingGuide(guide)}><FaEdit /></button>
-                                                                <button className={styles.deleteBtn} onClick={() => handleDeleteGuide(guide.id)}><FaTrash /></button>
+                                                                {esAdmin && <button className={styles.deleteBtn} onClick={() => handleDeleteGuide(guide.id)}><FaTrash /></button>}
                                                             </td>
                                                         </tr>
                                                     ))}
