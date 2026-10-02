@@ -1,8 +1,9 @@
 import Link from "next/link";
 import styles from "../static-pages.module.css";
+import { LEGAL_ACTUALIZADO, LEGAL_CONTACTO, TERMINOS_VERSION } from "@/lib/legal";
 
-const ACTUALIZADO = "5 de septiembre de 2026";
-const CONTACTO = "legal@comeapp.com.mx";
+const ACTUALIZADO = LEGAL_ACTUALIZADO;
+const CONTACTO = LEGAL_CONTACTO;
 
 const INDICE = [
   ["quienes-somos", "1. Quiénes somos"],
@@ -10,17 +11,19 @@ const INDICE = [
   ["tu-cuenta", "3. Tu cuenta"],
   ["contenido-que-envias", "4. Contenido que nos envías"],
   ["negocios", "5. Registro y gestión de negocios"],
-  ["uso-permitido", "6. Uso permitido y conductas prohibidas"],
-  ["propiedad-intelectual", "7. Propiedad intelectual"],
-  ["terceros", "8. Contenidos y servicios de terceros"],
-  ["ubicacion", "9. Ubicación y mapas"],
-  ["disponibilidad", "10. Disponibilidad y cambios del servicio"],
-  ["responsabilidad", "11. Exención y límite de responsabilidad"],
-  ["app", "12. Aplicación móvil"],
-  ["privacidad", "13. Privacidad"],
-  ["cambios", "14. Cambios a estos términos"],
-  ["ley-aplicable", "15. Ley aplicable y jurisdicción"],
-  ["contacto", "16. Contacto"],
+  ["reservaciones", "6. Reservaciones"],
+  ["perfiles-verificados", "7. Perfiles verificados y herramientas para negocios"],
+  ["uso-permitido", "8. Uso permitido y conductas prohibidas"],
+  ["propiedad-intelectual", "9. Propiedad intelectual"],
+  ["terceros", "10. Contenidos y servicios de terceros"],
+  ["ubicacion", "11. Ubicación y mapas"],
+  ["disponibilidad", "12. Disponibilidad y cambios del servicio"],
+  ["responsabilidad", "13. Exención y límite de responsabilidad"],
+  ["app", "14. Aplicación móvil"],
+  ["privacidad", "15. Privacidad"],
+  ["cambios", "16. Cambios a estos términos"],
+  ["ley-aplicable", "17. Ley aplicable y jurisdicción"],
+  ["contacto", "18. Contacto"],
 ];
 
 export default function Terminos() {
@@ -30,7 +33,7 @@ export default function Terminos() {
         <div>
           <span className={styles.eyebrow}>INFORMACIÓN LEGAL</span>
           <h1>Términos y condiciones</h1>
-          <p>Última actualización: {ACTUALIZADO}.</p>
+          <p>Última actualización: {ACTUALIZADO} · versión {TERMINOS_VERSION}.</p>
         </div>
       </section>
 
@@ -40,6 +43,7 @@ export default function Terminos() {
           <ul>
             <li>Come es una guía gastronómica editorial: publicamos información sobre restaurantes, chefs y rutas para comer en México.</li>
             <li>No vendemos comida, no procesamos pagos y no hacemos entregas. Cuando pides algo, lo haces directamente con el restaurante.</li>
+            <li>Puedes reservar mesa en los restaurantes que lo permiten: Come transmite tu reservación, pero el servicio lo presta el restaurante.</li>
             <li>Lo que nos envías —nominaciones, la ficha de tu negocio— pasa por revisión de la redacción antes de publicarse.</li>
             <li>Horarios, precios y menús cambian: confírmalos con el lugar antes de ir.</li>
           </ul>
@@ -62,7 +66,9 @@ export default function Terminos() {
           cualquier servicio que ofrezcamos a través de ellos.
         </p>
         <p>
-          Al acceder o usar Come aceptas estos términos. Si no estás de acuerdo con ellos, no uses la plataforma.
+          Al crear una cuenta, al marcar la casilla de aceptación o al usar Come aceptas estos términos y el{" "}
+          <Link href="/privacidad">aviso de privacidad</Link>. Guardamos la versión que aceptaste y la fecha en que lo
+          hiciste. Si no estás de acuerdo con ellos, no uses la plataforma.
         </p>
 
         <h2 id="que-es-come">2. Qué es Come (y qué no es)</h2>
@@ -75,9 +81,11 @@ export default function Terminos() {
         <ul>
           <li>No somos un restaurante ni un servicio de comida. No preparamos, vendemos ni entregamos alimentos.</li>
           <li>No procesamos pagos ni cobramos comisiones por pedidos. Los menús que publicamos son informativos.</li>
-          <li>No somos intermediarios ni representantes de los negocios que aparecen en la plataforma. Cualquier
-            pedido, reservación, consumo o reclamación ocurre entre tú y el establecimiento.</li>
-          <li>No garantizamos disponibilidad de mesas, de platillos ni de servicio a domicilio.</li>
+          <li>No somos representantes de los negocios que aparecen en la plataforma. Cualquier pedido, consumo o
+            reclamación sobre el servicio ocurre entre tú y el establecimiento.</li>
+          <li>En los restaurantes que activan reservaciones en línea, Come funciona como herramienta para apartar mesa y
+            transmitirle tu solicitud al restaurante (ver la sección 6). El servicio lo presta el restaurante.</li>
+          <li>No garantizamos disponibilidad de platillos ni de servicio a domicilio.</li>
         </ul>
         <p>
           La información de cada lugar —horarios, precios, dirección, menú, reconocimientos— proviene del propio
@@ -139,7 +147,66 @@ export default function Terminos() {
           condiciones se informarán por separado antes de contratarlos.
         </p>
 
-        <h2 id="uso-permitido">6. Uso permitido y conductas prohibidas</h2>
+        <h2 id="reservaciones">6. Reservaciones</h2>
+        <p>
+          Algunos restaurantes permiten reservar mesa desde Come, en el sitio o en la app. En esos casos Come funciona
+          como una herramienta tecnológica que muestra la disponibilidad que el restaurante configura, registra tu
+          solicitud y se la transmite. Come no presta el servicio de alimentos ni es parte de tu relación de consumo con
+          el restaurante.
+        </p>
+        <ul>
+          <li><b>Cuenta y datos.</b> Para reservar necesitas una cuenta. Los datos que indicas —nombre, teléfono, correo,
+            número de personas, fecha, hora y notas— deben ser verdaderos; los compartimos con el restaurante sólo para
+            que atienda tu reservación, como se explica en el <Link href="/privacidad">aviso de privacidad</Link>.</li>
+          <li><b>Confirmación.</b> Según la configuración de cada restaurante, la reservación se confirma al instante si
+            hay lugar, o queda pendiente hasta que el restaurante la acepta o la rechaza. Te avisamos por correo y puedes
+            consultar el estado en tu perfil.</li>
+          <li><b>Cancelación.</b> Puedes cancelar tu reservación desde tu perfil antes de la hora reservada. El
+            restaurante también puede cancelarla o rechazarla, por ejemplo por cierre o causas de fuerza mayor; en ese
+            caso te avisaremos.</li>
+          <li><b>Políticas del restaurante.</b> La tolerancia, el tiempo de mesa, los requisitos para grupos y las demás
+            condiciones las fija cada restaurante y se muestran al reservar cuando las proporciona.</li>
+          <li><b>Sin costo.</b> Reservar en Come es gratuito: no cobramos anticipos, depósitos ni comisiones. Si un
+            restaurante te pide un pago, lo hace por su cuenta y bajo sus propias condiciones.</li>
+          <li><b>Uso responsable.</b> No hagas reservaciones que no piensas cumplir ni a nombre de otra persona sin su
+            autorización. Podemos limitar o suspender la función de reservaciones a cuentas con reservaciones falsas,
+            duplicadas o con inasistencias reiteradas.</li>
+          <li><b>Alergias y necesidades especiales.</b> Si las mencionas en las notas, el restaurante las recibe tal
+            cual. Confírmalas directamente con el establecimiento: Come no puede garantizar que se atiendan.</li>
+        </ul>
+        <p>
+          Come no responde por que el restaurante respete una reservación confirmada, por la calidad del servicio ni por
+          los cambios que haga el establecimiento. Cualquier reclamación sobre el servicio debe dirigirse al restaurante,
+          sin perjuicio de tus derechos como consumidor.
+        </p>
+
+        <h2 id="perfiles-verificados">7. Perfiles verificados y herramientas para negocios</h2>
+        <p>
+          El titular o representante de un restaurante o de un chef puede reclamar su perfil en Come. Para aprobarlo
+          revisamos la evidencia que nos envía; podemos pedir información adicional y negar o revocar la verificación si
+          no es suficiente o si resulta falsa.
+        </p>
+        <p>Si gestionas un perfil verificado:</p>
+        <ul>
+          <li>Eres responsable de la información que publiques y de mantener al día horarios, menú, precios y la
+            configuración de reservaciones.</li>
+          <li>Si activas las reservaciones, te comprometes a respetar las que se confirmen conforme a tu configuración, a
+            atender o rechazar con prontitud las que requieran tu aprobación y a avisar a tiempo cualquier cancelación.</li>
+          <li>Los datos de los comensales que recibes por una reservación sólo puedes usarlos para atenderla. No puedes
+            usarlos para enviar publicidad, cederlos a terceros ni conservarlos más de lo necesario, y debes protegerlos
+            conforme a la legislación de protección de datos personales.</li>
+          <li>Si conectas las cuentas de redes sociales del negocio (Instagram, Facebook o TikTok), nos autorizas a
+            mostrar en Come las publicaciones públicas de esas cuentas, con su crédito y enlace al original. Puedes
+            desconectarlas cuando quieras; los tokens de acceso se guardan cifrados y sólo se usan para leer ese
+            contenido.</li>
+        </ul>
+        <p>
+          La selección de lugares, guías y notas la realiza la redacción de Come, que puede apoyarse en curadores
+          designados por la propia redacción. Su trabajo es editorial y no implica una relación con los negocios
+          publicados.
+        </p>
+
+        <h2 id="uso-permitido">8. Uso permitido y conductas prohibidas</h2>
         <p>
           Puedes usar Come para consultar, compartir enlaces y participar con nominaciones o con el registro de tu
           negocio. No está permitido:
@@ -155,7 +222,7 @@ export default function Terminos() {
           <li>Introducir código malicioso o sobrecargar deliberadamente nuestros servicios.</li>
         </ul>
 
-        <h2 id="propiedad-intelectual">7. Propiedad intelectual</h2>
+        <h2 id="propiedad-intelectual">9. Propiedad intelectual</h2>
         <p>
           El contenido editorial, las guías, los textos de las fichas, la selección y organización del directorio, la
           marca Come, sus logotipos, el diseño y el software pertenecen a Mexica Gourmet o a sus licenciantes, y están
@@ -174,19 +241,20 @@ export default function Terminos() {
           lo revisaremos y, si procede, lo retiraremos.
         </p>
 
-        <h2 id="terceros">8. Contenidos y servicios de terceros</h2>
+        <h2 id="terceros">10. Contenidos y servicios de terceros</h2>
         <p>
           Come se apoya en servicios de terceros y enlaza a sitios que no controlamos: Google Maps para los mapas y la
           búsqueda de direcciones, Firebase de Google para el alojamiento, la autenticación y la base de datos, Apple
-          y Google para el acceso con cuenta, nuestro sistema editorial para las historias, y las páginas y redes
-          sociales de los establecimientos.
+          y Google para el acceso con cuenta, Resend para el envío de correos de reservaciones, nuestro sistema
+          editorial para las historias, y las páginas y redes sociales de los establecimientos, cuyos videos de
+          Instagram, Facebook y TikTok mostramos incrustados.
         </p>
         <p>
           No respondemos por el contenido, las políticas ni el funcionamiento de esos servicios. Al usarlos, se aplican
           además sus propios términos y avisos de privacidad.
         </p>
 
-        <h2 id="ubicacion">9. Ubicación y mapas</h2>
+        <h2 id="ubicacion">11. Ubicación y mapas</h2>
         <p>
           Si nos autorizas a usar tu ubicación, la empleamos para mostrarte lugares cercanos y calcular distancias
           aproximadas. La dirección que guardas se almacena en tu propio dispositivo y puedes borrarla cuando quieras.
@@ -198,14 +266,14 @@ export default function Terminos() {
           privacidad</Link>.
         </p>
 
-        <h2 id="disponibilidad">10. Disponibilidad y cambios del servicio</h2>
+        <h2 id="disponibilidad">12. Disponibilidad y cambios del servicio</h2>
         <p>
           Trabajamos para mantener Come disponible, pero no garantizamos un funcionamiento ininterrumpido ni libre de
           errores. Podemos modificar, suspender o descontinuar funciones, secciones o la plataforma completa, así como
           realizar tareas de mantenimiento que interrumpan el servicio temporalmente.
         </p>
 
-        <h2 id="responsabilidad">11. Exención y límite de responsabilidad</h2>
+        <h2 id="responsabilidad">13. Exención y límite de responsabilidad</h2>
         <p>
           Come se ofrece &laquo;tal cual&raquo;, con la información disponible al momento de la publicación. En la
           medida que permita la ley aplicable, no respondemos por:
@@ -223,7 +291,7 @@ export default function Terminos() {
           incluida la protección al consumidor.
         </p>
 
-        <h2 id="app">12. Aplicación móvil</h2>
+        <h2 id="app">14. Aplicación móvil</h2>
         <p>
           La app de Come se descarga desde las tiendas de aplicaciones y su uso queda sujeto además a los términos de
           la tienda correspondiente. Te concedemos una licencia personal, limitada, revocable y no transferible para
@@ -233,8 +301,16 @@ export default function Terminos() {
           Las actualizaciones pueden instalarse automáticamente según la configuración de tu dispositivo. La descarga
           es gratuita; el consumo de datos móviles corre por tu cuenta.
         </p>
+        <p>
+          Si descargas la app desde la App Store de Apple: estos términos se celebran entre tú y Mexica Gourmet, no con
+          Apple; Apple no es responsable de la app ni de su contenido, ni tiene obligación de darle mantenimiento o
+          soporte; ante cualquier reclamación sobre la app —incluidas las de garantía, de propiedad intelectual o de
+          cumplimiento normativo— responde Mexica Gourmet, no Apple; y Apple y sus subsidiarias son terceros
+          beneficiarios de estos términos y pueden hacerlos valer frente a ti. Declaras que no te encuentras en un país
+          sujeto a embargo de los Estados Unidos ni en sus listas de partes restringidas.
+        </p>
 
-        <h2 id="privacidad">13. Privacidad</h2>
+        <h2 id="privacidad">15. Privacidad</h2>
         <p>
           El tratamiento de tus datos personales se rige por nuestro <Link href="/privacidad">aviso de privacidad</Link>,
           que forma parte de estos términos y explica qué datos recabamos, para qué los usamos y cómo ejercer tus
@@ -242,25 +318,28 @@ export default function Terminos() {
           <Link href="/eliminar-cuenta">eliminar tu cuenta</Link>.
         </p>
 
-        <h2 id="cambios">14. Cambios a estos términos</h2>
+        <h2 id="cambios">16. Cambios a estos términos</h2>
         <p>
           Podemos actualizar estos términos para reflejar cambios en la plataforma o en la normativa. La versión
           vigente es siempre la publicada en esta página, con su fecha de última actualización. Si el cambio es
-          relevante, lo anunciaremos en el sitio o por correo. Seguir usando Come después de la publicación implica que
-          aceptas la versión actualizada.
+          relevante, te pediremos que aceptes la nueva versión la próxima vez que entres a tu cuenta, y lo anunciaremos
+          en el sitio o por correo. Seguir usando Come después de la publicación implica que aceptas la versión
+          actualizada.
         </p>
 
-        <h2 id="ley-aplicable">15. Ley aplicable y jurisdicción</h2>
+        <h2 id="ley-aplicable">17. Ley aplicable y jurisdicción</h2>
         <p>
           Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Para cualquier controversia, las
           partes se someten a los tribunales competentes de la Ciudad de México, renunciando a cualquier otro fuero que
-          pudiera corresponderles por razón de domicilio presente o futuro.
+          pudiera corresponderles por razón de domicilio presente o futuro. Lo anterior no limita los derechos que te
+          otorga la Ley Federal de Protección al Consumidor ni tu facultad de acudir a la Procuraduría Federal del
+          Consumidor (PROFECO).
         </p>
         <p>
           Si alguna cláusula resulta inválida o inexigible, las demás continuarán en vigor.
         </p>
 
-        <h2 id="contacto">16. Contacto</h2>
+        <h2 id="contacto">18. Contacto</h2>
         <p>Para consultas legales, reclamaciones de contenido o solicitudes sobre tu cuenta:</p>
         <div className={styles.contactBox}>
           <p><b>Come · Mexica Gourmet</b></p>

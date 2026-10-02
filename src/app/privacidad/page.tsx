@@ -1,8 +1,9 @@
 import Link from "next/link";
 import styles from "../static-pages.module.css";
+import { LEGAL_ACTUALIZADO, LEGAL_CONTACTO, LEGAL_DOMICILIO, LEGAL_RAZON_SOCIAL, PRIVACIDAD_VERSION } from "@/lib/legal";
 
-const ACTUALIZADO = "5 de septiembre de 2026";
-const CONTACTO = "legal@comeapp.com.mx";
+const ACTUALIZADO = LEGAL_ACTUALIZADO;
+const CONTACTO = LEGAL_CONTACTO;
 
 const INDICE = [
   ["responsable", "1. Quién es responsable de tus datos"],
@@ -54,6 +55,26 @@ const DATOS = [
     cuando: "Sólo si concedes el permiso o escribes una dirección.",
   },
   {
+    dato: "Datos de reservaciones",
+    detalle: "Nombre para la reservación, teléfono, correo, número de personas, fecha, hora, restaurante, notas que escribas y el historial de estados (confirmada, cancelada, etcétera).",
+    cuando: "Al reservar mesa en un restaurante.",
+  },
+  {
+    dato: "Reclamación de un perfil",
+    detalle: "Tu relación con el negocio o el chef, correo de trabajo, teléfono, sitio web, enlaces o documentos de evidencia y comentarios.",
+    cuando: "Al pedir la verificación de un perfil.",
+  },
+  {
+    dato: "Cuentas de redes del negocio",
+    detalle: "Identificador de la cuenta conectada y los tokens de acceso que otorga Instagram, Facebook o TikTok (guardados cifrados), y las publicaciones públicas que mostramos.",
+    cuando: "Sólo si un negocio o chef conecta sus redes.",
+  },
+  {
+    dato: "Registro de aceptación",
+    detalle: "Versión de los términos y de este aviso que aceptaste, y la fecha en que lo hiciste.",
+    cuando: "Al crear tu cuenta o al aceptar una versión nueva.",
+  },
+  {
     dato: "Datos técnicos",
     detalle: "Dirección IP, tipo de dispositivo y navegador, y registros de errores que generan nuestros proveedores de alojamiento por razones de seguridad y operación.",
     cuando: "Al navegar el sitio o usar la app.",
@@ -67,7 +88,7 @@ export default function Privacidad() {
         <div>
           <span className={styles.eyebrow}>INFORMACIÓN LEGAL</span>
           <h1>Aviso de privacidad</h1>
-          <p>Última actualización: {ACTUALIZADO}.</p>
+          <p>Última actualización: {ACTUALIZADO} · versión {PRIVACIDAD_VERSION}.</p>
         </div>
       </section>
 
@@ -76,7 +97,8 @@ export default function Privacidad() {
           <h2>En corto</h2>
           <ul>
             <li>Puedes usar Come sin cuenta y sin compartir tu ubicación.</li>
-            <li>Sólo pedimos datos cuando te registras, nominas un lugar o registras tu negocio.</li>
+            <li>Sólo pedimos datos cuando te registras, reservas mesa, nominas un lugar o registras tu negocio.</li>
+            <li>Cuando reservas, compartimos tus datos de la reservación sólo con ese restaurante.</li>
             <li>No vendemos tus datos personales ni los usamos para publicidad de terceros.</li>
             <li>La dirección que guardas se queda en tu dispositivo y puedes borrarla cuando quieras.</li>
             <li>Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos escribiendo a {CONTACTO}.</li>
@@ -96,8 +118,9 @@ export default function Privacidad() {
 
         <h2 id="responsable">1. Quién es responsable de tus datos</h2>
         <p>
-          Mexica Gourmet, responsable de la plataforma Come (comeapp.com.mx y la aplicación móvil Come), es
-          responsable del tratamiento de los datos personales que recabamos a través de ellas.
+          {LEGAL_RAZON_SOCIAL}, responsable de la plataforma Come (comeapp.com.mx y la aplicación móvil Come), es
+          responsable del tratamiento de los datos personales que recabamos a través de ellas
+          {LEGAL_DOMICILIO ? <>, con domicilio en {LEGAL_DOMICILIO}</> : null}.
         </p>
         <p>
           Este aviso se emite conforme a la legislación mexicana en materia de protección de datos personales en
@@ -145,6 +168,11 @@ export default function Privacidad() {
           <li>Crear tu cuenta, autenticarte y mantener tu sesión abierta.</li>
           <li>Mostrarte tu perfil y los negocios que has registrado.</li>
           <li>Revisar, editar y publicar las nominaciones y las fichas de negocio que nos envías.</li>
+          <li>Registrar tus reservaciones, transmitirlas al restaurante, mostrarte su estado y enviarte los avisos por
+            correo de confirmación, rechazo o cancelación.</li>
+          <li>Verificar la titularidad de los perfiles que se reclaman y dar acceso a su gestión.</li>
+          <li>Mostrar en Come las publicaciones públicas de las cuentas de redes que un negocio conecta.</li>
+          <li>Conservar la constancia de que aceptaste los términos y este aviso.</li>
           <li>Contactarte a propósito de tu cuenta, de tu nominación o de la ficha de tu negocio.</li>
           <li>Ordenar los lugares por cercanía y calcular distancias, cuando compartes una ubicación.</li>
           <li>Mantener la seguridad de la plataforma, prevenir fraudes y abusos, y atender obligaciones legales.</li>
@@ -164,6 +192,12 @@ export default function Privacidad() {
           No solicitamos datos personales sensibles —origen étnico, estado de salud, creencias, preferencias sexuales,
           opiniones políticas ni datos biométricos—. Te pedimos que no los incluyas en los campos abiertos de los
           formularios.
+        </p>
+        <p>
+          La excepción son las notas de una reservación: si decides mencionar ahí una alergia, una intolerancia u otra
+          necesidad relacionada con tu salud, ese dato es sensible. Sólo lo tratamos para transmitírselo al restaurante
+          en el que reservas, y lo hacemos con tu consentimiento expreso, que otorgas al marcar la casilla de
+          aceptación antes de confirmar la reservación. Es opcional: puedes reservar sin escribir notas.
         </p>
         <p>
           Come no está dirigido a menores de 18 años y no recabamos conscientemente sus datos. Si detectamos que una
@@ -193,8 +227,13 @@ export default function Privacidad() {
         <ul>
           <li><b>Sesión:</b> Firebase Authentication guarda un token para mantenerte con la sesión iniciada.</li>
           <li><b>Ubicación guardada:</b> la dirección que eliges, bajo la clave <code>come:ubicacion</code>.</li>
-          <li><b>Preferencias de la interfaz:</b> ajustes menores de navegación.</li>
+          <li><b>Preferencias de la interfaz:</b> ajustes menores de navegación, como ocultar el aviso para descargar la
+            app.</li>
         </ul>
+        <p>
+          Cuando reproduces un video incrustado de Instagram, Facebook o TikTok, esa plataforma puede fijar sus propias
+          cookies conforme a sus políticas. No las controlamos ni recibimos la información que recaban.
+        </p>
         <p>
           Puedes borrar estos datos desde tu navegador o desinstalando la app. Si lo haces, tendrás que iniciar sesión
           de nuevo y volver a indicar tu dirección.
@@ -212,7 +251,16 @@ export default function Privacidad() {
           <li><b>Google Maps Platform:</b> mapas, búsqueda de direcciones y conversión de coordenadas.</li>
           <li><b>Apple y Google:</b> únicamente si eliges acceder con esas cuentas, para verificar tu identidad.</li>
           <li><b>Proveedor de nuestro sistema editorial:</b> alojamiento de las historias y del contenido publicado.</li>
+          <li><b>Resend:</b> envío de los correos de tus reservaciones.</li>
+          <li><b>Meta (Instagram y Facebook) y TikTok:</b> sólo cuando un negocio conecta sus cuentas, para leer sus
+            publicaciones públicas.</li>
         </ul>
+        <p>
+          Además, cuando reservas mesa, el <b>restaurante</b> en el que reservas recibe tu nombre, teléfono, correo,
+          número de personas, fecha, hora y notas, únicamente para atender tu reservación. Esta comunicación es
+          necesaria para cumplir lo que nos pides. El restaurante se obliga a usar esos datos sólo para ese fin; su
+          tratamiento posterior queda bajo su responsabilidad.
+        </p>
         <p>
           Además podremos revelar datos cuando lo exija una autoridad competente o una obligación legal, y en caso de
           reestructura, fusión o adquisición de Come, informándolo previamente.
@@ -236,6 +284,12 @@ export default function Privacidad() {
             atender obligaciones legales y reclamaciones.</li>
           <li><b>Fichas de negocio publicadas:</b> mientras el establecimiento aparezca en el directorio.</li>
           <li><b>Nominaciones no publicadas:</b> hasta veinticuatro meses después de su revisión.</li>
+          <li><b>Reservaciones:</b> hasta veinticuatro meses después de la fecha reservada, para que puedas consultarlas y
+            para atender aclaraciones.</li>
+          <li><b>Reclamaciones de perfil:</b> mientras dure la verificación y hasta veinticuatro meses después de
+            resolverla.</li>
+          <li><b>Tokens de redes sociales:</b> hasta que el negocio desconecte la cuenta o deje de gestionar el perfil.</li>
+          <li><b>Registro de aceptación:</b> mientras exista tu cuenta y durante el plazo de conservación posterior.</li>
           <li><b>Registros técnicos y de seguridad:</b> los plazos que fijan nuestros proveedores de infraestructura,
             normalmente no mayores a doce meses.</li>
         </ul>
@@ -324,6 +378,7 @@ export default function Privacidad() {
           <p><b>Come · Mexica Gourmet</b></p>
           <p>Correo: <a href={`mailto:${CONTACTO}`}>{CONTACTO}</a></p>
           <p>Sitio: comeapp.com.mx</p>
+          {LEGAL_DOMICILIO ? <p>Domicilio: {LEGAL_DOMICILIO}</p> : null}
         </div>
 
         <div className={styles.actions}>

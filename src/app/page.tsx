@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { APP_STORE_URL, GOOGLE_PLAY_URL } from "@/lib/legal";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { ArrowRight, CalendarDays, ChefHat, ChevronLeft, ChevronRight, Compass, Map, MapPin, Search, ShoppingBag, Sparkles, Star } from "lucide-react";
@@ -107,8 +108,8 @@ function AppBand(){
       <p>Guarda tus taquerías de cabecera, sigue a los chefs que te gustan, arma rutas para el fin de semana y pide sin dar tantas vueltas. Toda la mesa mexicana, en tu teléfono.</p>
       {/* Badges oficiales de Apple y Google, sin modificar. */}
       <div className={styles.storeButtons}>
-        <a href="https://apps.apple.com/mx/app/id6809052402" aria-label="Descargar Come en el App Store"><img src="/badges/app-store-es.svg" alt="Descárgala en el App Store"/></a>
-        <a href="https://play.google.com/store/apps/details?id=com.mxica.come" aria-label="Descargar Come en Google Play"><img src="/badges/google-play-es.png" alt="Disponible en Google Play"/></a>
+        <a href={APP_STORE_URL} aria-label="Descargar Come en el App Store"><img src="/badges/app-store-es.svg" alt="Descárgala en el App Store"/></a>
+        <a href={GOOGLE_PLAY_URL} aria-label="Descargar Come en Google Play"><img src="/badges/google-play-es.png" alt="Disponible en Google Play"/></a>
       </div>
     </div>
   </section>;

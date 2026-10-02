@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_STORE_URL, GOOGLE_PLAY_URL } from "@/lib/legal";
 import { FaInstagram } from "react-icons/fa";
 import styles from "./Footer.module.css";
 import { SEO_CIUDADES } from "@/lib/seoCatalog";
@@ -6,8 +7,8 @@ import { SEO_CIUDADES } from "@/lib/seoCatalog";
 // Fichas en las tiendas. La de Apple ya existe (la app está en revisión); la de
 // Google responde 404 hasta que se publique, pero es la dirección definitiva y
 // no hay que volver a tocarla.
-const ENLACE_APP_STORE = "https://apps.apple.com/mx/app/id6809052402";
-const ENLACE_GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.mxica.come";
+const ENLACE_APP_STORE = APP_STORE_URL;
+const ENLACE_GOOGLE_PLAY = GOOGLE_PLAY_URL;
 
 export default function Footer() {
   return (
@@ -18,6 +19,7 @@ export default function Footer() {
             <b>SOBRE COME</b>
             <Link href="/restaurantes">Restaurantes</Link>
             <Link href="/cocina-tradicional">Cocina tradicional</Link>
+            <Link href="/cocineras-tradicionales">Cocineras tradicionales</Link>
             <Link href="/guias">Guías y rutas</Link>
             <Link href="/chefs">Chefs</Link>
             <Link href="/mapa">Mapa</Link>

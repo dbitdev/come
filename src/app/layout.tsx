@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://comeapp.com.mx"),
   alternates: { canonical: "/" },
   applicationName: "Come",
+  // Banner nativo "Abrir en la App Store" en Safari de iPhone.
+  itunes: { appId: APP_STORE_ID },
   title: "Come: restaurantes, chefs y guía gastronómica de México",
   description: "Descubre restaurantes, chefs, rutas, comida mexicana, menús y lugares para comer en CDMX, Puebla, Oaxaca y todo México con Come y ComeApp.",
   keywords: ["Come", "ComeApp", "Come México", "guía gastronómica de México", "restaurantes en México", "lugares para comer", "comida mexicana", "chefs mexicanos", "rutas gastronómicas", "menús de restaurantes"],
@@ -70,6 +72,10 @@ export const metadata: Metadata = {
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import HideOnAdmin from "@/components/HideOnAdmin";
+import AceptacionLegal from "@/components/AceptacionLegal";
+import BannerApp from "@/components/BannerApp";
+import { APP_STORE_ID } from "@/lib/legal";
 import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
@@ -78,7 +84,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es-MX">
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
         <script
           type="application/ld+json"
@@ -107,9 +113,11 @@ export default function RootLayout({
           }}
         />
         <AuthProvider>
-          <Navbar />
+          <HideOnAdmin><Navbar /></HideOnAdmin>
           {children}
-          <Footer />
+          <HideOnAdmin><Footer /></HideOnAdmin>
+          <AceptacionLegal />
+          <BannerApp />
         </AuthProvider>
       </body>
     </html>

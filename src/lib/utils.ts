@@ -52,5 +52,18 @@ export function rutaLugar(nombre?: string | null, id?: string | null): string {
 export function rutaMenu(nombre?: string | null, id?: string | null): string {
     const slug = nombre ? slugify(nombre) : "";
     const destino = slug || id || "";
-    return destino ? `/lugares/menu/${destino}` : "/lugares";
+    // El nombre conserva una URL legible, pero el id evita abrir por accidente
+    // un documento histórico duplicado con el mismo slug y un menú vacío.
+    return destino ? `/lugares/menu/${destino}${id && slug ? `?lugar=${encodeURIComponent(id)}` : ""}` : "/lugares";
+}
+
+/**
+ * A dónde volver tras iniciar sesión o registrarse: el `?next=` de la URL, sólo
+ * si es una ruta interna (nunca `//otro-sitio` ni una URL completa), para que
+ * el login no sirva de redirección abierta.
+ */
+export function destinoTrasEntrar(): string {
+  if (typeof window === "undefined") return "/";
+  const next = new URLSearchParams(window.location.search).get("next") || "";
+  return next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/";
 }

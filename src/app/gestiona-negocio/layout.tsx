@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Gestiona tu negocio | Come",
   description: "Administra la ficha, el menú y la información de tu restaurante en Come.",
   alternates: { canonical: "/gestiona-negocio" },
+  robots: { index: false, follow: false },
   openGraph: {
     title: "Gestiona tu negocio | Come",
     description: "Administra la ficha, el menú y la información de tu restaurante en Come.",

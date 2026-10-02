@@ -8,6 +8,10 @@ import { SEO_CIUDADES, SEO_COCINAS } from "@/lib/seoCatalog";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx';
 
+// Se regenera una vez al día: sin esto el sitemap quedaba congelado en el
+// momento del deploy y los lugares nuevos no llegaban a los buscadores.
+export const revalidate = 86400;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Static Routes
   // Sólo rutas que existen: /guias/con-estrellas y /guias/chefs caían en el
@@ -16,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '',
     '/restaurantes',
     '/cocina-tradicional',
+    '/cocineras-tradicionales',
     '/lugares',
     '/mapa',
     '/chefs',
