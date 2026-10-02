@@ -2,12 +2,15 @@
 .estado{min-height:60vh;display:grid;place-items:center;color:var(--foreground-muted);font-family:var(--font-modern)}
 
 /* ── Encabezado ──────────────────────────────────── */
-.hero{background:var(--primary-dark);color:#fff;padding:4rem max(5vw,1.2rem) 3.5rem}
-.heroInner{max-width:1140px;margin:auto;display:flex;align-items:center;gap:1.8rem;flex-wrap:wrap}
-.avatar{display:grid;place-items:center;width:96px;height:96px;border-radius:50%;background:var(--accent);color:var(--primary-dark);font-family:var(--font-modern);font-size:2.6rem;font-weight:800;letter-spacing:-.05em;flex-shrink:0}
+/* `accountHero` a propósito, no `hero`: el nombre de archivo `profile.module.css`
+   choca con el de lugares y wonder-system.css fuerza min-height:520px a todo
+   `[class*="profile_hero__"]`. Esta banda de cuenta debe ser compacta. */
+.accountHero{background:var(--primary-dark);color:#fff;padding:2.2rem max(5vw,1.2rem)}
+.heroInner{max-width:1140px;margin:auto;display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap}
+.avatar{display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:var(--accent);color:var(--primary-dark);font-family:var(--font-modern);font-size:1.9rem;font-weight:800;letter-spacing:-.05em;flex-shrink:0}
 .heroCopy{flex:1;min-width:220px}
 .eyebrow{font-family:var(--font-modern);font-size:.72rem;font-weight:800;letter-spacing:.16em;color:var(--accent)}
-.hero h1{font-family:var(--font-serif);font-size:clamp(2.2rem,4.5vw,3.4rem);letter-spacing:-.03em;margin:.35rem 0 .6rem;color:#fff}
+.accountHero h1{font-family:var(--font-serif);font-size:clamp(1.8rem,3.4vw,2.6rem);letter-spacing:-.03em;margin:.2rem 0 .45rem;color:#fff}
 .heroMeta{display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;font-size:.92rem;color:rgba(255,255,255,.82)}
 .heroMeta span{display:inline-flex;align-items:center;gap:.4rem}
 .logout{display:inline-flex;align-items:center;gap:.5rem;background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:6px;color:#fff;font-family:var(--font-modern);font-size:.9rem;font-weight:600;letter-spacing:0;text-transform:none;padding:.75rem 1.2rem;box-shadow:none;cursor:pointer}
@@ -51,8 +54,8 @@
 .cardGhost{background:#fff!important;color:var(--primary-dark)!important;border:1px solid var(--border-light)}
 
 @media(max-width:640px){
-  .hero{padding-top:3rem}
-  .heroInner{gap:1.2rem}
-  .avatar{width:72px;height:72px;font-size:2rem}
+  .accountHero{padding:1.8rem max(5vw,1.2rem)}
+  .heroInner{gap:1.1rem}
+  .avatar{width:60px;height:60px;font-size:1.7rem}
   .logout{width:100%;justify-content:center}
 }

@@ -9,11 +9,12 @@ import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { searchArticles } from '@/lib/wordpress';
 import styles from './ChefProfile.module.css';
 import Link from 'next/link';
-import { 
-    Award, 
-    Utensils, 
-    Star, 
-    ChevronLeft, 
+import {
+    Award,
+    Utensils,
+    Star,
+    ChevronRight,
+    MapPin,
     Map as MapIcon,
     BookOpen,
     Clock
@@ -118,7 +119,7 @@ export default function ChefProfilePage() {
         fetchChefData();
     }, [params.id]);
 
-    if (loading) return <div className={styles.loading}>Cargando perfil...</div>;
+    if (loading) return <div className={styles.loading}>Cargando perfil…</div>;
     if (!chef) return <div className={styles.error}>Chef no encontrado</div>;
 
     const feedSocial = obtenerFeedChef({
@@ -128,140 +129,171 @@ export default function ChefProfilePage() {
         socialVideos: chef.socialVideos,
     });
 
+    const restauranteActual = restaurants.find((r) => !r.esPrevio) || restaurants[0];
+
     return (
-        <div className={styles.container}>
-            {/* Minimal Sticky Nav */}
-            <nav className={styles.stickyNav}>
-                <div className={styles.navContent}>
-                    <Link href="/chefs" className={styles.backLink}>
-                        <ChevronLeft size={18} /> <span>Chefs</span>
-                    </Link>
-                </div>
-            </nav>
-
-            {/* Profile Hero */}
+        <div className={styles.page}>
+            {/* ── Hero: nombre sobre la foto ── */}
             <header className={styles.hero}>
-                <div className={styles.heroGrid}>
-                    <div className={styles.imageCol}>
-                        <div className={styles.portraitWrapper}>
-                            <RetratoChef src={chef.image} nombre={chef.name} className={styles.portrait} />
-                            {chef.stars && (
-                                <div className={styles.starsBadge}>
-                                    <Star size={16} fill="currentColor" /> <span>{chef.stars} {chef.stars === 1 ? "Estrella" : "Estrellas"}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className={styles.infoCol}>
-                        <div className={styles.roleBadge}>{chef.role}</div>
-                        <h1 className={styles.name}>{chef.name}</h1>
-                        <p className={styles.bio}>{chef.bio}</p>
-                        
-                        <div className={styles.accolades}>
-                            {chef.logroClave && (
-                                <div className={styles.accoladeItem}>
-                                    <Award size={16} /> <span>{chef.logroClave}</span>
-                                </div>
-                            )}
-                            {chef.restaurant && (
-                                <div className={styles.accoladeItem}>
-                                    <Award size={16} /> <span>{chef.restaurant}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className={styles.socials}>
-                            {chef.redes.map((perfil) => (
-                                <a key={perfil.red + perfil.usuario} href={perfil.url} target="_blank" rel="noopener noreferrer" title={perfil.usuario}>
-                                    {perfil.red === 'instagram' ? <FaInstagram size={20} /> : perfil.red === 'facebook' ? <FaFacebookF size={20} /> : <FaTwitter size={20} />}
-                                </a>
-                            ))}
-                            <button className={styles.shareBtn}>Seguir Perfil</button>
-                        </div>
+                <RetratoChef src={chef.image} nombre={chef.name} className={styles.heroImg} />
+                <div className={styles.heroScrim} />
+                <div className={styles.heroInner}>
+                    <nav className={styles.crumbs} aria-label="Ruta de navegación">
+                        <Link href="/">Inicio</Link>
+                        <span aria-hidden="true">/</span>
+                        <Link href="/chefs">Chefs</Link>
+                    </nav>
+                    <p className={styles.heroEyebrow}>{chef.role}</p>
+                    <h1 className={styles.heroName}>{chef.name}</h1>
+                    <div className={styles.heroMeta}>
+                        {chef.stars ? (
+                            <span className={styles.metaItem}>
+                                <Star size={16} fill="var(--accent-warm)" color="var(--accent-warm)" />
+                                {chef.stars} {chef.stars === 1 ? 'Estrella' : 'Estrellas'} Michelin
+                            </span>
+                        ) : null}
+                        {chef.restaurant && <span className={styles.metaItem}><Utensils size={15} /> {chef.restaurant}</span>}
+                        {chef.ubicacion && <span className={styles.metaItem}><MapPin size={15} /> {chef.ubicacion}</span>}
                     </div>
                 </div>
             </header>
 
-            <main className={styles.main}>
-                <div className={styles.sectionsGrid}>
-                    {/* Restaurants Section */}
-                    <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>
-                            <Utensils size={22} /> Su Cocina
-                        </h2>
-                        <div className={styles.restaurantGrid}>
-                            {restaurants.map(res => (
-                                <Link key={res.id} href={rutaLugar(res.restaurantName || res.name, res.id)} className={styles.restCard}>
-                                    <img src={res.image || "/placeholder-restaurant.jpg"} alt={res.name} />
-                                    <div className={styles.restInfo}>
-                                        <h3>{res.restaurantName || res.name}</h3>
-                                        <span>{res.category}</span>
-                                        {/* Distinguir dónde cocina hoy de dónde cocinó antes:
-                                            presentarlos igual afirma algo que puede ser falso. */}
-                                        {res.esPrevio && <em className={styles.restPrevio}>Estuvo aquí</em>}
-                                    </div>
-                                </Link>
-                            ))}
-                            {restaurants.length === 0 && <p className={styles.emptyMsg}>No se encontraron restaurantes asociados.</p>}
-                        </div>
-                    </section>
+            <div className={styles.shell}>
+                {/* ── Columna de contenido ── */}
+                <div className={styles.content}>
+                    {chef.bio && <p className={styles.lead}>{chef.bio}</p>}
 
-                    {/* Guides Section */}
-                    <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>
-                            <MapIcon size={22} /> Rutas & Mapas
-                        </h2>
-                        <div className={styles.guidesGrid}>
-                            {guides.map(guide => (
-                                <Link key={guide.id} href={`/guias/${guide.slug}`} className={styles.guideCard}>
-                                    <div className={styles.guideThumb}>
-                                        <img src={guide.heroImage} alt={guide.title} />
-                                        <div className={styles.guideOverlay}>
-                                            <span>Ver Guía Interactiva</span>
+                    <section className={styles.block}>
+                        <div className={styles.blockHead}>
+                            <span className={styles.eyebrow}>Su cocina</span>
+                            <h2>Dónde lo encuentras</h2>
+                        </div>
+                        {restaurants.length > 0 ? (
+                            <div className={styles.restGrid}>
+                                {restaurants.map((res) => (
+                                    <Link key={res.id} href={rutaLugar(res.restaurantName || res.name, res.id)} className={styles.restCard}>
+                                        <img src={res.image || '/placeholder-restaurant.jpg'} alt={res.restaurantName || res.name} />
+                                        <div className={styles.restOverlay}>
+                                            <h3>{res.restaurantName || res.name}</h3>
+                                            {res.category && <span>{res.category}</span>}
+                                            {res.esPrevio && <em className={styles.restPrevio}>Estuvo aquí</em>}
                                         </div>
-                                    </div>
-                                    <div className={styles.guideInfo}>
-                                        <h3>{guide.title}</h3>
-                                        <p>{guide.description?.substring(0, 80)}...</p>
-                                    </div>
-                                </Link>
-                            ))}
-                            {guides.length === 0 && <p className={styles.emptyMsg}>Aún no aparece en guías interactivas.</p>}
-                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className={styles.emptyMsg}>No hay restaurantes asociados todavía.</p>
+                        )}
                     </section>
 
-                    {/* Articles Section */}
-                    <section className={styles.sectionFull}>
-                        <h2 className={styles.sectionTitle}>
-                            <BookOpen size={22} /> Prensa & Crónicas
-                        </h2>
-                        <div className={styles.newsGrid}>
-                            {articles.map(article => (
-                                <Link key={article.id} href={`/noticias/${article.slug}`} className={styles.newsItem}>
-                                    <div className={styles.newsDate}>
-                                        <Clock size={14} /> {new Date(article.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}
-                                    </div>
-                                    <h3 dangerouslySetInnerHTML={{ __html: article.title }} />
-                                    <div className={styles.newsExcerpt} dangerouslySetInnerHTML={{ __html: article.excerpt?.substring(0, 100) + '...' }} />
-                                </Link>
-                            ))}
-                            {articles.length === 0 && <p className={styles.emptyMsg}>No hay menciones recientes en la prensa.</p>}
-                        </div>
-                    </section>
+                    {guides.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>Rutas y mapas</span>
+                                <h2>Guías donde aparece</h2>
+                            </div>
+                            <div className={styles.miniList}>
+                                {guides.map((guide) => (
+                                    <Link key={guide.id} href={`/guias/${guide.slug}`} className={styles.miniCard}>
+                                        <div className={styles.miniThumb}>
+                                            <img src={guide.heroImage || '/news-placeholder.jpg'} alt={guide.title} />
+                                        </div>
+                                        <div className={styles.miniInfo}>
+                                            <h3>{guide.title}</h3>
+                                            {guide.description && <p>{guide.description}</p>}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
-                    {/* Social Feed Section */}
+                    {articles.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>En la prensa</span>
+                                <h2>Prensa y crónicas</h2>
+                            </div>
+                            <div className={styles.miniList}>
+                                {articles.map((article) => (
+                                    <Link key={article.id} href={`/noticias/${article.slug}`} className={styles.miniCard}>
+                                        <div className={styles.miniThumb}>
+                                            <img src={article.featuredImage?.node?.sourceUrl || '/news-placeholder.jpg'} alt="" />
+                                        </div>
+                                        <div className={styles.miniInfo}>
+                                            <h3 dangerouslySetInnerHTML={{ __html: article.title }} />
+                                            <span className={styles.miniMeta}>
+                                                <Clock size={13} /> {new Date(article.date).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {feedSocial.items.length > 0 && (
-                        <div style={{ gridColumn: '1 / -1' }}>
+                        <section className={styles.block}>
                             <FeedSocialCarousel
                                 titulo={`En redes con ${chef.name}`}
                                 subtitulo="TIKTOK E INSTAGRAM"
                                 items={feedSocial.items}
                                 cuentas={feedSocial.cuentas}
                             />
-                        </div>
+                        </section>
                     )}
                 </div>
-            </main>
+
+                {/* ── Barra lateral ── */}
+                <aside className={styles.aside}>
+                    <div className={styles.panel}>
+                        {chef.logroClave && (
+                            <div className={styles.panelBlock}>
+                                <span className={styles.panelLabel}><Award size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Logro clave</span>
+                                <div className={styles.panelBig}>{chef.logroClave}</div>
+                            </div>
+                        )}
+
+                        {(restauranteActual || chef.restaurant) && (
+                            <div className={styles.panelBlock}>
+                                <span className={styles.panelLabel}>Cocina en</span>
+                                {restauranteActual ? (
+                                    <Link href={rutaLugar(restauranteActual.restaurantName || restauranteActual.name, restauranteActual.id)} className={styles.panelPlace}>
+                                        <Utensils size={16} /> {restauranteActual.restaurantName || restauranteActual.name}
+                                    </Link>
+                                ) : (
+                                    <span className={styles.panelPlace}><Utensils size={16} /> {chef.restaurant}</span>
+                                )}
+                            </div>
+                        )}
+
+                        {chef.ubicacion && (
+                            <div className={styles.panelBlock}>
+                                <span className={styles.panelLabel}>Dónde</span>
+                                <p className={styles.panelText}><MapPin size={15} style={{ verticalAlign: '-2px', marginRight: 4, color: 'var(--primary)' }} />{chef.ubicacion}</p>
+                            </div>
+                        )}
+
+                        <div className={styles.panelBlock}>
+                            {chef.redes.length > 0 && (
+                                <div className={styles.panelSocials}>
+                                    {chef.redes.map((perfil) => (
+                                        <a key={perfil.red + perfil.usuario} href={perfil.url} target="_blank" rel="noopener noreferrer" title={perfil.usuario} aria-label={`${perfil.red} de ${chef.name}`}>
+                                            {perfil.red === 'instagram' ? <FaInstagram size={22} /> : perfil.red === 'facebook' ? <FaFacebookF size={22} /> : <FaTwitter size={22} />}
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
+                            <button className={styles.followBtn}>Seguir perfil</button>
+                            {!chef.userId && (
+                                <Link className={styles.claimLink} href={`/reclamar/chef/${chef.id}?nombre=${encodeURIComponent(chef.name)}`}>
+                                    ¿Este perfil es tuyo? Reclámalo
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </aside>
+            </div>
         </div>
     );
 }

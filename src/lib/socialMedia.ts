@@ -14,7 +14,8 @@ export function parseSocialUrl(url: string): ParsedSocialMedia {
   if (!url) return { platform: "unknown", originalUrl: url };
 
   // Instagram: /reel/ID, /p/ID
-  const igMatch = url.match(/instagram\.com\/(?:reel|p)\/([^/?#&]+)/i);
+  // Instagram comparte reels como /reel/ y /reels/ (y los viejos como /p/ o /tv/).
+  const igMatch = url.match(/instagram\.com\/(?:reels?|p|tv)\/([^/?#&]+)/i);
   if (igMatch) {
     const id = igMatch[1];
     return {

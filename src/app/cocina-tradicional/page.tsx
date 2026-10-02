@@ -36,6 +36,7 @@ type Lugar = {
   direccion: string;
   imagen: string;
   estado?: string;
+  esCocinaTradicional: boolean;
 };
 
 async function traerLugaresTradicionales(): Promise<Lugar[]> {
@@ -53,9 +54,10 @@ async function traerLugaresTradicionales(): Promise<Lugar[]> {
           direccion: d.address || "México",
           imagen: d.image || d.menu?.[0]?.image || "",
           estado: d.estado,
+          esCocinaTradicional: d.isTraditionalCuisine === true || d.esCocinaTradicional === true,
         };
       })
-      .filter((lugar) => esTradicional(`${lugar.categoria} ${lugar.nombre}`));
+      .filter((lugar) => lugar.esCocinaTradicional || esTradicional(`${lugar.categoria} ${lugar.nombre}`));
   } catch {
     return [];
   }
@@ -63,7 +65,7 @@ async function traerLugaresTradicionales(): Promise<Lugar[]> {
 
 export default async function CocinaTradicional() {
   const [lugares, todosLosChefs] = await Promise.all([traerLugaresTradicionales(), traerChefs()]);
-  const chefs = todosLosChefs.filter((chef) => esTradicional(`${chef.role} ${chef.restaurant ?? ""}`));
+  const chefs = todosLosChefs.filter((chef) => chef.isTraditionalCook || esTradicional(`${chef.role} ${chef.restaurant ?? ""}`));
 
   // Los estados que ya tienen algo publicado: es lo que hace navegable la página
   // cuando el directorio crezca.
@@ -92,6 +94,7 @@ export default async function CocinaTradicional() {
           </p>
           <div className={styles.portadaAcciones}>
             <Link href="/restaurantes?search=Tradicional">Ver el directorio</Link>
+            <Link href="/cocineras-tradicionales" className={styles.secundario}>Conocer cocineras</Link>
             <Link href="/nomina-lugar" className={styles.secundario}>
               Nomina una fonda
             </Link>

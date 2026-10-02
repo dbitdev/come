@@ -25,6 +25,8 @@ export interface Chef {
   logroClave?: string;
   redes: RedSocial[];
   socialVideos: SocialVideoSource[];
+  userId?: string;
+  isTraditionalCook: boolean;
 }
 
 /**
@@ -80,6 +82,8 @@ function aChef(id: string, d: Record<string, any>): Chef {
     logroClave: d.logroClave || d.awards || undefined,
     redes: normalizarRedes(d.redes ?? d.socials),
     socialVideos: Array.isArray(d.socialVideos) ? d.socialVideos : [],
+    userId: typeof d.userId === "string" ? d.userId : undefined,
+    isTraditionalCook: d.isTraditionalCook === true,
   };
 }
 

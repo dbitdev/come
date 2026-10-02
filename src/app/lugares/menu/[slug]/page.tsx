@@ -1,6 +1,6 @@
 "use client";
 import { useEffect,useMemo,useState } from "react";
-import { useParams,useRouter } from "next/navigation";
+import { useParams,useRouter,useSearchParams } from "next/navigation";
 import { collection,doc,getDoc,getDocs } from "firebase/firestore";
 import { slugify } from "@/lib/utils";
 import { ArrowLeft,Minus,Plus,ShoppingBag,Star } from "lucide-react";
@@ -12,10 +12,10 @@ type Item={name:string;description?:string;ingredients?:string;image?:string;pri
 type DatosLugar={restaurantName?:string;name?:string;category?:string;rating?:number|string;image?:string;address?:string;menu?:Partial<Item>[]};
 type Restaurant={name:string;category?:string;rating?:number;image?:string;address?:string;menu:Item[]};
 export default function MenuPage(){
- const {slug}=useParams<{slug:string}>(); const router=useRouter(); const [restaurant,setRestaurant]=useState<Restaurant|null>(null); const [loading,setLoading]=useState(true); const [cart,setCart]=useState<Record<number,number>>({});
+ const {slug}=useParams<{slug:string}>(); const search=useSearchParams(); const router=useRouter(); const [restaurant,setRestaurant]=useState<Restaurant|null>(null); const [loading,setLoading]=useState(true); const [cart,setCart]=useState<Record<number,number>>({});
  // El parámetro es el nombre en slug ("levadura-de-olla"); aceptamos también
  // el id de Firestore para no romper enlaces viejos.
- useEffect(()=>{(async()=>{if(!db||!slug)return;const clave=decodeURIComponent(slug);let d:DatosLugar|null=null;const porId=await getDoc(doc(db,"come",clave));if(porId.exists()){d=porId.data()}else{const todos=await getDocs(collection(db,"come"));for(const item of todos.docs){const datos=item.data();if(slugify(String(datos.restaurantName||datos.name||""))===clave){d=datos;break}}}if(d){setRestaurant({name:d.restaurantName||d.name||"Restaurante",category:d.category,rating:Number(d.rating)||4.8,image:d.image||d.menu?.[0]?.image,address:d.address,menu:(Array.isArray(d.menu)?d.menu:[]).map((x)=>({name:x.name||"Platillo",description:x.description,ingredients:x.ingredients,image:x.image,price:Number(x.price)||0}))})}})().catch(()=>setRestaurant(null)).finally(()=>setLoading(false))},[slug]);
+ useEffect(()=>{(async()=>{if(!db||!slug)return;const clave=decodeURIComponent(slug);const lugarId=search.get("lugar");let d:DatosLugar|null=null;if(lugarId){const exacto=await getDoc(doc(db,"come",lugarId));if(exacto.exists())d=exacto.data()}if(!d){const porId=await getDoc(doc(db,"come",clave));if(porId.exists()){d=porId.data()}else{const todos=await getDocs(collection(db,"come"));const coincidencias=todos.docs.filter((item)=>{const datos=item.data();return slugify(String(datos.restaurantName||datos.name||""))===clave});const elegido=coincidencias.find((item)=>Array.isArray(item.data().menu)&&item.data().menu.length>0)||coincidencias[0];if(elegido)d=elegido.data()}}if(d){setRestaurant({name:d.restaurantName||d.name||"Restaurante",category:d.category,rating:Number(d.rating)||4.8,image:d.image||d.menu?.[0]?.image,address:d.address,menu:(Array.isArray(d.menu)?d.menu:[]).map((x)=>({name:x.name||"Platillo",description:x.description,ingredients:x.ingredients,image:x.image,price:Number(x.price)||0}))})}})().catch(()=>setRestaurant(null)).finally(()=>setLoading(false))},[slug,search]);
  const total=useMemo(()=>restaurant?.menu.reduce((sum,item,index)=>sum+item.price*(cart[index]||0),0)||0,[cart,restaurant]); const count=Object.values(cart).reduce((a,b)=>a+b,0);
  const change=(index:number,delta:number)=>setCart(old=>({...old,[index]:Math.max(0,(old[index]||0)+delta)}));
  if(loading)return <div className={styles.state}>Cargando menú…</div>; if(!restaurant)return <div className={styles.state}>Restaurante no encontrado.</div>;
