@@ -8,7 +8,11 @@ runConfig:
 # Los secretos de cobro (Stripe y Mercado Pago) se quitaron: no los lee ningún
 # archivo de src/ y su ausencia en Secret Manager rompía la compilación.
 # Vuelve a declararlos cuando se porte el flujo de pagos.
-environmentVariables:
+#
+# OJO: la clave es `env:`. Hasta el 2 oct 2026 este bloque se llamaba
+# `environmentVariables:`, que App Hosting ignora en silencio: producción
+# no recibía NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_WORDPRESS_API_URL ni MAP_ID.
+env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     secret: NEXT_PUBLIC_FIREBASE_API_KEY
     availability:
@@ -69,6 +73,11 @@ environmentVariables:
     value: https://comeapp.com.mx
     availability:
       - BUILD
+      - RUNTIME
+  # Correos de reservaciones (Resend). Sólo en ejecución: es una clave privada.
+  - variable: RESEND_API_KEY
+    secret: RESEND_API_KEY
+    availability:
       - RUNTIME
 
 # Antes de activar las conexiones sociales, crea en Secret Manager y agrega aquí

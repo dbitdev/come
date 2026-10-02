@@ -3,3 +3,9 @@ allowBuilds:
   protobufjs: true
   sharp: true
   unrs-resolver: true
+
+# Parches de seguridad en dependencias transitivas de firebase (oct 2026):
+# GHSA-f596-whhp-79r4 (@grpc/grpc-js) y DoS en protobufjs.
+overrides:
+  "@grpc/grpc-js": "^1.13.6"
+  protobufjs: "^7.6.5"
