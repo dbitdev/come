@@ -51,12 +51,19 @@ service cloud.firestore {
           'name', 'restaurantName', 'address', 'city', 'zone', 'tier',
           'cuisine_type', 'is_verified', 'is_active', 'is_claimed',
           'managed_by', 'access_level', 'created_by', 'created_at',
-          'isMichelin', 'rating', 'featured', 'status', 'awards'
+          'isMichelin', 'rating', 'featured', 'status', 'awards', 'reservas'
         ]);
     }
 
     function isShortText(value, max) {
       return value is string && value.size() <= max;
+    }
+
+    // Campos de autoridad de un lugar que un curador NO puede tocar (sí el admin):
+    // distinción Michelin, destacado, calificación y estado editorial.
+    function curatorSafeVenue() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['isMichelin', 'michelinStars', 'featured', 'rating', 'status', 'managed_by', 'userId', 'reservas']);
     }
 
     // ── Restaurantes y lugares ──────────────────────────────────
@@ -70,11 +77,17 @@ service cloud.firestore {
       // que alguien se ponga solo estrella, rating o destacado.
       allow read: if true;
       allow create: if isPlatformAdmin()
+                    // Curador: alta editorial, pero sin auto-otorgar Michelin ni destacado.
+                    || (isCurator()
+                        && request.resource.data.get('isMichelin', false) == false
+                        && request.resource.data.get('featured', false) == false)
                     || (isSignedIn()
                         && request.resource.data.userId == request.auth.uid
                         && request.resource.data.get('status', '') == 'pending'
                         && request.resource.data.get('isMichelin', false) == false);
       allow update: if isPlatformAdmin()
+                    // Curador: edita todo el contenido menos los campos de autoridad.
+                    || (isCurator() && curatorSafeVenue())
                     || (resource.data.get('managed_by', '') != 'admin'
                         && ownsExistingVenue() && keepsVenueOwnership() && noSetsEditorialFields());
       allow delete: if isPlatformAdmin()
@@ -84,7 +97,16 @@ service cloud.firestore {
     // ── Directorio de chefs ─────────────────────────────────────
     match /chefs/{document=**} {
       allow read: if true;
-      allow write: if isPlatformAdmin();
+      // Curador: puede crear y editar fichas, pero no estrellas/Michelin ni destacado.
+      allow create: if isCurator()
+                    && (isPlatformAdmin()
+                        || (request.resource.data.get('estrellas', 0) == 0
+                            && request.resource.data.get('michelinStars', 0) == 0));
+      allow update: if isPlatformAdmin()
+                    || (isCurator()
+                        && !request.resource.data.diff(resource.data).affectedKeys()
+                             .hasAny(['estrellas', 'michelinStars', 'featured', 'userId']));
+      allow delete: if isPlatformAdmin();
     }
 
     // ── Nominaciones de chefs (formulario público) ──────────────
@@ -128,11 +150,13 @@ service cloud.firestore {
     // ── Contenido editorial ─────────────────────────────────────
     match /news/{document=**} {
       allow read: if true;
-      allow write: if isPlatformAdmin();
+      allow create, update: if isCurator();
+      allow delete: if isPlatformAdmin();
     }
     match /guides/{document=**} {
       allow read: if true;
-      allow write: if isPlatformAdmin();
+      allow create, update: if isCurator();
+      allow delete: if isPlatformAdmin();
     }
     match /premios_especiales/{document=**} {
       allow read: if true;
@@ -156,6 +180,19 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
+    }
+
+    // ── Reservaciones ───────────────────────────────────────────
+    // Altas y cambios sólo por la API (/api/reservas), que valida horario y cupo
+    // dentro de una transacción; desde el cliente sería imposible evitar la
+    // sobreventa. Cada quien puede leer sus propias reservas ("Mis reservas").
+    match /reservations/{reservaId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    // Contadores de cupo por horario: internos del servidor.
+    match /reservation_slots/{cupoId} {
+      allow read, write: if false;
     }
 
     // Tokens OAuth y refresh tokens: sólo existen en servidor mediante Admin SDK.

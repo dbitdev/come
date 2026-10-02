@@ -22,6 +22,7 @@ import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { slugify } from "@/lib/utils";
 import styles from "./profile.module.css";
+import MisReservas from "@/components/reservas/MisReservas";
 
 type Negocio = {
   id: string;
@@ -82,7 +83,7 @@ export default function PerfilPage() {
   return (
     <main className={styles.page}>
       {/* Encabezado editorial, en la línea del resto del sitio */}
-      <header className={styles.hero}>
+      <header className={styles.accountHero}>
         <div className={styles.heroInner}>
           <div className={styles.avatar} aria-hidden="true">
             {inicial}
@@ -186,6 +187,7 @@ export default function PerfilPage() {
                     </p>
                     <div className={styles.cardActions}>
                       <Link href={`/gestiona-negocio/${negocio.id}`}>Gestionar</Link>
+                      <Link href={`/negocio/reservas?lugar=${negocio.id}`}>Reservaciones</Link>
                       {negocio.estado === "Publicado" && (
                         <Link href={`/lugares/${slugify(negocio.nombre)}`} className={styles.cardGhost}>
                           Ver ficha
@@ -197,6 +199,17 @@ export default function PerfilPage() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* Reservaciones del usuario */}
+        <section className={styles.block} id="reservas">
+          <div className={styles.blockHead}>
+            <div>
+              <span className={styles.eyebrow}>TUS MESAS</span>
+              <h2>Tus reservaciones</h2>
+            </div>
+          </div>
+          <MisReservas />
         </section>
 
         {/* Favoritos: todavía no hay sistema de guardado */}

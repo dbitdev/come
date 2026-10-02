@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { cache } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, limit, getDocs } from 'firebase/firestore';
@@ -27,6 +27,8 @@ import FeedSocialCarousel from '@/components/FeedSocialCarousel';
 import { obtenerFeedLugar } from '@/lib/feedSocial';
 import type { SocialVideoSource } from '@/lib/feedSocial';
 import { generateVideoJsonLd } from '@/lib/socialMedia';
+import { normalizarConfig } from '@/lib/reservas';
+import ReservaWidget from '@/components/reservas/ReservaWidget';
 
 interface Restaurant {
     id: string;
@@ -59,9 +61,13 @@ interface Restaurant {
     estado?: string;
     priceRange?: string;
     menu?: Array<{name?:string;description?:string;ingredients?:string;image?:string;price?:number}>;
+    userId?: string;
+    reservas?: unknown;
 }
 
-async function getRestaurant(slug: string): Promise<Restaurant | null> {
+// cache(): generateMetadata y la página piden el mismo lugar en cada visita;
+// así la colección se lee una vez por petición y no dos.
+const getRestaurant = cache(async function getRestaurant(slug: string): Promise<Restaurant | null> {
     try {
         if (!db) return null;
         const qRest = collection(db, "come");
@@ -81,7 +87,7 @@ async function getRestaurant(slug: string): Promise<Restaurant | null> {
         console.error("Error fetching restaurant:", err);
     }
     return null;
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
@@ -256,6 +262,8 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
         menu: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://comeapp.com.mx'}${rutaMenu(restaurant.name, restaurant.id)}`,
         servesCuisine: restaurant.category,
         priceRange: restaurant.priceRange,
+        // Le dice a Google que se puede reservar en línea desde la ficha.
+        acceptsReservations: normalizarConfig(restaurant.reservas).activo ? canonicalUrl : undefined,
         aggregateRating: Number.isFinite(rating) && Number.isFinite(ratingCount) && ratingCount > 0 ? {
             '@type': 'AggregateRating',
             ratingValue: rating,
@@ -295,191 +303,126 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
         url: v.url,
     }));
 
+    const descripcion = restaurant.description?.trim()
+        || `Una propuesta de ${restaurant.category.toLowerCase()} en ${region || 'México'}. Conócelo en Come.`;
+    const michelinN = restaurant.michelinStars || 1;
+    // Reservaciones: el correo interno de avisos no viaja al navegador.
+    const configReservas = normalizarConfig(restaurant.reservas);
+    const { correoAvisos: _correoInterno, ...configReservasPublica } = configReservas;
+
     return (
-        <div className={styles.profileWrapper}>
+        <div className={styles.page}>
             <Script
                 id="restaurant-jsonld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, breadcrumbJsonLd, ...videoJsonLds]).replace(/</g, '\\u003c') }}
             />
-            {/* Hero Section */}
-            <div className={styles.hero}>
-                <img src={restaurant.image} alt={restaurant.name} className={styles.heroImage} />
-                <div className={styles.heroOverlay} />
-            </div>
 
-            <div className={styles.contentContainer}>
-                {/* Header Top Grid: Info y Botones a la izquierda, Mapa a la derecha */}
-                <div className={styles.headerTopGrid}>
-                    <div className={styles.headerLeftCol}>
-                        <header className={styles.mainHeader}>
-                            <div className={styles.category}>{restaurant.category}</div>
-                            <h1 className={styles.name}>{restaurant.name}</h1>
-
-                            <div className={styles.badges}>
-                                <div className={styles.rating}>
-                                    <Star color="#f5c518" fill="#f5c518" size={18} /> {restaurant.rating}
-                                </div>
-
-                                {restaurant.isMichelin && (
-                                    <div className={styles.michelinStars}>
-                                        <img src="/michelin-star.png" alt="Michelin" className={styles.michelinIcon} />
-                                        <span>{restaurant.michelinStars || 1} Estrellas Michelin</span>
-                                    </div>
-                                )}
-
-                                {address && (
-                                    <div className={styles.addressRow}>
-                                        <MapPin color="var(--primary)" size={18} />
-                                        {address}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className={styles.headerActionTray}>
-                                <Link
-                                    href={rutaMenu(restaurant.name, restaurant.id)}
-                                    className={styles.actionBtn}
-                                >
-                                    <UtensilsCrossed size={18} /> VER MENÚ
-                                </Link>
-                                <Link
-                                    href={rutaMenu(restaurant.name, restaurant.id)}
-                                    className={styles.actionBtnSecondary}
-                                >
-                                    <ShoppingBag size={18} /> ORDENAR
-                                </Link>
-                            </div>
-                        </header>
-                    </div>
-
-                    {/* Mapa en el header del lado derecho */}
-                    <div className={styles.headerRightCol}>
-                        <div className={styles.mapCard}>
-                            <h3>Ubicación</h3>
-                            <div className={styles.mapWrapper}>
-                                {hasCoords ? (
-                                    <SinglePlaceMapWrapper lat={latNum} lng={lngNum} name={restaurant.name} />
-                                ) : (
-                                    <div className={styles.mapPlaceholder}>
-                                        <MapPin size={32} strokeWidth={1} />
-                                        <p>Mapa no disponible</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <a
-                                href={googleMapsUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`${styles.actionBtn} ${styles.mapDirectionsBtn}`}
-                            >
-                                <Navigation size={18} /> CÓMO LLEGAR
-                            </a>
-
-                            <div className={styles.contactInfo}>
-                                {restaurant.phone && (
-                                    <a href={`tel:${restaurant.phone}`} className={styles.contactLink}>
-                                        <Phone color="var(--primary)" size={18} /> {restaurant.phone}
-                                    </a>
-                                )}
-                                {restaurant.website && (
-                                    <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                                        <Globe color="var(--primary)" size={18} /> Web Oficial
-                                    </a>
-                                )}
-                            </div>
-
-                            <div className={styles.socialLinks}>
-                                {restaurant.socials?.instagram && (
-                                    <a href={restaurant.socials.instagram} target="_blank" rel="noreferrer" aria-label={`Instagram de ${restaurant.name}`}><FaInstagram size={24} /></a>
-                                )}
-                                {restaurant.socials?.facebook && (
-                                    <a href={restaurant.socials.facebook} target="_blank" rel="noreferrer" aria-label={`Facebook de ${restaurant.name}`}><FaFacebookF size={24} /></a>
-                                )}
-                                {restaurant.socials?.twitter && (
-                                    <a href={restaurant.socials.twitter} target="_blank" rel="noreferrer" aria-label={`X de ${restaurant.name}`}><FaTwitter size={24} /></a>
-                                )}
-                            </div>
-                        </div>
+            {/* ── Hero: nombre sobre la foto ── */}
+            <header className={styles.hero}>
+                <img src={restaurant.image} alt={restaurant.name} className={styles.heroImg} />
+                <div className={styles.heroScrim} />
+                <div className={styles.heroInner}>
+                    <nav className={styles.crumbs} aria-label="Ruta de navegación">
+                        <Link href="/">Inicio</Link>
+                        <span aria-hidden="true">/</span>
+                        <Link href="/restaurantes">Restaurantes</Link>
+                    </nav>
+                    <p className={styles.heroEyebrow}>{restaurant.category}</p>
+                    <h1 className={styles.heroName}>{restaurant.name}</h1>
+                    <div className={styles.heroMeta}>
+                        {Number.isFinite(rating) && rating > 0 && (
+                            <span className={styles.metaItem}>
+                                <Star size={16} fill="#f5c518" color="#f5c518" /> {rating.toFixed(1)}
+                            </span>
+                        )}
+                        {restaurant.isMichelin && (
+                            <span className={styles.metaItem}>
+                                <img src="/michelin-star.png" alt="" className={styles.michelinIcon} />
+                                {michelinN} {michelinN > 1 ? 'Estrellas' : 'Estrella'} Michelin
+                            </span>
+                        )}
+                        {restaurant.priceRange && <span className={styles.metaItem}>{restaurant.priceRange}</span>}
+                        {(region || address) && (
+                            <span className={styles.metaItem}><MapPin size={15} /> {region || address}</span>
+                        )}
                     </div>
                 </div>
+            </header>
 
-                <div className={styles.grid}>
-                    {/* Main Content Column */}
-                    <main className={styles.mainColumnFull}>
-                        {restaurant.menu && restaurant.menu.length > 0 && <section className={styles.menuHighlights}><div className={styles.highlightHead}><span>DESTACADOS DEL MENÚ</span><h2>{restaurant.description || `Lo mejor de ${restaurant.name}`}</h2><Link href={rutaMenu(restaurant.name, restaurant.id)}>Ver el menú completo <ChevronRight size={18}/></Link></div><div className={styles.highlightGrid}>{restaurant.menu.slice(0,4).map((item,index)=><Link href={rutaMenu(restaurant.name, restaurant.id)} key={`${item.name}-${index}`}><img src={item.image || restaurant.image} alt={item.name || "Platillo"}/><h3>{item.name || "Platillo destacado"}</h3><p>{item.description || item.ingredients || "Preparado por el restaurante."}</p><b>Ordenar ahora</b></Link>)}</div></section>}
+            <div className={styles.shell}>
+                {/* ── Columna de contenido ── */}
+                <div className={styles.content}>
+                    <p className={styles.lead}>{descripcion}</p>
 
-                        {/* Featured In Guides Section */}
-                        {(restaurant as any).featuredInGuides && (restaurant as any).featuredInGuides.length > 0 && (
-                            <section className={styles.extraSection}>
-                                <h2 className={styles.sectionHeading}>Aparece en estas guías</h2>
-                                <div className={styles.guidesGrid}>
-                                    {(restaurant as any).featuredInGuides.map((guide: any) => (
-                                        <Link key={guide.id} href={`/guias/${guide.slug}`} className={styles.guideMiniCard}>
-                                            <div className={styles.guideMiniThumb}>
-                                                <img src={guide.heroImage || "/news-placeholder.jpg"} alt={guide.title} />
+                    {nombresDeChef.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>Al frente de la cocina</span>
+                                <h2>{nombresDeChef.length > 1 ? 'Cocina a cuatro manos' : 'El chef'}</h2>
+                            </div>
+                            <div className={styles.chefsRow}>
+                                {nombresDeChef.map((nombre) => {
+                                    const ficha = chefsConFicha.get(nombre);
+                                    const cuerpo = (
+                                        <>
+                                            <div>
+                                                <div className={styles.chefCardName}>{nombre}</div>
+                                                <div className={styles.chefCardSub}>{restaurant.category} · {restaurant.name}</div>
                                             </div>
-                                            <div className={styles.guideMiniInfo}>
-                                                <h3>{guide.title}</h3>
-                                                <div className={styles.guideMiniMeta}>
-                                                    <BookOpen size={14} /> Artículo Interactivo
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                                            {ficha && <span className={styles.chefCardGo}><ChevronRight size={20} /></span>}
+                                        </>
+                                    );
+                                    return ficha ? (
+                                        <Link key={nombre} href={`/chefs/${ficha}`} className={styles.chefCard}>{cuerpo}</Link>
+                                    ) : (
+                                        <div key={nombre} className={styles.chefCard}>{cuerpo}</div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
 
-                        <section className={styles.aboutSection}>
-                            <h2>Experiencia Gastronómica</h2>
-                            <p className={styles.description}>
-                                {restaurant.description || "Una propuesta culinaria excepcional que redefine los sabores tradicionales con técnicas contemporáneas de vanguardia."}
-                            </p>
+                    {restaurant.signatureDishes && restaurant.signatureDishes.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>La carta</span>
+                                <h2>Platillos insignia</h2>
+                            </div>
+                            <ul className={styles.dishes}>
+                                {restaurant.signatureDishes.map((dish, idx) => (
+                                    <li key={idx}>{dish}</li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
 
-                            {nombresDeChef.length > 0 && (
-                                <div className={styles.chefSection}>
-                                    <span className={styles.chefLabel}>
-                                        {nombresDeChef.length > 1 ? 'Liderado por' : 'Liderado por'}
-                                    </span>
-                                    {/* Un enlace por chef: antes los dos nombres iban dentro
-                                        de un solo enlace, que apuntaba a un slug inexistente. */}
-                                    <div className={styles.chefName}>
-                                        {nombresDeChef.map((nombre, indice) => {
-                                            const ficha = chefsConFicha.get(nombre);
-                                            return (
-                                                <span key={nombre}>
-                                                    {indice > 0 && <span className={styles.chefSeparador}>, </span>}
-                                                    {ficha ? (
-                                                        <Link href={`/chefs/${ficha}`} className={styles.chefLink}>{nombre}</Link>
-                                                    ) : (
-                                                        <span>{nombre}</span>
-                                                    )}
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-                                    <p style={{ marginTop: '1rem', color: '#666' }}>
-                                        {nombresDeChef.length > 1 ? 'Cocina a cuatro manos' : 'Cocina'} de {restaurant.category.toLowerCase()} en {restaurant.name}.
-                                    </p>
-                                </div>
-                            )}
+                    {restaurant.menu && restaurant.menu.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>Destacados del menú</span>
+                                <h2>Lo mejor de {restaurant.name}</h2>
+                            </div>
+                            <div className={styles.menuGrid}>
+                                {restaurant.menu.slice(0, 4).map((item, index) => (
+                                    <Link href={rutaMenu(restaurant.name, restaurant.id)} key={`${item.name}-${index}`} className={styles.menuCard}>
+                                        <img src={item.image || restaurant.image} alt={item.name || 'Platillo'} />
+                                        <div className={styles.menuCardBody}>
+                                            <h3>{item.name || 'Platillo destacado'}</h3>
+                                            <p>{item.description || item.ingredients || 'Preparado por el restaurante.'}</p>
+                                            <b>Ordenar ahora</b>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                            <Link href={rutaMenu(restaurant.name, restaurant.id)} className={styles.blockLink}>
+                                Ver el menú completo <ChevronRight size={18} />
+                            </Link>
+                        </section>
+                    )}
 
-                            {restaurant.signatureDishes && restaurant.signatureDishes.length > 0 && (
-                                <div className={styles.signatureSection}>
-                                    <h3>Platillos Insignia</h3>
-                                    <div className={styles.dishList}>
-                                        {restaurant.signatureDishes.map((dish: string, idx: number) => (
-                                            <div key={idx} className={styles.dishItem}>
-                                                {dish}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Feed Social de TikTok e Instagram */}
+                    {feedSocial.items.length > 0 && (
+                        <section className={styles.block}>
                             <FeedSocialCarousel
                                 titulo={`Ambiente y cocina en ${restaurant.name}`}
                                 subtitulo="EN TIKTOK E INSTAGRAM"
@@ -487,49 +430,154 @@ export default async function RestaurantProfile({ params }: { params: Promise<{ 
                                 cuentas={feedSocial.cuentas}
                             />
                         </section>
+                    )}
 
-                        {/* Related Articles Section */}
-                        {relatedArticles.length > 0 && (
-                            <section className={styles.extraSection}>
-                                <h2 className={styles.sectionHeading}>Crónicas Relacionadas</h2>
-                                <div className={styles.articlesGrid}>
-                                    {relatedArticles.map((article: any) => (
-                                        <Link key={article.id} href={`/noticias/${article.slug}`} className={styles.articleCard}>
-                                            <div className={styles.articleThumb}>
-                                                <img src={article.featuredImage?.node?.sourceUrl || "/news-placeholder.jpg"} alt={article.title} />
-                                            </div>
-                                            <div className={styles.articleInfo}>
-                                                <h3>{article.title}</h3>
-                                                <div className={styles.articleMeta}>
-                                                    {new Date(article.date).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                    {(restaurant as any).featuredInGuides && (restaurant as any).featuredInGuides.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>Rutas gastronómicas</span>
+                                <h2>Aparece en estas guías</h2>
+                            </div>
+                            <div className={styles.miniList}>
+                                {(restaurant as any).featuredInGuides.map((guide: any) => (
+                                    <Link key={guide.id} href={`/guias/${guide.slug}`} className={styles.miniCard}>
+                                        <div className={styles.miniThumb}>
+                                            <img src={guide.heroImage || '/news-placeholder.jpg'} alt={guide.title} />
+                                        </div>
+                                        <div className={styles.miniInfo}>
+                                            <h3>{guide.title}</h3>
+                                            <span className={styles.miniMeta}><BookOpen size={14} /> Artículo interactivo</span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
-                        {/* Similar Places / Listas */}
-                        {similarPlaces.length > 0 && (
-                            <section className={styles.extraSection}>
-                                <h2 className={styles.sectionHeading}>Más en {restaurant.category}</h2>
-                                <div className={styles.similarGrid}>
-                                    {similarPlaces.map((place: any) => (
-                                        <Link key={place.id} href={`/lugares/${slugify(place.restaurantName || place.name)}`} className={styles.similarCard}>
-                                            <img src={place.image || "/placeholder-restaurant.jpg"} alt={place.name} />
-                                            <div className={styles.similarOverlay}>
-                                                <h4>{place.name}</h4>
-                                                <span>{place.rating} ★</span>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
-                    </main>
+                    {relatedArticles.length > 0 && (
+                        <section className={styles.block}>
+                            <div className={styles.blockHead}>
+                                <span className={styles.eyebrow}>En la prensa</span>
+                                <h2>Crónicas relacionadas</h2>
+                            </div>
+                            <div className={styles.miniList}>
+                                {relatedArticles.map((article: any) => (
+                                    <Link key={article.id} href={`/noticias/${article.slug}`} className={styles.miniCard}>
+                                        <div className={styles.miniThumb}>
+                                            <img src={article.featuredImage?.node?.sourceUrl || '/news-placeholder.jpg'} alt={article.title} />
+                                        </div>
+                                        <div className={styles.miniInfo}>
+                                            <h3>{article.title}</h3>
+                                            <span className={styles.miniMeta}>
+                                                {new Date(article.date).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
+
+                {/* ── Barra lateral con lo práctico ── */}
+                <aside className={styles.aside}>
+                    <div className={styles.panel}>
+                        <div className={styles.panelActions}>
+                            {configReservas.activo && (
+                                <ReservaWidget
+                                    lugarId={restaurant.id}
+                                    lugarNombre={restaurant.name}
+                                    config={configReservasPublica}
+                                    rutaRegreso={`/lugares/${slugify(restaurant.name)}`}
+                                />
+                            )}
+                            <Link href={rutaMenu(restaurant.name, restaurant.id)} className={styles.btnPrimary}>
+                                <UtensilsCrossed size={18} /> Ver menú
+                            </Link>
+                            <Link href={rutaMenu(restaurant.name, restaurant.id)} className={styles.btnGhost}>
+                                <ShoppingBag size={18} /> Ordenar
+                            </Link>
+                        </div>
+
+                        <div className={styles.panelMap}>
+                            {hasCoords ? (
+                                <SinglePlaceMapWrapper lat={latNum} lng={lngNum} name={restaurant.name} />
+                            ) : (
+                                <div className={styles.mapPlaceholder}>
+                                    <MapPin size={30} strokeWidth={1} />
+                                    <p>Mapa no disponible</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {address && (
+                            <p className={styles.panelAddress}><MapPin size={17} /> {address}</p>
+                        )}
+
+                        <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className={styles.btnOutline}>
+                            <Navigation size={16} /> Cómo llegar
+                        </a>
+
+                        {(restaurant.phone || restaurant.website) && (
+                            <div className={styles.panelContacts}>
+                                {restaurant.phone && (
+                                    <a href={`tel:${restaurant.phone}`} className={styles.contactLink}>
+                                        <Phone size={17} /> {restaurant.phone}
+                                    </a>
+                                )}
+                                {restaurant.website && (
+                                    <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                                        <Globe size={17} /> Sitio web oficial
+                                    </a>
+                                )}
+                            </div>
+                        )}
+
+                        {(restaurant.socials?.instagram || restaurant.socials?.facebook || restaurant.socials?.twitter) && (
+                            <div className={styles.panelSocials}>
+                                {restaurant.socials?.instagram && (
+                                    <a href={restaurant.socials.instagram} target="_blank" rel="noreferrer" aria-label={`Instagram de ${restaurant.name}`}><FaInstagram size={22} /></a>
+                                )}
+                                {restaurant.socials?.facebook && (
+                                    <a href={restaurant.socials.facebook} target="_blank" rel="noreferrer" aria-label={`Facebook de ${restaurant.name}`}><FaFacebookF size={22} /></a>
+                                )}
+                                {restaurant.socials?.twitter && (
+                                    <a href={restaurant.socials.twitter} target="_blank" rel="noreferrer" aria-label={`X de ${restaurant.name}`}><FaTwitter size={22} /></a>
+                                )}
+                            </div>
+                        )}
+
+                        {!restaurant.userId && (
+                            <Link
+                                href={`/reclamar/lugar/${restaurant.id}?nombre=${encodeURIComponent(restaurant.name)}`}
+                                className={styles.claimLink}
+                            >
+                                ¿Administras este lugar? Reclama el perfil
+                            </Link>
+                        )}
+                    </div>
+                </aside>
             </div>
+
+            {/* ── Banda de relacionados ── */}
+            {similarPlaces.length > 0 && (
+                <section className={styles.relatedBand}>
+                    <div className={styles.relatedInner}>
+                        <h2 className={styles.relatedTitle}>Más en {restaurant.category}</h2>
+                        <div className={styles.relatedGrid}>
+                            {similarPlaces.map((place: any) => (
+                                <Link key={place.id} href={`/lugares/${slugify(place.restaurantName || place.name)}`} className={styles.relatedCard}>
+                                    <img src={place.image || '/placeholder-restaurant.jpg'} alt={place.name} />
+                                    <div className={styles.relatedOverlay}>
+                                        <h4>{place.restaurantName || place.name}</h4>
+                                        {place.rating && <span>{place.rating} ★</span>}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
         </div>
     );
 }
