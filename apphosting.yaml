@@ -43,12 +43,9 @@ env:
     availability:
       - BUILD
       - RUNTIME
-  # Vacía en producción: mxicapp usa la base (default).
-  - variable: NEXT_PUBLIC_FIRESTORE_DB_ID
-    value: ""
-    availability:
-      - BUILD
-      - RUNTIME
+  # NEXT_PUBLIC_FIRESTORE_DB_ID no se declara: sin ella se usa la base (default),
+  # que es la de mxicapp. App Hosting rechaza `value: ""` ("either 'value' or
+  # 'secret' field is required") y tumba el build entero.
   - variable: NEXT_PUBLIC_SITE_ID
     secret: NEXT_PUBLIC_SITE_ID
     availability:
